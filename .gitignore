@@ -1,0 +1,57 @@
+# Xcode
+DerivedData/
+build/
+*.xcworkspace/
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcscmblueprint
+*.xcuserstate
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+Package.resolved
+.build/
+
+# CocoaPods
+Pods/
+*.podspec.json
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Logs
+*.log
+
+# User-specific
+*.swp
+*.swm
+.DS_Store
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Simulator
+*.simulatorstate
+
+# Env files
+.env
+.env.*
+
+# Secrets and credentials
+*.key
+*.pem
+*.p12
+*.mobileprovision
+*.ipa
+
+# Don't commit Secrets.plist which may contain API keys
+Secrets.plist
