@@ -53,6 +53,48 @@ private let groqAPIKey = "your_groq_api_key_here"
 2. Press ⌘R to build and run
 3. Grant microphone permissions when prompted
 
+## Local setup: provide your Groq API key (GROQ_API_KEY)
+
+You can provide your Groq API key to the app in two safe ways during local development. Do NOT commit real keys to the repository—use one of the methods below.
+
+Option A — Xcode scheme environment variable (recommended for quick development)
+
+1. In Xcode, open your project and choose Product → Scheme → Edit Scheme…
+2. Select the `Run` action on the left, then open the `Arguments` tab.
+3. Under *Environment Variables*, click `+` and add:
+   - Name: `GROQ_API_KEY`
+   - Value: your_groq_api_key_here
+4. Make sure the checkbox at the left of the row is checked (enabled).
+5. Run the app from Xcode (⌘R). The app process will see the env var via `ProcessInfo.processInfo.environment`.
+
+Option B — A gitignored `Secrets.plist` (useful if you prefer bundling a local plist)
+
+1. Add your key to `.env` (local file) or export it to your shell:
+
+```bash
+# from the repo root (bash)
+export GROQ_API_KEY="your_groq_api_key_here"
+```
+
+2. Use the included helper script to generate a local, gitignored `Secrets.plist`:
+
+```bash
+cd /path/to/CreoleTranslator-iOS
+# If you have a .env file, load it first so the env var is set in your shell:
+set -a; source .env; set +a
+# Then run the script which writes Secrets.plist with secure permissions
+bash scripts/generate_secrets_plist.sh
+```
+
+3. Add `Secrets.plist` to your Xcode project (drag into the Project navigator) and ensure *Target Membership* is checked for your app so the file is bundled.
+4. Run the app from Xcode — the app will read `GROQ_API_KEY` from the bundled `Secrets.plist`.
+
+Notes and safety
+
+- `Secrets.plist` is included in `.gitignore` by default; confirm it is present there before committing.
+- Environment variables set in Xcode schemes only apply when launching from Xcode. If you run the app via other means, use the plist approach or pass env vars explicitly.
+- If you accidentally publish a key, rotate/revoke it immediately in the Groq console and update your local config.
+
 ## Project Structure
 
 ```
