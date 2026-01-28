@@ -11,8 +11,14 @@ struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @Environment(\.colorScheme) private var colorScheme
     
-    // Use the centralized Secrets helper to load the API key.
-    private let groqAPIKey: String? = Secrets.apiKey
+    // Note: Secrets provides groqAPIKey, openAIKey, metaAPIKey and metaAPIURL
+    private var groqAPIKey: String? { Secrets.groqAPIKey }
+    private var openAIKey: String? { Secrets.openAIKey }
+    private var metaAPIKey: String? { Secrets.metaAPIKey }
+    private var metaAPIURL: URL? {
+        if let s = Secrets.metaAPIURL, let url = URL(string: s) { return url }
+        return nil
+    }
     
     @State private var transcription = "Your transcription will appear here..."
     @State private var translation = "Your translation will appear here..."
@@ -22,14 +28,16 @@ struct ContentView: View {
     @State private var statusMessage = ""
     @State private var permissionGranted = false
     
+    // Toggle to select which provider path to use: true = Groq (existing), false = OpenAI+Meta (direct)
+    @State private var useGroqPath: Bool = true
+
     var body: some View {
         ZStack {
-            // Gradient background
             // Adaptive background: branded gradient in light mode, subtle system backgrounds in dark mode
             let bgColors: [Color] = colorScheme == .dark
                 ? [Color(UIColor.systemGray6), Color(UIColor.systemBackground)]
                 : [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.8, green: 0.3, blue: 0.5)]
-            
+
             LinearGradient(
                 colors: bgColors,
                 startPoint: .topLeading,
@@ -54,6 +62,19 @@ struct ContentView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, 40)
+                    
+                    // Provider switch
+                    HStack {
+                        Text("Use Groq path")
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Toggle(isOn: $useGroqPath) {
+                            EmptyView()
+                        }
+                        .labelsHidden()
+                    }
+                    .padding(.horizontal, 30)
                     
                     // Recording button
                     Button(action: {
@@ -165,11 +186,27 @@ struct ContentView: View {
     }
     
     private func processAudio(url: URL) {
-        // Guard that we have an API key before performing network calls
-        guard let apiKey = groqAPIKey, !apiKey.isEmpty else {
-            errorMessage = "Missing Groq API key. Add GROQ_API_KEY to Secrets.plist or set the environment variable in your scheme."
-            statusMessage = ""
-            return
+        // Choose service implementation depending on toggle
+        let service: TranslationService
+        if useGroqPath {
+            guard let apiKey = groqAPIKey, !apiKey.isEmpty else {
+                errorMessage = "Missing Groq API key. Add GROQ_API_KEY to Secrets.plist or set the environment variable in your scheme."
+                return
+            }
+            service = GroqService(apiKey: apiKey)
+        } else {
+            // OpenAI + Meta path
+            guard let oKey = openAIKey, !oKey.isEmpty else {
+                errorMessage = "Missing OpenAI API key. Set OPENAI_API_KEY in Secrets.plist or Xcode scheme."
+                return
+            }
+            // metaAPIURL is required (can be HuggingFace inference URL or self-hosted)
+            guard let mURL = metaAPIURL else {
+                errorMessage = "Missing META_API_URL. Set META_API_URL to the Meta/Llama endpoint (or HuggingFace model URL)."
+                return
+            }
+            let mKey = metaAPIKey // optional depending on host
+            service = OpenAIMetaService(openAIKey: oKey, metaKey: mKey, metaURL: mURL)
         }
         
         isProcessing = true
@@ -178,8 +215,7 @@ struct ContentView: View {
         
         Task {
             do {
-                let groqService = GroqService(apiKey: apiKey)
-                let result = try await groqService.processAudio(fileURL: url)
+                let result = try await service.processAudio(fileURL: url)
                 
                 await MainActor.run {
                     transcription = result.transcription
@@ -188,9 +224,7 @@ struct ContentView: View {
                     isProcessing = false
                 }
                 
-                // Clean up audio file
                 audioRecorder.deleteRecording(at: url)
-                
             } catch {
                 await MainActor.run {
                     transcription = "Your transcription will appear here..."
@@ -199,8 +233,6 @@ struct ContentView: View {
                     statusMessage = ""
                     isProcessing = false
                 }
-                
-                // Clean up audio file
                 audioRecorder.deleteRecording(at: url)
             }
         }
@@ -230,7 +262,7 @@ struct ResultCard: View {
                 .opacity(isLoading && content == "Processing..." ? 0.6 : 1.0)
         }
         .padding(20)
-        // Use a system background for cards so they contrast correctly in both appearances
+        .frame(maxWidth: .infinity)
         .background(Color(UIColor.tertiarySystemBackground))
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
