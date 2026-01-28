@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
+    @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
     private let groqAPIKey: String? = Secrets.apiKey
@@ -24,8 +25,13 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Gradient background
+            // Adaptive background: branded gradient in light mode, subtle system backgrounds in dark mode
+            let bgColors: [Color] = colorScheme == .dark
+                ? [Color(UIColor.systemGray6), Color(UIColor.systemBackground)]
+                : [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.8, green: 0.3, blue: 0.5)]
+            
             LinearGradient(
-                colors: [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.8, green: 0.3, blue: 0.5)],
+                colors: bgColors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -41,11 +47,11 @@ struct ContentView: View {
                         Text("Creole to English")
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                         
                         Text("Powered by Groq AI")
                             .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.secondary)
                     }
                     .padding(.top, 40)
                     
@@ -65,8 +71,9 @@ struct ContentView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
-                        .background(audioRecorder.isRecording ? Color.red : Color.white)
-                        .foregroundColor(audioRecorder.isRecording ? .white : Color(red: 0.4, green: 0.2, blue: 0.8))
+                        // Use system backgrounds so the button is visible in dark mode
+                        .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
+                        .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
                         .cornerRadius(15)
                         .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                     }
@@ -77,14 +84,14 @@ struct ContentView: View {
                     if !statusMessage.isEmpty {
                         Text(statusMessage)
                             .font(.subheadline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                             .padding(.horizontal)
                     }
                     
                     // Processing indicator
                     if isProcessing {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
                             .scaleEffect(1.5)
                             .padding()
                     }
@@ -113,7 +120,7 @@ struct ContentView: View {
                             .font(.subheadline)
                             .foregroundColor(.red)
                             .padding()
-                            .background(Color.white.opacity(0.9))
+                            .background(Color(UIColor.systemBackground).opacity(0.95))
                             .cornerRadius(10)
                             .padding(.horizontal, 30)
                     }
@@ -223,8 +230,8 @@ struct ResultCard: View {
                 .opacity(isLoading && content == "Processing..." ? 0.6 : 1.0)
         }
         .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(Color.white)
+        // Use a system background for cards so they contrast correctly in both appearances
+        .background(Color(UIColor.tertiarySystemBackground))
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
     }
