@@ -52,6 +52,11 @@ struct ContentView: View {
                         Text("Powered by Groq AI")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+
+                        // Show the Groq model being used so it's visible in the UI
+                        Text("Model: llama-3.3-70b-versatile")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                     .padding(.top, 40)
                     
@@ -127,6 +132,12 @@ struct ContentView: View {
                     
                     Spacer(minLength: 30)
                 }
+            }
+            .overlay(alignment: .bottom) {
+                // Banner ad at the bottom using your AdMob unit ID
+                BannerAdView(adUnitID: "ca-app-pub-7871017136061682/1384450307")
+                    .frame(height: 60)
+                    .padding(.bottom, 8)
             }
         }
         .onAppear {
@@ -206,7 +217,7 @@ struct ContentView: View {
         }
     }
 }
-
+  
 struct ResultCard: View {
     let title: String
     let icon: String
