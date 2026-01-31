@@ -133,11 +133,15 @@ struct ContentView: View {
                     Spacer(minLength: 30)
                 }
             }
-            .overlay(alignment: .bottom) {
-                // Banner ad at the bottom using your AdMob unit ID
+            // Place the banner in a bottom-aligned VStack inside the ZStack (avoids overlay/alignment inference issues)
+            VStack {
+                Spacer()
+                // Banner ad at the bottom. Using your production AdMob ad unit below.
                 BannerAdView(adUnitID: "ca-app-pub-7871017136061682/1384450307")
                     .frame(height: 60)
                     .padding(.bottom, 8)
+                // For development/testing you can switch to the Google test ad unit:
+                // BannerAdView(adUnitID: "ca-app-pub-3940256099942544/2934735716")
             }
         }
         .onAppear {
