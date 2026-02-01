@@ -1,31 +1,9 @@
 import Foundation
 
-/// Helper to load sensitive configuration like API keys from multiple sources without hard-coding.
-/// Order of precedence:
-/// 1. Environment variable GROQ_API_KEY (useful for Xcode scheme or CI)
-/// 2. Secrets.plist in the app bundle (gitignored in your repo)
-/// 3. Info.plist key GROQ_API_KEY (less secure, optional)
+// Helper to load AdMob Ad Unit ID from Info.plist or fallback to a test ID
 struct Secrets {
-    static var apiKey: String? {
-        // 1) Environment (useful for Xcode Run scheme, CI)
-        if let env = ProcessInfo.processInfo.environment["GROQ_API_KEY"], !env.isEmpty {
-            return env
-        }
-        
-        // 2) Secrets.plist in bundle (create and add to your app target, but keep it gitignored)
-        if let url = Bundle.main.url(forResource: "Secrets", withExtension: "plist"),
-           let data = try? Data(contentsOf: url),
-           let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
-           let key = dict["GROQ_API_KEY"] as? String,
-           !key.isEmpty {
-            return key
-        }
-        
-        // 3) Info.plist key (for convenience; avoid committing secrets here in public repos)
-        if let infoKey = Bundle.main.object(forInfoDictionaryKey: "GROQ_API_KEY") as? String, !infoKey.isEmpty {
-            return infoKey
-        }
-        
-        return nil
+    static var admobBannerAdUnitID: String {
+        // Try to load from Info.plist (or use a test ad unit for dev)
+        Bundle.main.object(forInfoDictionaryKey: "ADMOB_BANNER_AD_UNIT_ID") as? String ?? "ca-app-pub-3940256099942544/2934735716"
     }
 }

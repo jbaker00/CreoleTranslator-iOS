@@ -1,0 +1,15 @@
+To enable Google AdMob banner ads:
+
+1. Add the Google Mobile Ads SDK to your project using Swift Package Manager:
+   https://github.com/googleads/swift-package-manager-google-mobile-ads
+
+2. In Info.plist, add the following key/value:
+   <key>ADMOB_BANNER_AD_UNIT_ID</key>
+   <string>ca-app-pub-3940256099942544/2934735716</string>
+   (Replace with your real Ad Unit ID for production.)
+
+3. The app will use a test ad unit by default if the Info.plist key is missing.
+
+4. BannerAdView.swift and Secrets.swift handle the integration.
+
+5. For production, update Info.plist and AdMob dashboard as needed.

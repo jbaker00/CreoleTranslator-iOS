@@ -123,25 +123,14 @@ struct ContentView: View {
                             .background(Color(UIColor.systemBackground).opacity(0.95))
                             .cornerRadius(10)
                             .padding(.horizontal, 30)
-                        
-                        if error.contains("Missing Groq API key") {
-                            Link("View setup instructions in README", destination: URL(string: "https://github.com/your-org-or-user/CreoleTranslator-iOS#api-key-setup-groq")!)
-                                .font(.subheadline)
-                                .foregroundColor(.accentColor)
-                                .padding(.top, 4)
-                        }
                     }
                     
                     Spacer(minLength: 30)
                 }
             }
-        }
-        .onAppear {
-            checkMicrophonePermission()
-            // Warn user if API key is missing so they know to add it before using the network features.
-            if groqAPIKey == nil {
-                errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
-            }
+            // Banner Ad at the bottom
+            BannerAdView()
+                .padding(.bottom, 8)
         }
     }
     
