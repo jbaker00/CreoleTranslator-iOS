@@ -21,9 +21,11 @@ struct ContentView: View {
     @State private var recordingURL: URL?
     @State private var statusMessage = ""
     @State private var permissionGranted = false
+    @State private var availableWidth: CGFloat = 320
     
     var body: some View {
-        ZStack {
+        // ZStack allows us to overlay the banner at the bottom while content scrolls above
+        ZStack(alignment: .bottom) {
             // Gradient background
             // Adaptive background: branded gradient in light mode, subtle system backgrounds in dark mode
             let bgColors: [Color] = colorScheme == .dark
@@ -132,16 +134,28 @@ struct ContentView: View {
                         }
                     }
                     
-                    Spacer(minLength: 30)
+                    Spacer(minLength: 80) // leave room for banner
                 }
             }
-        }
-        .onAppear {
-            checkMicrophonePermission()
-            // Warn user if API key is missing so they know to add it before using the network features.
-            if groqAPIKey == nil {
-                errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
+            .onAppear {
+                checkMicrophonePermission()
+                // Warn user if API key is missing so they know to add it before using the network features.
+                if groqAPIKey == nil {
+                    errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
+                }
             }
+            
+            // Host the banner in a GeometryReader so we can pass the current width to compute an adaptive size.
+            GeometryReader { geo in
+                BannerAdView(width: geo.size.width)
+                    .frame(width: geo.size.width, height: 50, alignment: .center) // Reserve typical banner height; adaptive banners may adjust internally
+                    .background(.ultraThinMaterial) // Slight material background to separate ad from content visually
+                    .overlay(Divider(), alignment: .top) // Subtle divider to delineate content and ad area
+                    .ignoresSafeArea(edges: .bottom) // Allow the banner to extend to the bottom edge safely
+                    .onAppear { availableWidth = geo.size.width } // Initialize width on first layout
+                    .onChange(of: geo.size.width) { availableWidth = $0 } // Update width as the device rotates or layout changes
+            }
+            .frame(height: 50, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
         }
     }
     
