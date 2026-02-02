@@ -7,17 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6E92902B2F26C4CA00DF5C62 /* README 2.md in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902A2F26C4CA00DF5C62 /* README 2.md */; };
 		6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902C2F26C4CF00DF5C62 /* .gitignore */; };
+		6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */; };
+		6ED7AC7B2F302BA6000E65B1 /* CONVERSION-SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */; };
+		6ED7AC7C2F302BA6000E65B1 /* README 2.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC772F302BA6000E65B1 /* README 2.md */; };
+		6ED7AC7D2F302BA6000E65B1 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC762F302BA6000E65B1 /* README.md */; };
+		6ED7AC7E2F302BA6000E65B1 /* Secrets.plist.example in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */; };
+		6ED7AC7F2F302BA6000E65B1 /* QUICKSTART.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC752F302BA6000E65B1 /* QUICKSTART.md */; };
 		6EE149002F300ECD00CFE9BA /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 6EE148FF2F300ECD00CFE9BA /* GoogleMobileAds */; };
 		6EE1490B2F300F0A00CFE9BA /* BannerAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149032F300F0A00CFE9BA /* BannerAdView.swift */; };
 		6EE1490C2F300F0A00CFE9BA /* ATTAuthorization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */; };
 		6EE1490D2F300F0A00CFE9BA /* generate_app_icons.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */; };
-		6EE1490E2F300F0A00CFE9BA /* CONVERSION-SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149042F300F0A00CFE9BA /* CONVERSION-SUMMARY.md */; };
-		6EE1490F2F300F0A00CFE9BA /* Secrets.plist.example in Resources */ = {isa = PBXBuildFile; fileRef = 6EE1490A2F300F0A00CFE9BA /* Secrets.plist.example */; };
-		6EE149102F300F0A00CFE9BA /* BANNER_AD_INTEGRATION.md in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149022F300F0A00CFE9BA /* BANNER_AD_INTEGRATION.md */; };
-		6EE149112F300F0A00CFE9BA /* QUICKSTART.md in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149062F300F0A00CFE9BA /* QUICKSTART.md */; };
-		6EE149122F300F0A00CFE9BA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149072F300F0A00CFE9BA /* README.md */; };
 		6EE149132F300F0A00CFE9BA /* generate_secrets_plist.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */; };
 		AA0000000001 /* CreoleTranslatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000002 /* CreoleTranslatorApp.swift */; };
 		AA0000000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000004 /* ContentView.swift */; };
@@ -29,17 +29,17 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6E92902A2F26C4CA00DF5C62 /* README 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "README 2.md"; sourceTree = "<group>"; };
 		6E92902C2F26C4CF00DF5C62 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BANNER_AD_INTEGRATION.md; sourceTree = "<group>"; };
+		6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "CONVERSION-SUMMARY.md"; sourceTree = "<group>"; };
+		6ED7AC752F302BA6000E65B1 /* QUICKSTART.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICKSTART.md; sourceTree = "<group>"; };
+		6ED7AC762F302BA6000E65B1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		6ED7AC772F302BA6000E65B1 /* README 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "README 2.md"; sourceTree = "<group>"; };
+		6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Secrets.plist.example; sourceTree = "<group>"; };
 		6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATTAuthorization.swift; sourceTree = "<group>"; };
-		6EE149022F300F0A00CFE9BA /* BANNER_AD_INTEGRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BANNER_AD_INTEGRATION.md; sourceTree = "<group>"; };
 		6EE149032F300F0A00CFE9BA /* BannerAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerAdView.swift; sourceTree = "<group>"; };
-		6EE149042F300F0A00CFE9BA /* CONVERSION-SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "CONVERSION-SUMMARY.md"; sourceTree = "<group>"; };
 		6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_app_icons.sh; sourceTree = "<group>"; };
-		6EE149062F300F0A00CFE9BA /* QUICKSTART.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICKSTART.md; sourceTree = "<group>"; };
-		6EE149072F300F0A00CFE9BA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_secrets_plist.sh; sourceTree = "<group>"; };
-		6EE1490A2F300F0A00CFE9BA /* Secrets.plist.example */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Secrets.plist.example; sourceTree = "<group>"; };
 		AA0000000002 /* CreoleTranslatorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreoleTranslatorApp.swift; sourceTree = "<group>"; };
 		AA0000000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA0000000006 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
@@ -63,10 +63,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6ED7AC792F302BA6000E65B1 /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */,
+				6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */,
+				6ED7AC752F302BA6000E65B1 /* QUICKSTART.md */,
+				6ED7AC762F302BA6000E65B1 /* README.md */,
+				6ED7AC772F302BA6000E65B1 /* README 2.md */,
+				6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */,
+			);
+			path = Docs;
+			sourceTree = "<group>";
+		};
 		6EE149092F300F0A00CFE9BA /* scripts */ = {
 			isa = PBXGroup;
 			children = (
 				6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */,
+				6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */,
 			);
 			path = scripts;
 			sourceTree = "<group>";
@@ -74,12 +88,7 @@
 		AA0000000014 = {
 			isa = PBXGroup;
 			children = (
-				6EE149022F300F0A00CFE9BA /* BANNER_AD_INTEGRATION.md */,
-				6EE149042F300F0A00CFE9BA /* CONVERSION-SUMMARY.md */,
-				6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */,
-				6EE149062F300F0A00CFE9BA /* QUICKSTART.md */,
-				6EE149072F300F0A00CFE9BA /* README.md */,
-				6EE1490A2F300F0A00CFE9BA /* Secrets.plist.example */,
+				6ED7AC792F302BA6000E65B1 /* Docs */,
 				6EE149092F300F0A00CFE9BA /* scripts */,
 				6EE149032F300F0A00CFE9BA /* BannerAdView.swift */,
 				6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */,
@@ -92,7 +101,6 @@
 				AA0000000010 /* Assets.xcassets */,
 				AA0000000012 /* Info.plist */,
 				AA0000000016 /* Products */,
-				6E92902A2F26C4CA00DF5C62 /* README 2.md */,
 				6E92902C2F26C4CF00DF5C62 /* .gitignore */,
 			);
 			sourceTree = "<group>";
@@ -166,14 +174,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6E92902B2F26C4CA00DF5C62 /* README 2.md in Resources */,
 				6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */,
+				6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */,
+				6ED7AC7B2F302BA6000E65B1 /* CONVERSION-SUMMARY.md in Resources */,
+				6ED7AC7C2F302BA6000E65B1 /* README 2.md in Resources */,
+				6ED7AC7D2F302BA6000E65B1 /* README.md in Resources */,
+				6ED7AC7E2F302BA6000E65B1 /* Secrets.plist.example in Resources */,
+				6ED7AC7F2F302BA6000E65B1 /* QUICKSTART.md in Resources */,
 				6EE1490D2F300F0A00CFE9BA /* generate_app_icons.sh in Resources */,
-				6EE1490E2F300F0A00CFE9BA /* CONVERSION-SUMMARY.md in Resources */,
-				6EE1490F2F300F0A00CFE9BA /* Secrets.plist.example in Resources */,
-				6EE149102F300F0A00CFE9BA /* BANNER_AD_INTEGRATION.md in Resources */,
-				6EE149112F300F0A00CFE9BA /* QUICKSTART.md in Resources */,
-				6EE149122F300F0A00CFE9BA /* README.md in Resources */,
 				6EE149132F300F0A00CFE9BA /* generate_secrets_plist.sh in Resources */,
 				AA0000000009 /* Assets.xcassets in Resources */,
 				AA0000000031 /* Secrets.plist in Resources */,
