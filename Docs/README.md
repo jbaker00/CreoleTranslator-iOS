@@ -6,6 +6,7 @@ A native iOS application that converts Haitian Creole speech to English text usi
 
 - **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
 - **[GitHub Merge Guide](GITHUB_MERGE_GUIDE.md)** - How to merge pull requests and approved changes
+- **[Merge Quick Reference](MERGE_QUICK_REFERENCE.md)** - Visual cheat sheet for merging PRs
 - **[Banner Ad Integration](BANNER_AD_INTEGRATION.md)** - AdMob integration guide
 - **[Conversion Summary](CONVERSION-SUMMARY.md)** - Web to iOS conversion details
 
