@@ -149,11 +149,11 @@ struct ContentView: View {
             GeometryReader { geo in
                 BannerAdView(width: geo.size.width)
                     .frame(width: geo.size.width, height: 50, alignment: .center) // Reserve typical banner height; adaptive banners may adjust internally
-                    .background(.ultraThinMaterial) // Slight material background to separate ad from content visually
-                    .overlay(Divider(), alignment: .top) // Subtle divider to delineate content and ad area
+                    .background(Color(UIColor.tertiarySystemBackground)) // Use system background color for consistent contrast
+                    .overlay(alignment: .top) { Divider() } // Subtle divider to delineate content and ad area
                     .ignoresSafeArea(edges: .bottom) // Allow the banner to extend to the bottom edge safely
                     .onAppear { availableWidth = geo.size.width } // Initialize width on first layout
-                    .onChange(of: geo.size.width) { availableWidth = $0 } // Update width as the device rotates or layout changes
+                    .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
             .frame(height: 50, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
         }
