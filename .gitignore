@@ -3,6 +3,7 @@ DerivedData/
 build/
 *.xcworkspace/
 xcuserdata/
+xcshareddata/xcschemes/
 *.xccheckout
 *.moved-aside
 *.xcscmblueprint
