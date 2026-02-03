@@ -2,6 +2,13 @@
 
 A native iOS application that converts Haitian Creole speech to English text using Groq AI (Whisper + LLAMA).
 
+## 📚 Documentation
+
+- **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
+- **[GitHub Merge Guide](GITHUB_MERGE_GUIDE.md)** - How to merge pull requests and approved changes
+- **[Banner Ad Integration](BANNER_AD_INTEGRATION.md)** - AdMob integration guide
+- **[Conversion Summary](CONVERSION-SUMMARY.md)** - Web to iOS conversion details
+
 ## Features
 
 - **Real-time Audio Recording** - Record Haitian Creole speech using iPhone microphone
@@ -216,6 +223,11 @@ This is converted from a web application. Feel free to:
 - Report bugs
 - Suggest features
 - Submit pull requests
+
+### How to Merge Your Pull Requests
+
+New to GitHub or need help merging approved changes? See our detailed guide:
+📖 **[GitHub Merge Guide](GITHUB_MERGE_GUIDE.md)** - Step-by-step instructions for merging pull requests
 
 ## License
 
