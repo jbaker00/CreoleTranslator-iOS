@@ -50,13 +50,6 @@
             ReferencedContainer = "container:CreoleTranslator.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "GROQ_API_KEY"
-            value = "[REDACTED]"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
