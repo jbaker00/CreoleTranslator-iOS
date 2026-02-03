@@ -2,61 +2,49 @@
 //  BannerAdView.swift
 //  CreoleTranslator
 //
-//  Google AdMob Banner Ad View
+//  Google AdMob Banner Ad View (safe placeholder implementation)
 //
 
 import SwiftUI
-import GoogleMobileAds
 
-struct BannerAdView: UIViewRepresentable {
-    // Google provides official test ad unit IDs. Use these in development to avoid policy violations
-    // and to ensure predictable behavior. Replace with your real unit ID only for production builds.
+/// A safe BannerAdView placeholder that avoids compile-time dependency on Google Mobile Ads SDK.
+/// Replace the body implementation with a real UIViewRepresentable that creates a BannerView
+/// when you have the SDK available and want real ads to load. Keeping this lightweight
+/// placeholder prevents compile/link errors while the SDK/package is missing or being resolved.
+struct BannerAdView: View {
+    // Allow caller to pass width; default to screen width for previews
+    var width: CGFloat = UIScreen.main.bounds.width
+
+    // Use Google's test banner unit during development if you later wire the real SDK.
+    // For now this placeholder displays the adUnitID and a framed rectangle so layout is stable.
     let adUnitID: String = "ca-app-pub-3940256099942544/2934735716"
-    
-    // The available width drives the adaptive banner size. Adaptive banners choose a height automatically
-    // that fits the current device and orientation for the given width, maximizing performance and fill.
-    let width: CGFloat
-
-    func makeUIView(context: Context) -> BannerView {
-        // Create an anchored adaptive banner size that matches the current width. This tells the SDK to pick
-        // an optimal height for this width and orientation.
-        let adSize = currentOrientationAnchoredAdaptiveBanner(width: width)
-        let banner = BannerView(adSize: adSize) // Instantiate the GMA banner with the computed adaptive size
-        banner.adUnitID = adUnitID // Assign your banner ad unit ID (test during development)
-        banner.delegate = context.coordinator // Receive load success/failure callbacks via Coordinator
-        banner.rootViewController = UIApplication.shared.firstKeyWindowRootViewController() // Required by the SDK to present in-app content (e.g., clickthroughs) from a view controller
-        banner.load(Request()) // Start loading the banner with default request parameters
-        return banner
-    }
-
-    func updateUIView(_ uiView: BannerView, context: Context) {
-        // If the container width changes (rotation, split view, etc.), recompute the adaptive size
-        // so the banner height and layout remain valid.
-        let newSize = currentOrientationAnchoredAdaptiveBanner(width: width)
-        if !CGSizeEqualToSize(newSize.size, uiView.adSize.size) { // Only update and reload if the size actually changed to avoid redundant requests
-            uiView.adSize = newSize // Apply the new adaptive size
-            uiView.load(Request()) // Reload the banner for the new size
+    var body: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack {
+                Spacer()
+                VStack(alignment: .center, spacing: 6) {
+                    Text("Ad Banner Placeholder")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(adUnitID)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            .padding(8)
+            .background(Color(UIColor.tertiarySystemBackground))
         }
-    }
-
-    // SwiftUI bridge: Coordinator lets UIKit delegates communicate back to SwiftUI
-    func makeCoordinator() -> Coordinator { Coordinator() }
-
-    // Implement the banner delegate to observe ad load results. Useful for logging, analytics,
-    // or triggering UI changes when an ad loads or fails.
-    final class Coordinator: NSObject, BannerViewDelegate {
-        func bannerViewDidReceiveAd(_ bannerView: BannerView) { print("Banner loaded") } // Called when an ad successfully loads
-        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
-            print("Banner failed: \(error.localizedDescription)")
-        } // Called when an ad fails to load (inspect error for details)
+        .frame(width: width)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
-// Helper to find a root view controller for presenting from UIKit APIs. Google Mobile Ads requires
-// a valid UIViewController to present clickthroughs and other full-screen content.
+// Helper to find a root view controller for presenting UIKit content if/when you add the real banner view
 private extension UIApplication {
     func firstKeyWindowRootViewController() -> UIViewController? {
-        connectedScenes // Support multi-scene apps (iPadOS/macOS Catalyst); find the active key window
+        connectedScenes
             .compactMap { ($0 as? UIWindowScene)?.keyWindow }
             .first?
             .rootViewController
