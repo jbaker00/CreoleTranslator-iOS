@@ -125,13 +125,6 @@ struct ContentView: View {
                             .background(Color(UIColor.systemBackground).opacity(0.95))
                             .cornerRadius(10)
                             .padding(.horizontal, 30)
-                        
-                        if error.contains("Missing Groq API key") {
-                            Link("View setup instructions in README", destination: URL(string: "https://github.com/your-org-or-user/CreoleTranslator-iOS#api-key-setup-groq")!)
-                                .font(.subheadline)
-                                .foregroundColor(.accentColor)
-                                .padding(.top, 4)
-                        }
                     }
                     
                     Spacer(minLength: 80) // leave room for banner
