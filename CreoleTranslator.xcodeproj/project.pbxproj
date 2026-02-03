@@ -27,7 +27,6 @@
 		AA0000000007 /* GroqService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000008 /* GroqService.swift */; };
 		AA0000000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000010 /* Assets.xcassets */; };
 		AA0000000027 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000028 /* Secrets.swift */; };
-		AA0000000031 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000032 /* Secrets.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,7 +50,6 @@
 		AA0000000011 /* CreoleTranslator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CreoleTranslator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA0000000028 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
-		AA0000000032 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,7 +100,6 @@
 				AA0000000006 /* AudioRecorder.swift */,
 				AA0000000008 /* GroqService.swift */,
 				AA0000000028 /* Secrets.swift */,
-				AA0000000032 /* Secrets.plist */,
 				AA0000000010 /* Assets.xcassets */,
 				AA0000000012 /* Info.plist */,
 				AA0000000016 /* Products */,
@@ -125,7 +122,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA0000000018 /* Build configuration list for PBXNativeTarget "CreoleTranslator" */;
 			buildPhases = (
-				6E6AB2DF2F31C038008F4143 /* ShellScript */,
 				AA0000000019 /* Sources */,
 				AA0000000013 /* Frameworks */,
 				AA0000000020 /* Resources */,
@@ -191,32 +187,10 @@
 				6EE149132F300F0A00CFE9BA /* generate_secrets_plist.sh in Resources */,
 				AA0000000009 /* Assets.xcassets in Resources */,
 				6E6AB2DE2F31B848008F4143 /* Package.resolved in Resources */,
-				AA0000000031 /* Secrets.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		6E6AB2DF2F31C038008F4143 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/bash \"${SRCROOT}/scripts/run_generate_secrets_plist_build_phase.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA0000000019 /* Sources */ = {
@@ -381,7 +355,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5;
+				MARKETING_VERSION = 1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -412,7 +386,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.5;
+				MARKETING_VERSION = 1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

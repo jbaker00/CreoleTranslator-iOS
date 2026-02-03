@@ -23,7 +23,7 @@ struct CreoleTranslatorApp: App {
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
-                ATTAuthorization.requestIfNeeded()
+                ATTAuthorization.requestIfNeeded() 
             }
         }
     }

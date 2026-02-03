@@ -66,7 +66,7 @@ class AudioRecorder: NSObject, ObservableObject {
 
         // Configure and activate session
         do {
-            try recordingSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            try recordingSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP])
             try recordingSession.setActive(true)
         } catch {
             DispatchQueue.main.async { self.lastError = "Failed to activate audio session: \(error.localizedDescription)" }
