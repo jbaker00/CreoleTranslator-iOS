@@ -125,6 +125,7 @@
 				AA0000000019 /* Sources */,
 				AA0000000013 /* Frameworks */,
 				AA0000000020 /* Resources */,
+				6E176AB62F328BAF009738C5 /* Generate Secrets */,
 			);
 			buildRules = (
 			);
@@ -191,6 +192,29 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		6E176AB62F328BAF009738C5 /* Generate Secrets */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Secrets";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a sc   #!/bin/bash\n   # Generate Secrets.plist from environment variable\n\n   if [ -n \"${GROQ_API_KEY}\" ]; then\n     PLIST_FILE=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Secrets.plist\"\n\n     echo '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' > \"$PLIST_FILE\"\n     echo '<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \n  \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">' >> \"$PLIST_FILE\"\n     echo '<plist version=\"1.0\">' >> \"$PLIST_FILE\"\n     echo '<dict>' >> \"$PLIST_FILE\"\n     echo '    <key>GROQ_API_KEY</key>' >> \"$PLIST_FILE\"\n     echo \"    <string>${GROQ_API_KEY}</string>\" >> \"$PLIST_FILE\"\n     echo '</dict>' >> \"$PLIST_FILE\"\n     echo '</plist>' >> \"$PLIST_FILE\"\n\n     echo \"✅ Generated Secrets.plist with API key\"\n   else\n     echo \"⚠️  GROQ_API_KEY not set\"\n   fi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA0000000019 /* Sources */ = {
@@ -339,7 +363,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = G3P9A8Z2NP;
 				ENABLE_PREVIEWS = YES;
@@ -357,7 +381,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.75;
+				MARKETING_VERSION = 1.95;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -372,7 +396,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = G3P9A8Z2NP;
 				ENABLE_PREVIEWS = YES;
@@ -390,7 +414,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.75;
+				MARKETING_VERSION = 1.95;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
