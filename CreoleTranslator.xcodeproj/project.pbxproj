@@ -125,6 +125,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA0000000018 /* Build configuration list for PBXNativeTarget "CreoleTranslator" */;
 			buildPhases = (
+				6E6AB2DF2F31C038008F4143 /* ShellScript */,
 				AA0000000019 /* Sources */,
 				AA0000000013 /* Frameworks */,
 				AA0000000020 /* Resources */,
@@ -195,6 +196,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		6E6AB2DF2F31C038008F4143 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/bash \"${SRCROOT}/scripts/run_generate_secrets_plist_build_phase.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA0000000019 /* Sources */ = {
