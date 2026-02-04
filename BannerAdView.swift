@@ -17,7 +17,8 @@ struct BannerAdView: View {
 
     // Use Google's test banner unit during development if you later wire the real SDK.
     // For now this placeholder displays the adUnitID and a framed rectangle so layout is stable.
-    let adUnitID: String = "ca-app-pub-3940256099942544/2934735716"
+    //let adUnitID: String = "ca-app-pub-3940256099942544/2934735716"
+    let adUnitID: String = "ca-app-pub-7871017136061682/3584044139" // Replace with your real ad unit ID when using real ads
     var body: some View {
         VStack(spacing: 0) {
             Divider()

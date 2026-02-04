@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6E176AB82F331098009738C5 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6E176AB72F331098009738C5 /* Secrets.plist */; };
 		6E6AB2DE2F31B848008F4143 /* Package.resolved in Resources */ = {isa = PBXBuildFile; fileRef = 6E6AB2DD2F31B848008F4143 /* Package.resolved */; };
 		6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902C2F26C4CF00DF5C62 /* .gitignore */; };
 		6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */; };
@@ -30,6 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6E176AB72F331098009738C5 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		6E6AB2DD2F31B848008F4143 /* Package.resolved */ = {isa = PBXFileReference; lastKnownFileType = text; path = Package.resolved; sourceTree = "<group>"; };
 		6E92902C2F26C4CF00DF5C62 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BANNER_AD_INTEGRATION.md; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 				AA0000000008 /* GroqService.swift */,
 				AA0000000028 /* Secrets.swift */,
 				AA0000000010 /* Assets.xcassets */,
+				6E176AB72F331098009738C5 /* Secrets.plist */,
 				AA0000000012 /* Info.plist */,
 				AA0000000016 /* Products */,
 				6E92902C2F26C4CF00DF5C62 /* .gitignore */,
@@ -181,6 +184,7 @@
 				6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */,
 				6ED7AC7B2F302BA6000E65B1 /* CONVERSION-SUMMARY.md in Resources */,
 				6ED7AC7C2F302BA6000E65B1 /* README 2.md in Resources */,
+				6E176AB82F331098009738C5 /* Secrets.plist in Resources */,
 				6ED7AC7D2F302BA6000E65B1 /* README.md in Resources */,
 				6ED7AC7E2F302BA6000E65B1 /* Secrets.plist.example in Resources */,
 				6ED7AC7F2F302BA6000E65B1 /* QUICKSTART.md in Resources */,
@@ -381,7 +385,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.95;
+				MARKETING_VERSION = 1.951;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -414,7 +418,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.95;
+				MARKETING_VERSION = 1.951;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
