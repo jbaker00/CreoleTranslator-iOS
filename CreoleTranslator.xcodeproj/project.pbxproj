@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6E176AB82F331098009738C5 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6E176AB72F331098009738C5 /* Secrets.plist */; };
 		6E6AB2DE2F31B848008F4143 /* Package.resolved in Resources */ = {isa = PBXBuildFile; fileRef = 6E6AB2DD2F31B848008F4143 /* Package.resolved */; };
 		6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902C2F26C4CF00DF5C62 /* .gitignore */; };
 		6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */; };
@@ -184,7 +183,6 @@
 				6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */,
 				6ED7AC7B2F302BA6000E65B1 /* CONVERSION-SUMMARY.md in Resources */,
 				6ED7AC7C2F302BA6000E65B1 /* README 2.md in Resources */,
-				6E176AB82F331098009738C5 /* Secrets.plist in Resources */,
 				6ED7AC7D2F302BA6000E65B1 /* README.md in Resources */,
 				6ED7AC7E2F302BA6000E65B1 /* Secrets.plist.example in Resources */,
 				6ED7AC7F2F302BA6000E65B1 /* QUICKSTART.md in Resources */,
