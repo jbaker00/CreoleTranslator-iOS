@@ -104,26 +104,6 @@ struct ContentView: View {
                         mainContentView
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     }
-                    Button(action: {
-                        if audioRecorder.isRecording {
-                            stopRecording()
-                        } else {
-                            startRecording()
-                        }
-                    }) {
-                        HStack(spacing: 12) {
-                            Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
-                                .font(.system(size: 24))
-                            Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        // Use system backgrounds so the button is visible in dark mode
-                        .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
-                        .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
-                        .cornerRadius(15)
-                        .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                     
                     Spacer(minLength: 80) // leave room for banner
                 }
