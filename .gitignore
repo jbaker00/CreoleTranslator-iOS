@@ -58,3 +58,4 @@ Secrets.plist
 *.ipa
 Secrets.swift.local
 Secrets.swift.original
+GeneratedSecrets.swift

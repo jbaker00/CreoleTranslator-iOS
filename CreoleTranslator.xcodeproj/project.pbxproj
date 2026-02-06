@@ -210,10 +210,11 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"${DERIVED_FILE_DIR}/GeneratedSecrets.swift",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Inject API key into Secrets.swift before compilation\necho \"🔐 Injecting API key into Secrets.swift\"\n\nSECRETS_FILE=\"${SRCROOT}/Secrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    # Use environment variable (Xcode Cloud)\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    # Extract from local Secrets.plist using PlistBuddy (more reliable)\n    API_KEY=$(/usr/libexec/PlistBuddy -c \"Print :GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" 2>/dev/null)\n    if [ -n \"${API_KEY}\" ]; then\n        echo \"   Using API key from Secrets.plist (${#API_KEY} chars)\"\n    else\n        echo \"   ⚠️  Could not read key from Secrets.plist\"\n        exit 0\n    fi\nelse\n    echo \"   ⚠️  No API key source found\"\n    exit 0\nfi\n\n# Validate key\nif [ -z \"${API_KEY}\" ]; then\n    echo \"   ⚠️  API key is empty after extraction\"\n    exit 0\nfi\n\n# Replace placeholder in Secrets.swift\nif grep -q \"YOUR_API_KEY_HERE\" \"${SECRETS_FILE}\"; then\n    sed -i '' \"s/YOUR_API_KEY_HERE/${API_KEY}/g\" \"${SECRETS_FILE}\"\n    echo \"   ✅ API key injected successfully\"\nelse\n    echo \"   ℹ️  Placeholder not found (already replaced or different format)\"\nfi\n";
+			shellScript = "# Generate Secrets.swift with embedded API key\necho \"🔐 Generating Secrets with API key\"\n\nOUTPUT_FILE=\"${DERIVED_FILE_DIR}/GeneratedSecrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   ✅ Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    API_KEY=$(/usr/libexec/PlistBuddy -c \"Print :GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" 2>/dev/null)\n    if [ -n \"${API_KEY}\" ]; then\n        echo \"   ✅ Using API key from Secrets.plist (${#API_KEY} chars)\"\n    else\n        echo \"   ⚠️  Could not read Secrets.plist, using placeholder\"\n        API_KEY=\"YOUR_API_KEY_HERE\"\n    fi\nelse\n    echo \"   ⚠️  No API key source found, using placeholder\"\n    API_KEY=\"YOUR_API_KEY_HERE\"\nfi\n\n# Generate Swift file with the key\ncat > \"${OUTPUT_FILE}\" << EOF\nimport Foundation\n\n/// Auto-generated secrets file - DO NOT EDIT\n/// Generated at build time from environment variable or Secrets.plist\nstruct Secrets {\n    static var apiKey: String? {\n        let key = \"${API_KEY}\"\n        return key == \"YOUR_API_KEY_HERE\" ? nil : key\n    }\n}\nEOF\n\necho \"   ✅ Generated: ${OUTPUT_FILE}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -228,7 +229,6 @@
 				AA0000000003 /* ContentView.swift in Sources */,
 				AA0000000005 /* AudioRecorder.swift in Sources */,
 				AA0000000007 /* GroqService.swift in Sources */,
-				AA0000000027 /* Secrets.swift in Sources */,
 				AA0000000001 /* CreoleTranslatorApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -383,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.955;
+				MARKETING_VERSION = 1.956;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -416,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.955;
+				MARKETING_VERSION = 1.956;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
