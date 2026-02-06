@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6E176AB92F328BAF009738C8 /* GeneratedSecrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */; };
 		6E6AB2DE2F31B848008F4143 /* Package.resolved in Resources */ = {isa = PBXBuildFile; fileRef = 6E6AB2DD2F31B848008F4143 /* Package.resolved */; };
 		6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902C2F26C4CF00DF5C62 /* .gitignore */; };
 		6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */; };
@@ -30,6 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneratedSecrets.swift; sourceTree = "<group>"; };
 		6E176AB72F331098009738C5 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		6E6AB2DD2F31B848008F4143 /* Package.resolved */ = {isa = PBXFileReference; lastKnownFileType = text; path = Package.resolved; sourceTree = "<group>"; };
 		6E92902C2F26C4CF00DF5C62 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
@@ -225,6 +227,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6E176AB92F328BAF009738C8 /* GeneratedSecrets.swift in Sources */,
 				6EE1490B2F300F0A00CFE9BA /* BannerAdView.swift in Sources */,
 				6EE1490C2F300F0A00CFE9BA /* ATTAuthorization.swift in Sources */,
 				AA0000000003 /* ContentView.swift in Sources */,
