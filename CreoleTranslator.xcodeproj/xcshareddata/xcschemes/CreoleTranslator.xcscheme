@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA0000000018"
+               BlueprintIdentifier = "AA0000000017"
                BuildableName = "CreoleTranslator.app"
                BlueprintName = "CreoleTranslator"
                ReferencedContainer = "container:CreoleTranslator.xcodeproj">
@@ -45,7 +45,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "AA0000000018"
+            BlueprintIdentifier = "AA0000000017"
             BuildableName = "CreoleTranslator.app"
             BlueprintName = "CreoleTranslator"
             ReferencedContainer = "container:CreoleTranslator.xcodeproj">
@@ -62,7 +62,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "AA0000000018"
+            BlueprintIdentifier = "AA0000000017"
             BuildableName = "CreoleTranslator.app"
             BlueprintName = "CreoleTranslator"
             ReferencedContainer = "container:CreoleTranslator.xcodeproj">
