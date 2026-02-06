@@ -3,7 +3,8 @@ DerivedData/
 build/
 *.xcworkspace/
 xcuserdata/
-**/xcshareddata/xcschemes/
+# Commented out - need to track shared schemes
+# **/xcshareddata/xcschemes/
 *.xccheckout
 *.moved-aside
 *.xcscmblueprint
