@@ -127,7 +127,6 @@
 				AA0000000019 /* Sources */,
 				AA0000000013 /* Frameworks */,
 				AA0000000020 /* Resources */,
-				6E176AB62F328BAF009738C5 /* Generate Secrets */,
 			);
 			buildRules = (
 			);
