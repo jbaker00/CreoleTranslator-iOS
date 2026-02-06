@@ -51,7 +51,7 @@ git update-index --no-assume-unchanged Info.plist
 # Update template
 cp Info.plist Info.plist.template
 # Replace real key with placeholder in template
-sed -i '' 's/gsk_[a-zA-Z0-9]*/
+sed -i '' 's/YOUR_API_KEY_HERE[a-zA-Z0-9]*/
 
 __REPLACE_WITH_YOUR_API_KEY__/' Info.plist.template
 
