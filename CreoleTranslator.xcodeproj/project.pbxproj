@@ -212,8 +212,8 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Type a sc   #!/bin/bash\n   # Generate Secrets.plist from environment variable\n\n   if [ -n \"${GROQ_API_KEY}\" ]; then\n     PLIST_FILE=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Secrets.plist\"\n\n     echo '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' > \"$PLIST_FILE\"\n     echo '<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \n  \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">' >> \"$PLIST_FILE\"\n     echo '<plist version=\"1.0\">' >> \"$PLIST_FILE\"\n     echo '<dict>' >> \"$PLIST_FILE\"\n     echo '    <key>GROQ_API_KEY</key>' >> \"$PLIST_FILE\"\n     echo \"    <string>${GROQ_API_KEY}</string>\" >> \"$PLIST_FILE\"\n     echo '</dict>' >> \"$PLIST_FILE\"\n     echo '</plist>' >> \"$PLIST_FILE\"\n\n     echo \"✅ Generated Secrets.plist with API key\"\n   else\n     echo \"⚠️  GROQ_API_KEY not set\"\n   fi\n";
+			shellPath = /bin/bash;
+			shellScript = "# Inject API Key - copies local Secrets.plist to app bundle\nset +e\n/bin/bash \"${SRCROOT}/scripts/inject_api_key.sh\"\nexit 0\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -383,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.951;
+				MARKETING_VERSION = 1.952;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -416,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.951;
+				MARKETING_VERSION = 1.952;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
