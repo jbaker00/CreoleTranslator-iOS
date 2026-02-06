@@ -213,7 +213,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Inject API key into Secrets.swift before compilation\necho \"🔐 Injecting API key into Secrets.swift\"\n\nSECRETS_FILE=\"${SRCROOT}/Secrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    # Use environment variable (Xcode Cloud)\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    # Extract from local Secrets.plist\n    API_KEY=$(grep -A1 \"GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" | tail -1 | sed 's/.*<string>//;s/<\\/string>.*//' | tr -d '[:space:]')\n    echo \"   Using API key from Secrets.plist\"\nelse\n    echo \"   ⚠️  No API key source found\"\n    exit 0\nfi\n\n# Validate key\nif [ -z \"${API_KEY}\" ]; then\n    echo \"   ⚠️  API key is empty\"\n    exit 0\nfi\n\n# Replace placeholder in Secrets.swift\nif grep -q \"YOUR_API_KEY_HERE\" \"${SECRETS_FILE}\"; then\n    sed -i '' \"s/YOUR_API_KEY_HERE/${API_KEY}/g\" \"${SECRETS_FILE}\"\n    echo \"   ✅ API key injected\"\nelse\n    echo \"   ℹ️  Placeholder not found (already replaced or different format)\"\nfi\n";
+			shellScript = "# Inject API key into Secrets.swift before compilation\necho \"🔐 Injecting API key into Secrets.swift\"\n\nSECRETS_FILE=\"${SRCROOT}/Secrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    # Use environment variable (Xcode Cloud)\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    # Extract from local Secrets.plist using PlistBuddy (more reliable)\n    API_KEY=$(/usr/libexec/PlistBuddy -c \"Print :GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" 2>/dev/null)\n    if [ -n \"${API_KEY}\" ]; then\n        echo \"   Using API key from Secrets.plist (${#API_KEY} chars)\"\n    else\n        echo \"   ⚠️  Could not read key from Secrets.plist\"\n        exit 0\n    fi\nelse\n    echo \"   ⚠️  No API key source found\"\n    exit 0\nfi\n\n# Validate key\nif [ -z \"${API_KEY}\" ]; then\n    echo \"   ⚠️  API key is empty after extraction\"\n    exit 0\nfi\n\n# Replace placeholder in Secrets.swift\nif grep -q \"YOUR_API_KEY_HERE\" \"${SECRETS_FILE}\"; then\n    sed -i '' \"s/YOUR_API_KEY_HERE/${API_KEY}/g\" \"${SECRETS_FILE}\"\n    echo \"   ✅ API key injected successfully\"\nelse\n    echo \"   ℹ️  Placeholder not found (already replaced or different format)\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -383,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.954;
+				MARKETING_VERSION = 1.955;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -416,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.954;
+				MARKETING_VERSION = 1.955;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
