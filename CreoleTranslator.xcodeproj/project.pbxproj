@@ -213,7 +213,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Inject API Key - copies local Secrets.plist to app bundle\n/bin/bash \"${SRCROOT}/scripts/inject_api_key.sh\"\n";
+			shellScript = "# Inject API Key - inline script to avoid sandbox issues\necho \"=========================================\"\necho \"🔧 Running inject_api_key (inline)\"\necho \"=========================================\"\necho \"   SRCROOT: ${SRCROOT}\"\necho \"   BUILT_PRODUCTS_DIR: ${BUILT_PRODUCTS_DIR}\"\necho \"   PRODUCT_NAME: ${PRODUCT_NAME}\"\n\n# Source file (gitignored)\nSOURCE_FILE=\"${SRCROOT}/Secrets.plist\"\n\necho \"   Source file: ${SOURCE_FILE}\"\n\n# Check if source exists\nif [ ! -f \"${SOURCE_FILE}\" ]; then\n    echo \"❌ ERROR: Secrets.plist not found at: ${SOURCE_FILE}\"\n    ls -la \"${SRCROOT}/\" | grep -i secret || echo \"   No Secrets files found\"\n    exit 1\nfi\n\necho \"   ✅ Source file exists\"\n\n# Output to app bundle\nOUTPUT_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app\"\nOUTPUT_FILE=\"${OUTPUT_DIR}/Secrets.plist\"\n\necho \"   Output: ${OUTPUT_FILE}\"\n\n# Create directory if needed\nmkdir -p \"${OUTPUT_DIR}\" || exit 1\n\n# Copy the file\ncp -v \"${SOURCE_FILE}\" \"${OUTPUT_FILE}\" || {\n    echo \"❌ Failed to copy Secrets.plist\"\n    exit 1\n}\n\n# Verify\nif [ -f \"${OUTPUT_FILE}\" ]; then\n    echo \"✅ Copied Secrets.plist successfully\"\n    ls -lh \"${OUTPUT_FILE}\"\nelse\n    echo \"❌ Secrets.plist not found after copy!\"\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
