@@ -1,20 +1,26 @@
 #!/bin/bash
 # inject_api_key.sh - Copies Secrets.plist to app bundle at build time
 
-# Always succeed even if there are issues
-set +e
-
-# Debug: Show environment
 echo "🔧 Running inject_api_key.sh"
 echo "   SRCROOT: ${SRCROOT}"
 echo "   BUILT_PRODUCTS_DIR: ${BUILT_PRODUCTS_DIR}"
 echo "   PRODUCT_NAME: ${PRODUCT_NAME}"
+echo "   TARGET_BUILD_DIR: ${TARGET_BUILD_DIR}"
+echo "   CONFIGURATION: ${CONFIGURATION}"
 
 # Source file (in your local project directory, gitignored)
 SOURCE_FILE="${SRCROOT}/Secrets.plist"
 
-# Output directly to the built app bundle
-OUTPUT_DIR="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app"
+# Try multiple possible output locations
+if [ -n "${TARGET_BUILD_DIR}" ] && [ -n "${EXECUTABLE_FOLDER_PATH}" ]; then
+    OUTPUT_DIR="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}"
+elif [ -n "${BUILT_PRODUCTS_DIR}" ] && [ -n "${PRODUCT_NAME}" ]; then
+    OUTPUT_DIR="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app"
+else
+    echo "❌ Cannot determine output directory"
+    exit 1
+fi
+
 OUTPUT_FILE="${OUTPUT_DIR}/Secrets.plist"
 
 echo "   Source: ${SOURCE_FILE}"
@@ -23,34 +29,59 @@ echo "   Output: ${OUTPUT_FILE}"
 # Make sure output directory exists
 if [ ! -d "${OUTPUT_DIR}" ]; then
     echo "⚠️  Output directory doesn't exist yet: ${OUTPUT_DIR}"
-    echo "   Waiting for app bundle to be created..."
-    exit 0
+    # Create it if needed
+    mkdir -p "${OUTPUT_DIR}" || {
+        echo "❌ Failed to create output directory"
+        exit 1
+    }
+    echo "✅ Created output directory"
 fi
 
 # Priority 1: Copy local Secrets.plist if it exists
 if [ -f "${SOURCE_FILE}" ]; then
-    cp "${SOURCE_FILE}" "${OUTPUT_FILE}"
-    echo "✅ Copied Secrets.plist from project to app bundle"
-    exit 0
+    cp -v "${SOURCE_FILE}" "${OUTPUT_FILE}" || {
+        echo "❌ Failed to copy Secrets.plist"
+        exit 1
+    }
+    
+    # Verify it was copied
+    if [ -f "${OUTPUT_FILE}" ]; then
+        echo "✅ Copied Secrets.plist from project to app bundle"
+        echo "   File size: $(ls -lh "${OUTPUT_FILE}" | awk '{print $5}')"
+        exit 0
+    else
+        echo "❌ Secrets.plist not found after copy!"
+        exit 1
+    fi
 fi
 
 # Priority 2: Generate from GROQ_API_KEY environment variable if set
 if [ -n "${GROQ_API_KEY}" ]; then
-    cat > "${OUTPUT_FILE}" << PLIST_EOF
+    cat > "${OUTPUT_FILE}" << 'PLIST_EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>GROQ_API_KEY</key>
-    <string>${GROQ_API_KEY}</string>
+    <string>GROQ_API_KEY_PLACEHOLDER</string>
 </dict>
 </plist>
 PLIST_EOF
-    echo "✅ Generated Secrets.plist from GROQ_API_KEY environment variable"
-    exit 0
+    
+    # Replace placeholder with actual key
+    sed -i '' "s/GROQ_API_KEY_PLACEHOLDER/${GROQ_API_KEY}/" "${OUTPUT_FILE}"
+    
+    if [ -f "${OUTPUT_FILE}" ]; then
+        echo "✅ Generated Secrets.plist from GROQ_API_KEY environment variable"
+        exit 0
+    else
+        echo "❌ Failed to generate Secrets.plist"
+        exit 1
+    fi
 fi
 
 # No source available
-echo "⚠️  Neither Secrets.plist file nor GROQ_API_KEY environment variable found"
-echo "   The app will fail unless you add the API key to Info.plist"
-exit 0
+echo "❌ ERROR: Neither Secrets.plist file nor GROQ_API_KEY environment variable found!"
+echo "   Source file checked: ${SOURCE_FILE}"
+echo "   The app WILL FAIL without an API key"
+exit 1

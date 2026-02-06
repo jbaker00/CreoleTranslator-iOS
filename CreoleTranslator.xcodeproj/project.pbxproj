@@ -213,7 +213,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Inject API Key - copies local Secrets.plist to app bundle\nset +e\n/bin/bash \"${SRCROOT}/scripts/inject_api_key.sh\"\nexit 0\n";
+			shellScript = "# Inject API Key - copies local Secrets.plist to app bundle\n/bin/bash \"${SRCROOT}/scripts/inject_api_key.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -383,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.952;
+				MARKETING_VERSION = 1.953;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -416,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.952;
+				MARKETING_VERSION = 1.953;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
