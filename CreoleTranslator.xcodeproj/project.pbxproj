@@ -205,7 +205,6 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Secrets.plist",
 			);
 			name = "Generate Secrets";
 			outputFileListPaths = (
@@ -215,7 +214,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Inject API Key - inline script to avoid sandbox issues\necho \"=========================================\"\necho \"🔧 Running inject_api_key (inline)\"\necho \"=========================================\"\necho \"   SRCROOT: ${SRCROOT}\"\necho \"   BUILT_PRODUCTS_DIR: ${BUILT_PRODUCTS_DIR}\"\necho \"   PRODUCT_NAME: ${PRODUCT_NAME}\"\n\n# Source file (gitignored)\nSOURCE_FILE=\"${SRCROOT}/Secrets.plist\"\n\necho \"   Source file: ${SOURCE_FILE}\"\n\n# Check if source exists\nif [ ! -f \"${SOURCE_FILE}\" ]; then\n    echo \"❌ ERROR: Secrets.plist not found at: ${SOURCE_FILE}\"\n    ls -la \"${SRCROOT}/\" | grep -i secret || echo \"   No Secrets files found\"\n    exit 1\nfi\n\necho \"   ✅ Source file exists\"\n\n# Output to app bundle\nOUTPUT_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app\"\nOUTPUT_FILE=\"${OUTPUT_DIR}/Secrets.plist\"\n\necho \"   Output: ${OUTPUT_FILE}\"\n\n# Create directory if needed\nmkdir -p \"${OUTPUT_DIR}\" || exit 1\n\n# Copy the file\ncp -v \"${SOURCE_FILE}\" \"${OUTPUT_FILE}\" || {\n    echo \"❌ Failed to copy Secrets.plist\"\n    exit 1\n}\n\n# Verify\nif [ -f \"${OUTPUT_FILE}\" ]; then\n    echo \"✅ Copied Secrets.plist successfully\"\n    ls -lh \"${OUTPUT_FILE}\"\nelse\n    echo \"❌ Secrets.plist not found after copy!\"\n    exit 1\nfi\n";
+			shellScript = "# Generate Secrets.plist inline - avoid sandbox read issues\necho \"=========================================\"\necho \"🔧 Generating Secrets.plist\"\necho \"=========================================\"\n\n# Output to app bundle\nOUTPUT_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app\"\nOUTPUT_FILE=\"${OUTPUT_DIR}/Secrets.plist\"\n\necho \"   Output: ${OUTPUT_FILE}\"\n\n# Create directory if needed\nmkdir -p \"${OUTPUT_DIR}\" || exit 1\n\n# Generate Secrets.plist with embedded API key\n# For local builds, key is embedded here\n# For Xcode Cloud, use GROQ_API_KEY environment variable\n\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    # Use environment variable (Xcode Cloud)\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   Using GROQ_API_KEY from environment\"\nelse\n    # Use embedded key (local builds)\n    API_KEY=\"YOUR_API_KEY_HERE\"\n    echo \"   Using embedded API key\"\nfi\n\n# Generate the plist\ncat > \"${OUTPUT_FILE}\" << PLIST_END\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n    <key>GROQ_API_KEY</key>\n    <string>${API_KEY}</string>\n</dict>\n</plist>\nPLIST_END\n\n# Verify\nif [ -f \"${OUTPUT_FILE}\" ]; then\n    echo \"✅ Generated Secrets.plist successfully\"\n    ls -lh \"${OUTPUT_FILE}\"\nelse\n    echo \"❌ Failed to generate Secrets.plist\"\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
