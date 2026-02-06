@@ -27,12 +27,11 @@
 		AA0000000005 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000006 /* AudioRecorder.swift */; };
 		AA0000000007 /* GroqService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000008 /* GroqService.swift */; };
 		AA0000000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000010 /* Assets.xcassets */; };
-		AA0000000027 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000028 /* Secrets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneratedSecrets.swift; sourceTree = "<group>"; };
 		6E176AB72F331098009738C5 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
+		6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneratedSecrets.swift; sourceTree = "<group>"; };
 		6E6AB2DD2F31B848008F4143 /* Package.resolved */ = {isa = PBXFileReference; lastKnownFileType = text; path = Package.resolved; sourceTree = "<group>"; };
 		6E92902C2F26C4CF00DF5C62 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BANNER_AD_INTEGRATION.md; sourceTree = "<group>"; };
@@ -52,7 +51,6 @@
 		AA0000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA0000000011 /* CreoleTranslator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CreoleTranslator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		AA0000000028 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +66,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6E6E81542F35A4990009E692 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		6ED7AC792F302BA6000E65B1 /* Docs */ = {
 			isa = PBXGroup;
 			children = (
@@ -101,13 +107,13 @@
 				AA0000000004 /* ContentView.swift */,
 				AA0000000006 /* AudioRecorder.swift */,
 				AA0000000008 /* GroqService.swift */,
-				AA0000000028 /* Secrets.swift */,
 				AA0000000010 /* Assets.xcassets */,
 				6E176AB72F331098009738C5 /* Secrets.plist */,
 				AA0000000012 /* Info.plist */,
 				AA0000000016 /* Products */,
 				6E92902C2F26C4CF00DF5C62 /* .gitignore */,
 				6E6AB2DD2F31B848008F4143 /* Package.resolved */,
+				6E6E81542F35A4990009E692 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
