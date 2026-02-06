@@ -205,6 +205,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Secrets.plist",
 			);
 			name = "Inject API Key Pre-Compile";
 			outputFileListPaths = (
