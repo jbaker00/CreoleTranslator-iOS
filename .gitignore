@@ -56,3 +56,4 @@ Secrets.plist
 *.p12
 *.mobileprovision
 *.ipa
+Secrets.swift.local
