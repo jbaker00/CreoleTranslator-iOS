@@ -1,7 +1,9 @@
 #!/bin/bash
 # inject_api_key.sh - Copies Secrets.plist to app bundle at build time
 
+echo "========================================="
 echo "🔧 Running inject_api_key.sh"
+echo "========================================="
 echo "   SRCROOT: ${SRCROOT}"
 echo "   BUILT_PRODUCTS_DIR: ${BUILT_PRODUCTS_DIR}"
 echo "   PRODUCT_NAME: ${PRODUCT_NAME}"
@@ -11,20 +13,34 @@ echo "   CONFIGURATION: ${CONFIGURATION}"
 # Source file (in your local project directory, gitignored)
 SOURCE_FILE="${SRCROOT}/Secrets.plist"
 
+echo "   Source file: ${SOURCE_FILE}"
+
+# Check if source exists
+if [ ! -f "${SOURCE_FILE}" ]; then
+    echo "❌ ERROR: Secrets.plist not found at: ${SOURCE_FILE}"
+    ls -la "${SRCROOT}/" | grep -i secret || echo "   No Secrets files found in SRCROOT"
+    exit 1
+fi
+
+echo "   ✅ Source file exists"
+
 # Try multiple possible output locations
 if [ -n "${TARGET_BUILD_DIR}" ] && [ -n "${EXECUTABLE_FOLDER_PATH}" ]; then
     OUTPUT_DIR="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}"
+    echo "   Using TARGET_BUILD_DIR method"
 elif [ -n "${BUILT_PRODUCTS_DIR}" ] && [ -n "${PRODUCT_NAME}" ]; then
     OUTPUT_DIR="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app"
+    echo "   Using BUILT_PRODUCTS_DIR method"
 else
     echo "❌ Cannot determine output directory"
+    echo "   Both TARGET_BUILD_DIR and BUILT_PRODUCTS_DIR are not set properly"
     exit 1
 fi
 
 OUTPUT_FILE="${OUTPUT_DIR}/Secrets.plist"
 
-echo "   Source: ${SOURCE_FILE}"
-echo "   Output: ${OUTPUT_FILE}"
+echo "   Output directory: ${OUTPUT_DIR}"
+echo "   Output file: ${OUTPUT_FILE}"
 
 # Make sure output directory exists
 if [ ! -d "${OUTPUT_DIR}" ]; then
