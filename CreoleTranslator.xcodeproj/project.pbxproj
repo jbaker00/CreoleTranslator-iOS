@@ -124,6 +124,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA0000000018 /* Build configuration list for PBXNativeTarget "CreoleTranslator" */;
 			buildPhases = (
+				6E176AB62F328BAF009738C5 /* Inject API Key Pre-Compile */,
 				AA0000000019 /* Sources */,
 				AA0000000013 /* Frameworks */,
 				AA0000000020 /* Resources */,
@@ -195,7 +196,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		6E176AB62F328BAF009738C5 /* Inject Secrets Pre-Build */ = {
+		6E176AB62F328BAF009738C5 /* Inject API Key Pre-Compile */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -205,14 +206,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Inject Secrets Pre-Build";
+			name = "Inject API Key Pre-Compile";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Inject API key before compilation\n\"${SRCROOT}/scripts/inject_secrets_prebuild.sh\"\n";
+			shellScript = "# Inject API key into Secrets.swift before compilation\necho \"🔐 Injecting API key into Secrets.swift\"\n\nSECRETS_FILE=\"${SRCROOT}/Secrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    # Use environment variable (Xcode Cloud)\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    # Extract from local Secrets.plist\n    API_KEY=$(grep -A1 \"GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" | tail -1 | sed 's/.*<string>//;s/<\\/string>.*//' | tr -d '[:space:]')\n    echo \"   Using API key from Secrets.plist\"\nelse\n    echo \"   ⚠️  No API key source found\"\n    exit 0\nfi\n\n# Validate key\nif [ -z \"${API_KEY}\" ]; then\n    echo \"   ⚠️  API key is empty\"\n    exit 0\nfi\n\n# Replace placeholder in Secrets.swift\nif grep -q \"YOUR_API_KEY_HERE\" \"${SECRETS_FILE}\"; then\n    sed -i '' \"s/YOUR_API_KEY_HERE/${API_KEY}/g\" \"${SECRETS_FILE}\"\n    echo \"   ✅ API key injected\"\nelse\n    echo \"   ℹ️  Placeholder not found (already replaced or different format)\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
