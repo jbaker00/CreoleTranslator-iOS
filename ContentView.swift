@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
+    @StateObject private var historyManager = TranslationHistoryManager()
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -22,6 +23,7 @@ struct ContentView: View {
     @State private var statusMessage = ""
     @State private var permissionGranted = false
     @State private var availableWidth: CGFloat = 320
+    @State private var showHistory = false
     
     var body: some View {
         // ZStack allows us to overlay the banner at the bottom while content scrolls above
@@ -43,88 +45,64 @@ struct ContentView: View {
                 VStack(spacing: 30) {
                     // Header
                     VStack(spacing: 10) {
-                        Text("🎤")
-                            .font(.system(size: 60))
-                        
-                        Text("Creole to English")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                        
-                        Text("Powered by Groq AI")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        HStack {
+                            Spacer()
+                            
+                            VStack(spacing: 10) {
+                                Text("🎤")
+                                    .font(.system(size: 60))
+                                
+                                Text("Creole to English")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Powered by Groq AI")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            // History button
+                            VStack {
+                                Button(action: {
+                                    withAnimation {
+                                        showHistory.toggle()
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(UIColor.secondarySystemBackground))
+                                            .frame(width: 44, height: 44)
+                                        
+                                        Image(systemName: showHistory ? "xmark" : "clock.arrow.circlepath")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+                                
+                                if !historyManager.entries.isEmpty {
+                                    Text("\(historyManager.entries.count)")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding(.horizontal)
                     }
                     .padding(.top, 40)
                     
-                    // Recording button
-                    Button(action: {
-                        if audioRecorder.isRecording {
-                            stopRecording()
-                        } else {
-                            startRecording()
-                        }
-                    }) {
-                        HStack(spacing: 12) {
-                            Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
-                                .font(.system(size: 24))
-                            Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        // Use system backgrounds so the button is visible in dark mode
-                        .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
-                        .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
-                        .cornerRadius(15)
-                        .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
-                    }
-                    .disabled(isProcessing || !permissionGranted)
-                    .padding(.horizontal, 30)
-                    
-                    // Status message
-                    if !statusMessage.isEmpty {
-                        Text(statusMessage)
-                            .font(.subheadline)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal)
-                    }
-                    
-                    // Processing indicator
-                    if isProcessing {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
-                            .scaleEffect(1.5)
-                            .padding()
-                    }
-                    
-                    // Results section
-                    VStack(spacing: 20) {
-                        ResultCard(
-                            title: "Haitian Creole",
-                            icon: "🇭🇹",
-                            content: transcription,
-                            isLoading: isProcessing
-                        )
-                        
-                        ResultCard(
-                            title: "English Translation",
-                            icon: "🇺🇸",
-                            content: translation,
-                            isLoading: isProcessing
-                        )
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Error message
-                    if let error = errorMessage {
-                        Text(error)
-                            .font(.subheadline)
-                            .foregroundColor(.red)
-                            .padding()
-                            .background(Color(UIColor.systemBackground).opacity(0.95))
-                            .cornerRadius(10)
-                            .padding(.horizontal, 30)
+                    // Show history or main content
+                    if showHistory {
+                        HistoryView(historyManager: historyManager)
+                            .padding(.horizontal, 20)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else {
+                        mainContentView
+                            .transition(.move(edge: .leading).combined(with: .opacity))
                     }
                     
                     Spacer(minLength: 80) // leave room for banner
@@ -149,6 +127,82 @@ struct ContentView: View {
                     .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
             .frame(height: 50, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
+        }
+    }
+    
+    // Main content view extracted for cleaner code
+    private var mainContentView: some View {
+        VStack(spacing: 30) {
+            // Recording button
+            Button(action: {
+                if audioRecorder.isRecording {
+                    stopRecording()
+                } else {
+                    startRecording()
+                }
+            }) {
+                HStack(spacing: 12) {
+                    Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
+                        .font(.system(size: 24))
+                    Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
+                .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
+                .cornerRadius(15)
+                .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+            }
+            .disabled(isProcessing || !permissionGranted)
+            .padding(.horizontal, 30)
+            
+            // Status message
+            if !statusMessage.isEmpty {
+                Text(statusMessage)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                    .padding(.horizontal)
+            }
+            
+            // Processing indicator
+            if isProcessing {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
+                    .scaleEffect(1.5)
+                    .padding()
+            }
+            
+            // Results section
+            VStack(spacing: 20) {
+                ResultCard(
+                    title: "Haitian Creole",
+                    icon: "🇭🇹",
+                    content: transcription,
+                    isLoading: isProcessing
+                )
+                
+                ResultCard(
+                    title: "English Translation",
+                    icon: "🇺🇸",
+                    content: translation,
+                    isLoading: isProcessing
+                )
+            }
+            .padding(.horizontal, 20)
+            
+            // Error message
+            if let error = errorMessage {
+                Text(error)
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+                    .padding()
+                    .background(Color(UIColor.systemBackground).opacity(0.95))
+                    .cornerRadius(10)
+                    .padding(.horizontal, 30)
+            }
+            
+            Spacer(minLength: 80) // leave room for banner
         }
     }
     
@@ -200,6 +254,9 @@ struct ContentView: View {
                     translation = result.translation
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
+                    
+                    // Save to history
+                    historyManager.addEntry(creole: result.transcription, english: result.translation)
                 }
                 
                 // Clean up audio file
