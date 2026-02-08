@@ -7,16 +7,18 @@ A native iOS application that converts Haitian Creole speech to English text usi
 - **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
 - **[GitHub Merge Guide](GITHUB_MERGE_GUIDE.md)** - How to merge pull requests and approved changes
 - **[Merge Quick Reference](MERGE_QUICK_REFERENCE.md)** - Visual cheat sheet for merging PRs
-- **[Banner Ad Integration](BANNER_AD_INTEGRATION.md)** - AdMob integration guide
+- **[Banner Ad Integration](BANNER_AD_INTEGRATION.md)** - AdMob integration guide (optional feature)
 - **[Conversion Summary](CONVERSION-SUMMARY.md)** - Web to iOS conversion details
 
 ## Features
 
 - **Real-time Audio Recording** - Record Haitian Creole speech using iPhone microphone
 - **AI-Powered Translation** - Uses Groq's Whisper Large V3 for transcription and LLAMA 3.3 70B for translation
+- **Translation History** - View and manage past translations with persistent local storage
 - **Native iOS Experience** - Built with SwiftUI for iOS 15+
-- **Privacy-Focused** - Audio processing via secure API calls, no local storage
+- **Privacy-Focused** - Audio processing via secure API calls, temporary local storage
 - **Simple Setup** - Only requires a free Groq API key
+- **Banner Ad Support** - Optional AdMob integration for monetization
 
 ## Requirements
 
@@ -44,16 +46,33 @@ open CreoleTranslator.xcodeproj
 
 ### 3. Configure API Key
 
-Open `ContentView.swift` and add your Groq API key:
+The app uses a secure build-time injection system. Choose one of these methods:
 
-```swift
-private let groqAPIKey = "your_groq_api_key_here"
-```
+**Option A: Environment Variable (Recommended for Development)**
 
-**⚠️ Important**: For production apps, store API keys securely using:
-- Keychain Services
-- Environment variables
-- Backend proxy (recommended)
+1. In Xcode: Product → Scheme → Edit Scheme...
+2. Select "Run" → "Arguments" tab
+3. Under "Environment Variables", add:
+   - Name: `GROQ_API_KEY`
+   - Value: `your_groq_api_key_here`
+4. Build and run (⌘R)
+
+**Option B: Secrets.plist (Recommended for Local Builds)**
+
+1. Create `Secrets.plist` in project root:
+   ```bash
+   cd CreoleTranslator-iOS
+   bash scripts/generate_secrets_plist.sh
+   ```
+2. Add your API key to the generated file
+3. Build and run (⌘R)
+
+The app automatically generates `GeneratedSecrets.swift` at build time with your key embedded securely.
+
+**⚠️ Important**: Never commit API keys to Git! The build system ensures:
+- `Secrets.plist` is gitignored
+- `GeneratedSecrets.swift` is auto-generated (not tracked)
+- API keys are injected at build time only
 
 ### 4. Build and Run
 
@@ -108,14 +127,26 @@ Notes and safety
 ```
 CreoleTranslator-iOS/
 ├── CreoleTranslator.xcodeproj/          # Xcode project
-├── CreoleTranslator/
-│   ├── CreoleTranslatorApp.swift        # App entry point
-│   ├── ContentView.swift                # Main UI + logic
-│   ├── GroqService.swift                # Groq API integration
-│   ├── AudioRecorder.swift              # Audio recording manager
-│   ├── Info.plist                       # App configuration
-│   └── Assets.xcassets/                 # App icons and images
-└── README.md                            # This file
+├── CreoleTranslatorApp.swift            # App entry point with AdMob initialization
+├── ContentView.swift                    # Main UI with history toggle
+├── GroqService.swift                    # Groq API integration (Whisper + LLAMA)
+├── AudioRecorder.swift                  # AVFoundation audio recording
+├── TranslationHistory.swift             # Data model & storage for history
+├── HistoryView.swift                    # History UI component
+├── BannerAdView.swift                   # AdMob banner ad placeholder
+├── ATTAuthorization.swift               # App Tracking Transparency
+├── GeneratedSecrets.swift               # Auto-generated at build time
+├── Info.plist                           # App configuration & permissions
+├── Secrets.plist                        # Local API key storage (gitignored)
+├── Assets.xcassets/                     # App icons and images
+├── scripts/                             # Build and setup scripts
+│   ├── generate_secrets_plist.sh
+│   └── inject_api_key.sh
+└── Docs/                                # Documentation
+    ├── README.md                        # This file
+    ├── QUICKSTART.md
+    ├── BANNER_AD_INTEGRATION.md
+    └── CONVERSION-SUMMARY.md
 ```
 
 ## Usage
@@ -125,6 +156,8 @@ CreoleTranslator-iOS/
 3. **Tap "Start Recording"** and speak in Haitian Creole
 4. **Tap "Stop Recording"** when finished
 5. **View results**: Original Creole transcription and English translation
+6. **Access history**: Tap the history button (🔄) to view past translations
+7. **Manage history**: Delete individual entries or clear all history
 
 ## How It Works
 
@@ -135,11 +168,14 @@ CreoleTranslator-iOS/
 
 ## Technologies
 
-- **SwiftUI** - Modern declarative UI framework
-- **AVFoundation** - Audio recording
-- **URLSession** - HTTP networking
+- **SwiftUI** - Modern declarative UI framework with animations
+- **AVFoundation** - Audio recording with interruption handling
+- **URLSession** - HTTP networking with async/await
+- **UserDefaults** - Persistent storage for translation history
+- **Combine** - Reactive state management with @Published
 - **Groq Whisper Large V3** - Audio transcription (Haitian Creole support)
 - **Meta LLAMA 3.3 70B** - Text translation
+- **Google AdMob** - Optional banner ad monetization
 
 ## API Details
 
@@ -207,16 +243,21 @@ Error: 429 Too Many Requests - Rate limit exceeded, wait a moment
    - Test error scenarios
    - Test on different iOS versions and devices
 
-## Future Enhancements
+## Feature Status
 
+- [x] Real-time audio recording
+- [x] AI-powered transcription and translation
+- [x] Translation history with persistence
+- [x] Dark mode support (adaptive)
+- [x] Banner ad integration (optional)
+- [x] App Tracking Transparency
 - [ ] Support for multiple languages
-- [ ] Save translation history
 - [ ] Share translations
 - [ ] Offline mode with local speech recognition
-- [ ] Dark mode support
-- [ ] iPad optimization
+- [ ] iPad optimization with split view
 - [ ] Text-to-speech for translations
 - [ ] Real-time translation (streaming)
+- [ ] iCloud sync for history
 
 ## Contributing
 

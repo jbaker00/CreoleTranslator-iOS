@@ -2,7 +2,7 @@
 
 ## 📱 What You Have
 
-A complete iOS app written in Swift that converts Haitian Creole speech to English using Groq AI.
+A complete iOS app written in Swift that converts Haitian Creole speech to English using Groq AI, with translation history and optional ad support.
 
 ## 🚀 How to Get Started
 
@@ -12,10 +12,20 @@ cd CreoleTranslator-iOS
 open CreoleTranslator.xcodeproj
 ```
 
-### Step 2: Add Your API Key
-1. In Xcode, open `ContentView.swift`
-2. Find line 18: `private let groqAPIKey = "YOUR_GROQ_API_KEY_HERE"`
-3. Replace with your actual Groq API key from https://console.groq.com
+### Step 2: Configure Your API Key
+
+**Method 1: Environment Variable (Quick & Easy)**
+1. In Xcode: Product → Scheme → Edit Scheme...
+2. Select "Run" → "Arguments" tab
+3. Add environment variable:
+   - Name: `GROQ_API_KEY`
+   - Value: Your API key from https://console.groq.com
+4. Enable the checkbox
+
+**Method 2: Secrets.plist (Persistent)**
+1. Run: `bash scripts/generate_secrets_plist.sh`
+2. Edit `Secrets.plist` and add your key
+3. Build will auto-inject the key
 
 ### Step 3: Build and Run
 1. Select your iPhone or simulator from the device menu
@@ -23,23 +33,29 @@ open CreoleTranslator.xcodeproj
 3. Grant microphone permission when prompted
 
 ### Step 4: Test It Out
-1. Tap "Start Recording"
+1. Tap "Start Recording" 🎙️
 2. Speak in Haitian Creole
-3. Tap "Stop Recording"
-4. See the transcription and translation!
+3. Tap "Stop Recording" ⏹️
+4. See the transcription (🇭🇹) and translation (🇺🇸)!
+5. Tap the history button (🔄) to view past translations
 
 ## 📁 Project Structure
 
 ```
 CreoleTranslator-iOS/
 ├── CreoleTranslator.xcodeproj/     # Xcode project file
-├── CreoleTranslatorApp.swift       # App entry point
-├── ContentView.swift               # Main UI (⚠️ Add API key here!)
+├── CreoleTranslatorApp.swift       # App entry point with AdMob init
+├── ContentView.swift               # Main UI with history integration
 ├── AudioRecorder.swift             # Audio recording logic
 ├── GroqService.swift               # Groq API integration
-├── Info.plist                      # Microphone permissions
-├── Assets.xcassets/                # App icons
-└── README.md                       # Full documentation
+├── TranslationHistory.swift        # History data model
+├── HistoryView.swift               # History UI
+├── BannerAdView.swift              # Ad banner (placeholder)
+├── GeneratedSecrets.swift          # Auto-generated API key file
+├── Info.plist                      # App config & permissions
+├── Secrets.plist                   # Local API key (gitignored)
+├── scripts/                        # Build scripts
+└── Docs/                           # Full documentation
 ```
 
 ## 🔑 Get Your Groq API Key
@@ -52,10 +68,12 @@ CreoleTranslator-iOS/
 
 ## 💡 What This App Does
 
-1. **Records audio** using your iPhone microphone
-2. **Transcribes** Haitian Creole speech using Whisper Large V3
+1. **Records audio** using your iPhone microphone with AVFoundation
+2. **Transcribes** Haitian Creole speech using Groq's Whisper Large V3
 3. **Translates** to English using LLAMA 3.3 70B
-4. **Displays** both the original and translated text
+4. **Displays** both the original and translated text with flag emojis
+5. **Saves history** of all translations with timestamps
+6. **Shows ads** (optional banner at bottom for monetization)
 
 ## ⚙️ Tech Stack
 
@@ -68,11 +86,13 @@ CreoleTranslator-iOS/
 ## 🎯 Key Features
 
 ✅ Native iOS app (no web view)  
-✅ SwiftUI modern UI  
-✅ Real-time audio recording  
-✅ Direct API integration  
-✅ No backend required  
-✅ Clean, simple interface  
+✅ SwiftUI modern UI with animations  
+✅ Real-time audio recording with M4A format  
+✅ Direct API integration (no backend)  
+✅ Translation history with persistence  
+✅ Dark mode adaptive UI  
+✅ AdMob banner integration (optional)  
+✅ Secure API key management  
 ✅ Supports Haitian Creole natively  
 
 ## 🐛 Troubleshooting
@@ -93,11 +113,17 @@ CreoleTranslator-iOS/
 
 ## 📝 Next Steps
 
-For production use, consider:
-1. Store API key securely (not hardcoded)
-2. Add translation history
-3. Implement offline mode
-4. Add more language pairs
+**Current Features (✅ Already Implemented):**
+- Translation history with local storage
+- Dark mode support
+- Secure API key injection at build time
+- Banner ad placeholder
+
+**Future Enhancements:**
+1. Enable real AdMob ads (see BANNER_AD_INTEGRATION.md)
+2. Implement offline mode with local speech recognition
+3. Add more language pairs beyond Haitian Creole
+4. Add iCloud sync for history across devices
 5. Publish to App Store
 
-See full README.md for detailed documentation!
+See full **Docs/README.md** for detailed documentation!

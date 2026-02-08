@@ -1,18 +1,29 @@
 # Google AdMob Banner Ad Integration Guide
 
 ## Overview
-This branch adds a Google AdMob banner ad at the bottom of the CreoleTranslator iOS app UI. The implementation is based on the working GoogleAdMobExample code.
+This guide covers the Google AdMob banner ad integration in the CreoleTranslator iOS app. The implementation includes a **placeholder banner** that displays ad unit information, ready to be replaced with live ads.
 
-## Files Added
+## Current Status
 
-1. **BannerAdView.swift** - SwiftUI banner ad view component
+✅ **Implemented:**
+- BannerAdView.swift with placeholder UI
+- ATTAuthorization.swift for App Tracking Transparency
+- Info.plist configured with AdMob keys
+- ContentView.swift integrated with banner at bottom
+- App layout adapted for banner space
+
+⚠️ **Not Active:**
+- Google Mobile Ads SDK is not currently installed
+- Placeholder shows ad unit ID instead of live ads
+- To enable real ads, follow "Setup Instructions" below
+
+## Files Included
+
+1. **BannerAdView.swift** - SwiftUI banner ad view component (currently placeholder)
 2. **ATTAuthorization.swift** - App Tracking Transparency permission handler
-
-## Files Modified
-
-1. **CreoleTranslatorApp.swift** - Added MobileAds initialization and ATT request
-2. **ContentView.swift** - Added banner ad at bottom using ZStack layout
-3. **Info.plist** - Added AdMob configuration keys
+3. **CreoleTranslatorApp.swift** - Modified for MobileAds initialization (commented out)
+4. **ContentView.swift** - Banner displayed at bottom using ZStack layout
+5. **Info.plist** - Contains AdMob configuration keys
 
 ## Important API Usage
 
@@ -32,7 +43,7 @@ The code uses the **CORRECT Google Mobile Ads API** (matching GoogleAdMobExample
 - `GADCurrentOrientationAnchoredAdaptiveBanner`
 - `GADBannerViewDelegate`
 
-## Setup Instructions
+## Setup Instructions (To Enable Live Ads)
 
 ### Step 1: Add GoogleMobileAds Swift Package
 
@@ -49,47 +60,91 @@ The code uses the **CORRECT Google Mobile Ads API** (matching GoogleAdMobExample
    https://github.com/googleads/swift-package-manager-google-mobile-ads
    ```
 
-4. Set version: **Up to Next Major Version: 12.12.0**
+4. Set version: **Up to Next Major Version: 12.12.0** (or latest)
 
 5. Click **Add Package**
 
 6. Select **GoogleMobileAds** and click **Add Package**
 
-### Step 2: Add New Swift Files to Xcode Project
+### Step 2: Uncomment MobileAds Code
 
-1. In Xcode Project Navigator, right-click on the project folder
-2. Select **Add Files to "CreoleTranslator"...**
-3. Navigate to and select:
-   - `BannerAdView.swift`
-   - `ATTAuthorization.swift`
-4. **Uncheck** "Copy items if needed" (files already in folder)
-5. Click **Add**
+Open `CreoleTranslatorApp.swift` and uncomment:
+```swift
+import GoogleMobileAds
 
-### Step 3: Build and Run
+// In init()
+MobileAds.shared.start()
+
+// In .onChange(of: scenePhase)
+if scenePhase == .active {
+    ATTAuthorization.requestPermission()
+}
+```
+
+### Step 3: Update BannerAdView.swift
+
+Replace the placeholder body with a real UIViewRepresentable implementation:
+
+```swift
+import GoogleMobileAds
+
+struct BannerAdView: UIViewRepresentable {
+    var width: CGFloat
+    let adUnitID: String = "ca-app-pub-3940256099942544/2934735716" // Test ID
+    
+    func makeUIView(context: Context) -> BannerView {
+        let banner = BannerView(adSize: .currentOrientationAnchoredAdaptiveBanner())
+        banner.adUnitID = adUnitID
+        banner.load(Request())
+        return banner
+    }
+    
+    func updateUIView(_ uiView: BannerView, context: Context) {}
+}
+```
+
+### Step 4: Build and Test
 
 1. Build: **Cmd+B**
 2. Run: **Cmd+R**
 3. Grant tracking permission when prompted (optional)
-4. You should see a test banner ad at the bottom
+4. You should see a live test banner ad at the bottom
 
-## What Was Changed
+## Current Implementation Details
+
+### BannerAdView.swift (Placeholder Mode)
+Currently displays a visual placeholder that shows:
+- "Ad Banner Placeholder" text
+- The ad unit ID for reference
+- Proper sizing and layout constraints
+- System background colors for consistency
+
+To convert to live ads, replace the `body` property with a `UIViewRepresentable` that creates a real `BannerView` from GoogleMobileAds SDK.
+
+### ContentView.swift Integration
+- Uses `ZStack(alignment: .bottom)` for layout
+- `GeometryReader` provides width to banner for adaptive sizing
+- `Spacer(minLength: 80)` reserves space above banner
+- Banner sits at bottom with proper safe area handling
+- `@State private var availableWidth` tracks device rotation
 
 ### CreoleTranslatorApp.swift
-- Added `import GoogleMobileAds`
-- Added `@Environment(\.scenePhase)` observer
-- Added `init()` with `MobileAds.shared.start()`
-- Added `.onChange(of: scenePhase)` to request ATT when app becomes active
+- Contains commented-out MobileAds initialization
+- Includes ATT permission request code (commented)
+- Ready to activate when SDK is added
 
-### ContentView.swift
-- Changed `ZStack` to `ZStack(alignment: .bottom)`
-- Added `@State private var availableWidth: CGFloat = 320`
-- Changed `Spacer(minLength: 30)` to `Spacer(minLength: 80)` for banner space
-- Added `GeometryReader` with `BannerAdView` at the bottom
+### Info.plist Configuration
+Already configured with:
+```xml
+<key>GADApplicationIdentifier</key>
+<string>ca-app-pub-3940256099942544~1458002511</string>
 
-### Info.plist
-- Added `GADApplicationIdentifier` (test app ID)
-- Added `NSUserTrackingUsageDescription`
-- Added `SKAdNetworkItems` array with ad network identifiers
+<key>NSUserTrackingUsageDescription</key>
+<string>This app uses your data to personalize ads.</string>
+
+<key>SKAdNetworkItems</key>
+<!-- Array of ad network identifiers -->
+```
 
 ## Test Ad IDs
 
@@ -103,16 +158,29 @@ These show "Test Ad" labels and are safe for development.
 
 To use real ads in production:
 
-1. **Get your AdMob IDs** from https://apps.admob.com/
-2. **Replace in Info.plist**:
+1. **Create AdMob Account** at https://apps.admob.com/
+
+2. **Get Your App ID and Ad Unit IDs**:
+   - Create an app in AdMob console
+   - Create a banner ad unit
+   - Note both IDs
+
+3. **Replace in Info.plist**:
    ```xml
    <key>GADApplicationIdentifier</key>
-   <string>ca-app-pub-YOUR-APP-ID~YOUR-APP-NUMBER</string>
+   <string>ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY</string>
    ```
-3. **Replace in BannerAdView.swift**:
+
+4. **Replace in BannerAdView.swift**:
    ```swift
-   let adUnitID: String = "ca-app-pub-YOUR-APP-ID/YOUR-BANNER-ID"
+   let adUnitID: String = "ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ"
    ```
+
+5. **Important**: 
+   - Test with test IDs first
+   - Use real IDs only for production builds
+   - Don't click your own ads (against AdMob policy)
+   - Verify ads.txt file for App Ads (if required by AdMob)
 
 ## Layout Details
 
@@ -125,41 +193,73 @@ To use real ads in production:
 
 ## Troubleshooting
 
-### If banner doesn't show:
-1. Check that GoogleMobileAds package is added in Xcode
-2. Verify both Swift files are added to the Xcode project target
-3. Check console for error messages
-4. Ensure device has internet connection
-5. Test ads may take a few seconds to load
+### Placeholder shows instead of ads:
+- GoogleMobileAds SDK not installed
+- Follow "Setup Instructions" above to add package
+- Uncomment MobileAds code in CreoleTranslatorApp.swift
+- Update BannerAdView.swift to use real BannerView
 
-### If you see build errors:
-- Make sure you added the Swift Package (Step 1)
-- Verify the package version is 12.12.0 or higher
+### Build errors after adding SDK:
 - Clean build folder: **Shift+Cmd+K**
-- Rebuild: **Cmd+B**
+- Verify package version is 12.12.0 or higher
+- Check that import GoogleMobileAds is present
+- Restart Xcode if needed
+
+### Banner doesn't show after SDK setup:
+1. Check console for GoogleMobileAds error messages
+2. Verify internet connection
+3. Ensure ad unit ID is correct
+4. Test ads may take 5-10 seconds to load
+5. Check device date/time is correct
+
+### App Tracking Transparency not prompting:
+- Verify NSUserTrackingUsageDescription is in Info.plist
+- Check iOS version (ATT required for iOS 14.5+)
+- Permission only shows once per app install
+- Reset by deleting app and reinstalling
+
+## Why Use a Placeholder?
+
+The app includes a **placeholder banner** instead of requiring the GoogleMobileAds SDK because:
+
+1. **Lighter Development**: SDK not needed during development of core features
+2. **Flexible Testing**: Can test UI layout without live ads
+3. **Optional Feature**: Developers can choose whether to enable ads
+4. **No Compile Dependencies**: App builds without external package
+5. **Easy Activation**: Simply add package and uncomment code when ready
+
+The placeholder maintains proper spacing and layout, ensuring the UI looks correct whether ads are enabled or not.
 
 ## Testing
 
-The banner will display Google test ads with "Test Ad" label. This is normal and expected during development.
-
-To test:
+### With Placeholder (Current State):
 1. Run on simulator or device
-2. Wait a few seconds for ad to load
-3. You should see "Banner loaded" in console
-4. Test banner appears at bottom of screen
-5. Try rotating device to verify adaptive sizing
+2. Banner shows "Ad Banner Placeholder" at bottom
+3. Displays ad unit ID for reference
+4. Layout and spacing is correct
+5. Rotates properly with device orientation
 
-## Git Branch
+### With Live Ads (After Setup):
+1. Add GoogleMobileAds package
+2. Uncomment initialization code
+3. Update BannerAdView to use real BannerView
+4. Run on simulator or device
+5. Wait for ad to load (5-10 seconds)
+6. Check console for "Banner loaded" message
+7. Test banner appears at bottom of screen
+8. Try rotating device to verify adaptive sizing
+9. Test ATT prompt on first launch
 
-Branch name: `add-google-banner-ad`
+## References
 
-To switch to this branch:
-```bash
-git checkout add-google-banner-ad
-```
+- **Google Mobile Ads Swift Package**: https://github.com/googleads/swift-package-manager-google-mobile-ads
+- **AdMob iOS Documentation**: https://developers.google.com/admob/ios/quick-start
+- **Banner Ad Guide**: https://developers.google.com/admob/ios/banner
+- **App Tracking Transparency**: https://developer.apple.com/documentation/apptrackingtransparency
+- **AdMob Console**: https://apps.admob.com/
 
-To merge into main (after testing):
-```bash
-git checkout main
-git merge add-google-banner-ad
-```
+---
+
+**Status**: Placeholder Implemented ✅  
+**Live Ads**: Requires GoogleMobileAds SDK 📦  
+**Last Updated**: February 2026
