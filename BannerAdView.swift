@@ -2,43 +2,27 @@
 //  BannerAdView.swift
 //  CreoleTranslator
 //
-//  Google AdMob Banner Ad View (safe placeholder implementation)
+//  Google AdMob Banner Ad View
 //
 
 import SwiftUI
+import GoogleMobileAds
 
-/// A safe BannerAdView placeholder that avoids compile-time dependency on Google Mobile Ads SDK.
-/// Replace the body implementation with a real UIViewRepresentable that creates a BannerView
-/// when you have the SDK available and want real ads to load. Keeping this lightweight
-/// placeholder prevents compile/link errors while the SDK/package is missing or being resolved.
-struct BannerAdView: View {
-    // Allow caller to pass width; default to screen width for previews
+/// Real AdMob banner ad view that loads and displays ads
+struct BannerAdView: UIViewRepresentable {
     var width: CGFloat = UIScreen.main.bounds.width
-
-    // Use Google's test banner unit during development if you later wire the real SDK.
-    // For now this placeholder displays the adUnitID and a framed rectangle so layout is stable.
-    //let adUnitID: String = "ca-app-pub-3940256099942544/2934735716"
-    let adUnitID: String = "ca-app-pub-7871017136061682/3584044139" // Replace with your real ad unit ID when using real ads
-    var body: some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack {
-                Spacer()
-                VStack(alignment: .center, spacing: 6) {
-                    Text("Ad Banner Placeholder")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(adUnitID)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-            }
-            .padding(8)
-            .background(Color(UIColor.tertiarySystemBackground))
-        }
-        .frame(width: width)
-        .fixedSize(horizontal: false, vertical: true)
+    let adUnitID: String = "ca-app-pub-7871017136061682/3584044139"
+    
+    func makeUIView(context: Context) -> BannerView {
+        let bannerView = BannerView(adSize: AdSizeBanner)
+        bannerView.adUnitID = adUnitID
+        bannerView.rootViewController = UIApplication.shared.firstKeyWindowRootViewController()
+        bannerView.load(Request())
+        return bannerView
+    }
+    
+    func updateUIView(_ uiView: BannerView, context: Context) {
+        // No-op: banner handles its own updates
     }
 }
 
