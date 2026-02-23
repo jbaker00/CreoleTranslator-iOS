@@ -53,6 +53,7 @@ playground.xcworkspace
 # Secrets and credentials
 *.key
 Secrets.plist
+GoogleService-Info.plist
 *.pem
 *.p12
 *.mobileprovision
