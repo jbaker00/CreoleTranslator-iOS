@@ -12,7 +12,8 @@ import FirebaseCore
 @main
 struct CreoleTranslatorApp: App {
     @Environment(\.scenePhase) private var scenePhase
-    
+    @StateObject private var sessionService = UserSessionService()
+
     init() {
         // Firebase must be configured before any other Firebase service
         FirebaseApp.configure()
@@ -23,10 +24,12 @@ struct CreoleTranslatorApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(sessionService)
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
-                ATTAuthorization.requestIfNeeded() 
+                ATTAuthorization.requestIfNeeded()
+                sessionService.logSessionStart()
             }
         }
     }

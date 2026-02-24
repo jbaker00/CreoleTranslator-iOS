@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var permissionGranted = false
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
+    @State private var showStats = false
     
     var body: some View {
         // ZStack allows us to overlay the banner at the bottom while content scrolls above
@@ -90,6 +91,24 @@ struct ContentView: View {
                                 
                                 Spacer()
                             }
+                            
+                            // Stats button
+                            VStack {
+                                Button(action: { showStats = true }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(UIColor.secondarySystemBackground))
+                                            .frame(width: 44, height: 44)
+                                        
+                                        Image(systemName: "chart.bar.fill")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(.trailing, 4)
                         }
                         .padding(.horizontal)
                     }
@@ -127,6 +146,9 @@ struct ContentView: View {
                     .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
             .frame(height: 50, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
+        }
+        .sheet(isPresented: $showStats) {
+            FirebaseStatsView()
         }
     }
     

@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your approximate location is used to show where the app is being used on the stats map. No precise location data is stored.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs access to your microphone to record Haitian Creole speech for translation.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

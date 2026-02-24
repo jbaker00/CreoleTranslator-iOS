@@ -31,6 +31,10 @@
 		FB0001000000000000000000000000001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = FB0001000000000000000000000000002 /* FirebaseAnalytics */; };
 		FB0001000000000000000000000000003 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = FB0001000000000000000000000000004 /* FirebaseCrashlytics */; };
 		FB000100000000000000000000000000C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FB000100000000000000000000000000D /* GoogleService-Info.plist */; };
+		FB21000000000000000000A0 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = FB21000000000000000000A1 /* FirebaseFirestore */; };
+		FB21000000000000000000B1 /* UserSessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB21000000000000000000B0 /* UserSessionService.swift */; };
+		FB21000000000000000000C1 /* FirebaseStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB21000000000000000000C0 /* FirebaseStatsView.swift */; };
+		FB21000000000000000000D1 /* UserLocationMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB21000000000000000000D0 /* UserLocationMapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +62,9 @@
 		AA0000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FB000100000000000000000000000000D /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FB000100000000000000000000000000E /* GoogleService-Info.plist.template */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist.template"; sourceTree = "<group>"; };
+		FB21000000000000000000B0 /* UserSessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSessionService.swift; sourceTree = "<group>"; };
+		FB21000000000000000000C0 /* FirebaseStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseStatsView.swift; sourceTree = "<group>"; };
+		FB21000000000000000000D0 /* UserLocationMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationMapView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +76,7 @@
 				6EE149002F300ECD00CFE9BA /* GoogleMobileAds in Frameworks */,
 				FB0001000000000000000000000000001 /* FirebaseAnalytics in Frameworks */,
 				FB0001000000000000000000000000003 /* FirebaseCrashlytics in Frameworks */,
+				FB21000000000000000000A0 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +130,9 @@
 				AA0000000006 /* AudioRecorder.swift */,
 				AA0000000008 /* GroqService.swift */,
 				AA0000000010 /* Assets.xcassets */,
+				FB21000000000000000000B0 /* UserSessionService.swift */,
+				FB21000000000000000000C0 /* FirebaseStatsView.swift */,
+				FB21000000000000000000D0 /* UserLocationMapView.swift */,
 				6ED7AC792F302BA6000E65B1 /* Docs */,
 				6EE149092F300F0A00CFE9BA /* scripts */,
 				AA0000000016 /* Products */,
@@ -278,6 +289,9 @@
 				6E9F19642F38131C0094AF1F /* HistoryView.swift in Sources */,
 				AA0000000007 /* GroqService.swift in Sources */,
 				AA0000000001 /* CreoleTranslatorApp.swift in Sources */,
+				FB21000000000000000000B1 /* UserSessionService.swift in Sources */,
+				FB21000000000000000000C1 /* FirebaseStatsView.swift in Sources */,
+				FB21000000000000000000D1 /* UserLocationMapView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -543,6 +557,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FB000100000000000000000000000000B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
+		};
+		FB21000000000000000000A1 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FB000100000000000000000000000000B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
