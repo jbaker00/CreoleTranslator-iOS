@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HistoryView: View {
     @ObservedObject var historyManager: TranslationHistoryManager
+    @StateObject private var ttsManager = TextToSpeechManager()
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -53,7 +54,11 @@ struct HistoryView: View {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(historyManager.entries) { entry in
-                            HistoryEntryCard(entry: entry, historyManager: historyManager)
+                            HistoryEntryCard(
+                                entry: entry,
+                                historyManager: historyManager,
+                                ttsManager: ttsManager
+                            )
                         }
                     }
                     .padding()
@@ -69,6 +74,7 @@ struct HistoryView: View {
 struct HistoryEntryCard: View {
     let entry: TranslationEntry
     @ObservedObject var historyManager: TranslationHistoryManager
+    @ObservedObject var ttsManager: TextToSpeechManager
     @State private var isExpanded = false
     
     var body: some View {
@@ -78,9 +84,23 @@ struct HistoryEntryCard: View {
                 Text(entry.formattedDate)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 Spacer()
-                
+
+                // Speaker button
+                Button(action: {
+                    if ttsManager.isSpeaking {
+                        ttsManager.stop()
+                    } else {
+                        ttsManager.speak(text: entry.englishText)
+                    }
+                }) {
+                    Image(systemName: ttsManager.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                }
+
+                // Delete button
                 Button(action: {
                     historyManager.deleteEntry(entry)
                 }) {
