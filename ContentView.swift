@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @StateObject private var historyManager = TranslationHistoryManager()
+    @StateObject private var ttsManager = TextToSpeechManager()
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -181,12 +182,20 @@ struct ContentView: View {
                     content: transcription,
                     isLoading: isProcessing
                 )
-                
+
                 ResultCard(
                     title: "English Translation",
                     icon: "🇺🇸",
                     content: translation,
-                    isLoading: isProcessing
+                    isLoading: isProcessing,
+                    speakerAction: {
+                        if ttsManager.isSpeaking {
+                            ttsManager.stop()
+                        } else {
+                            ttsManager.speak(text: translation)
+                        }
+                    },
+                    isSpeaking: ttsManager.isSpeaking
                 )
             }
             .padding(.horizontal, 20)
@@ -283,7 +292,9 @@ struct ResultCard: View {
     let icon: String
     let content: String
     let isLoading: Bool
-    
+    var speakerAction: (() -> Void)? = nil
+    var isSpeaking: Bool = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -292,8 +303,23 @@ struct ResultCard: View {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(.primary)
+
+                Spacer()
+
+                // Show speaker button if speakerAction is provided
+                if let action = speakerAction {
+                    Button(action: action) {
+                        Image(systemName: isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
+                            .font(.title3)
+                            .foregroundColor(.accentColor)
+                            .padding(8)
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(8)
+                    }
+                    .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
+                }
             }
-            
+
             Text(content)
                 .font(.body)
                 .foregroundColor(.secondary)
