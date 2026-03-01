@@ -218,6 +218,17 @@ struct ContentView: View {
                 }
             }
             
+            // TTS error message (helps diagnose Groq TTS fallback issues)
+            if let ttsError = ttsManager.lastError {
+                Text(ttsError)
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .padding()
+                    .background(Color(UIColor.systemBackground).opacity(0.95))
+                    .cornerRadius(10)
+                    .padding(.horizontal, 30)
+            }
+
             // Error message
             if let error = errorMessage {
                 Text(error)

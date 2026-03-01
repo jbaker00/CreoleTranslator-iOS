@@ -10,6 +10,7 @@ import Foundation
 
 class TextToSpeechManager: NSObject, ObservableObject {
     @Published var isSpeaking = false
+    @Published var lastError: String?
 
     private let synthesizer = AVSpeechSynthesizer()
     private var audioPlayer: AVAudioPlayer?
@@ -41,13 +42,15 @@ class TextToSpeechManager: NSObject, ObservableObject {
             isSpeaking = true
             Task {
                 do {
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: "Fritz-PlayAI")
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: "diana")
                     await MainActor.run {
                         self.playAudioData(audioData)
                     }
                 } catch {
                     // Fall back to AVSpeechSynthesizer on any Groq TTS error
+                    print("[TTS] Groq TTS failed, falling back to native: \(error)")
                     await MainActor.run {
+                        self.lastError = "Groq TTS failed: \(error.localizedDescription)"
                         self.speakNatively(text: text, language: language)
                     }
                 }

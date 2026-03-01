@@ -202,16 +202,16 @@ class GroqService {
         }
     }
     
-    // Synthesize speech from text using Groq's playai-tts model.
+    // Synthesize speech from text using Groq's Orpheus TTS model.
     // Returns raw WAV audio data suitable for playback with AVAudioPlayer.
-    func synthesizeSpeech(text: String, voice: String = "Fritz-PlayAI") async throws -> Data {
+    func synthesizeSpeech(text: String, voice: String = "diana") async throws -> Data {
         var request = URLRequest(url: speechURL)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         let payload: [String: Any] = [
-            "model": "playai-tts",
+            "model": "canopylabs/orpheus-v1-english",
             "input": text,
             "voice": voice,
             "response_format": "wav"
