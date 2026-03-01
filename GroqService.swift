@@ -7,6 +7,34 @@
 
 import Foundation
 
+enum TranslationDirection: String, Codable {
+    case creoleToEnglish
+    case englishToCreole
+
+    var sourceLanguage: String {
+        switch self {
+        case .creoleToEnglish: return "ht" // Haitian Creole
+        case .englishToCreole: return "en" // English
+        }
+    }
+
+    var targetLanguage: String {
+        switch self {
+        case .creoleToEnglish: return "English"
+        case .englishToCreole: return "Haitian Creole"
+        }
+    }
+
+    var systemPrompt: String {
+        switch self {
+        case .creoleToEnglish:
+            return "You are a professional translator. Translate the following Haitian Creole text to English. Only respond with the English translation, nothing else."
+        case .englishToCreole:
+            return "You are a professional translator. Translate the following English text to Haitian Creole. Only respond with the Creole translation, nothing else."
+        }
+    }
+}
+
 struct TranscriptionResponse: Codable {
     let text: String
 }
@@ -28,6 +56,7 @@ struct TranslationResult {
     let transcription: String
     let translation: String
     let provider: String
+    let direction: TranslationDirection
 }
 
 enum GroqError: LocalizedError {
@@ -66,57 +95,58 @@ class GroqService {
         self.apiKey = apiKey
     }
     
-    func processAudio(fileURL: URL) async throws -> TranslationResult {
+    func processAudio(fileURL: URL, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
         // Step 1: Transcribe audio using Whisper
-        let transcription = try await transcribeAudio(fileURL: fileURL)
-        
-        // Step 2: Translate Creole to English using LLAMA
-        let translation = try await translateText(transcription)
-        
+        let transcription = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
+
+        // Step 2: Translate using LLAMA
+        let translation = try await translateText(transcription, direction: direction)
+
         return TranslationResult(
             transcription: transcription,
             translation: translation,
-            provider: "Groq (Whisper + LLAMA)"
+            provider: "Groq (Whisper + LLAMA)",
+            direction: direction
         )
     }
     
-    private func transcribeAudio(fileURL: URL) async throws -> String {
+    private func transcribeAudio(fileURL: URL, language: String) async throws -> String {
         let boundary = "Boundary-\(UUID().uuidString)"
         var request = URLRequest(url: transcriptionURL)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        
+
         // Read audio file data
         let audioData = try Data(contentsOf: fileURL)
-        
+
         // Build multipart form data
         var body = Data()
-        
+
         // Add file field
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"file\"; filename=\"recording.m4a\"\r\n".data(using: .utf8)!)
         body.append("Content-Type: audio/m4a\r\n\r\n".data(using: .utf8)!)
         body.append(audioData)
         body.append("\r\n".data(using: .utf8)!)
-        
+
         // Add model field
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
         body.append("whisper-large-v3\r\n".data(using: .utf8)!)
-        
+
         // Add language field
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
-        body.append("ht\r\n".data(using: .utf8)!)
-        
+        body.append("\(language)\r\n".data(using: .utf8)!)
+
         // Add response_format field
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n".data(using: .utf8)!)
         body.append("json\r\n".data(using: .utf8)!)
-        
+
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-        
+
         request.httpBody = body
         
         do {
@@ -146,18 +176,18 @@ class GroqService {
         }
     }
     
-    private func translateText(_ text: String) async throws -> String {
+    private func translateText(_ text: String, direction: TranslationDirection) async throws -> String {
         var request = URLRequest(url: chatURL)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         let payload: [String: Any] = [
             "model": "llama-3.3-70b-versatile",
             "messages": [
                 [
                     "role": "system",
-                    "content": "You are a professional translator. Translate the following Haitian Creole text to English. Only respond with the English translation, nothing else."
+                    "content": direction.systemPrompt
                 ],
                 [
                     "role": "user",
@@ -167,7 +197,7 @@ class GroqService {
             "temperature": 0.3,
             "max_tokens": 1024
         ]
-        
+
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         
         do {
@@ -201,7 +231,7 @@ class GroqService {
             throw GroqError.networkError(error.localizedDescription)
         }
     }
-    
+
     // Synthesize speech from text using Groq's Orpheus TTS model.
     // Returns raw WAV audio data suitable for playback with AVAudioPlayer.
     func synthesizeSpeech(text: String, voice: String = "diana") async throws -> Data {
@@ -216,27 +246,27 @@ class GroqService {
             "voice": voice,
             "response_format": "wav"
         ]
-        
+
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
-        
+
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            
+
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw GroqError.invalidResponse
             }
-            
+
             if httpResponse.statusCode == 401 {
                 throw GroqError.invalidAPIKey
             }
-            
+
             guard httpResponse.statusCode == 200 else {
                 let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw GroqError.speechFailed(errorMessage)
             }
-            
+
             return data
-            
+
         } catch let error as GroqError {
             throw error
         } catch {

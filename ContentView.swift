@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var permissionGranted = false
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
+    @State private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
     
     var body: some View {
@@ -49,23 +50,43 @@ struct ContentView: View {
                     VStack(spacing: 10) {
                         HStack {
                             Spacer()
-                            
+
                             VStack(spacing: 10) {
                                 Text("🎤")
                                     .font(.system(size: 60))
-                                
-                                Text("Creole to English")
+
+                                Text(translationDirection == .creoleToEnglish ? "Creole to English" : "English to Creole")
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.primary)
-                                
+
                                 Text("Powered by Groq AI")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
+
+                                // Direction toggle button
+                                Button(action: {
+                                    withAnimation {
+                                        translationDirection = translationDirection == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
+                                    }
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "arrow.left.arrow.right")
+                                            .font(.system(size: 14))
+                                        Text("Switch Direction")
+                                            .font(.subheadline)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .foregroundColor(.accentColor)
+                                    .cornerRadius(20)
+                                }
+                                .disabled(isProcessing)
                             }
-                            
+
                             Spacer()
-                            
+
                             // History button
                             VStack {
                                 Button(action: {
@@ -77,19 +98,19 @@ struct ContentView: View {
                                         Circle()
                                             .fill(Color(UIColor.secondarySystemBackground))
                                             .frame(width: 44, height: 44)
-                                        
+
                                         Image(systemName: showHistory ? "xmark" : "clock.arrow.circlepath")
                                             .font(.system(size: 20))
                                             .foregroundColor(.accentColor)
                                     }
                                 }
-                                
+
                                 if !historyManager.entries.isEmpty {
                                     Text("\(historyManager.entries.count)")
                                         .font(.caption2)
                                         .foregroundColor(.secondary)
                                 }
-                                
+
                                 Spacer()
                             }
                         }
@@ -177,9 +198,11 @@ struct ContentView: View {
             
             // Results section
             VStack(spacing: 20) {
+                // Source language card
+                let sourceLanguage = translationDirection == .creoleToEnglish ? "ht-HT" : "en-US"
                 ResultCard(
-                    title: "Haitian Creole",
-                    icon: "🇭🇹",
+                    title: translationDirection == .creoleToEnglish ? "Haitian Creole" : "English",
+                    icon: translationDirection == .creoleToEnglish ? "🇭🇹" : "🇺🇸",
                     content: transcription,
                     isLoading: isProcessing,
                     speakerAction: {
@@ -187,16 +210,18 @@ struct ContentView: View {
                             ttsManager.stop()
                             speakingCardTitle = nil
                         } else {
-                            speakingCardTitle = "creole"
-                            ttsManager.speak(text: transcription, language: "ht-HT")
+                            speakingCardTitle = "source"
+                            ttsManager.speak(text: transcription, language: sourceLanguage)
                         }
                     },
-                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "creole"
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source"
                 )
 
+                // Target language card
+                let targetLanguage = translationDirection == .creoleToEnglish ? "en-US" : "ht-HT"
                 ResultCard(
-                    title: "English Translation",
-                    icon: "🇺🇸",
+                    title: translationDirection == .creoleToEnglish ? "English Translation" : "Creole Translation",
+                    icon: translationDirection == .creoleToEnglish ? "🇺🇸" : "🇭🇹",
                     content: translation,
                     isLoading: isProcessing,
                     speakerAction: {
@@ -204,11 +229,11 @@ struct ContentView: View {
                             ttsManager.stop()
                             speakingCardTitle = nil
                         } else {
-                            speakingCardTitle = "english"
-                            ttsManager.speak(text: translation)
+                            speakingCardTitle = "target"
+                            ttsManager.speak(text: translation, language: targetLanguage)
                         }
                     },
-                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "english"
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target"
                 )
             }
             .padding(.horizontal, 20)
@@ -277,29 +302,29 @@ struct ContentView: View {
             statusMessage = ""
             return
         }
-        
+
         isProcessing = true
         transcription = "Processing..."
         translation = "Waiting..."
-        
+
         Task {
             do {
                 let groqService = GroqService(apiKey: apiKey)
-                let result = try await groqService.processAudio(fileURL: url)
-                
+                let result = try await groqService.processAudio(fileURL: url, direction: translationDirection)
+
                 await MainActor.run {
                     transcription = result.transcription
                     translation = result.translation
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
-                    
-                    // Save to history
-                    historyManager.addEntry(creole: result.transcription, english: result.translation)
+
+                    // Save to history with direction
+                    historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                 }
-                
+
                 // Clean up audio file
                 audioRecorder.deleteRecording(at: url)
-                
+
             } catch {
                 await MainActor.run {
                     transcription = "Your transcription will appear here..."
@@ -308,7 +333,7 @@ struct ContentView: View {
                     statusMessage = ""
                     isProcessing = false
                 }
-                
+
                 // Clean up audio file
                 audioRecorder.deleteRecording(at: url)
             }
@@ -345,7 +370,7 @@ struct ResultCard: View {
                             .background(Color(UIColor.secondarySystemBackground))
                             .cornerRadius(8)
                     }
-                    .disabled(content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
+                    .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
                 }
             }
 

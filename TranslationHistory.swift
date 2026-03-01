@@ -10,16 +10,36 @@ import Foundation
 struct TranslationEntry: Identifiable, Codable, Equatable {
     let id: UUID
     let timestamp: Date
-    let creoleText: String
-    let englishText: String
-    
+    let sourceText: String
+    let translatedText: String
+    let direction: TranslationDirection
+
+    // Legacy support for old entries
+    var creoleText: String {
+        direction == .creoleToEnglish ? sourceText : translatedText
+    }
+
+    var englishText: String {
+        direction == .creoleToEnglish ? translatedText : sourceText
+    }
+
+    init(id: UUID = UUID(), timestamp: Date = Date(), sourceText: String, translatedText: String, direction: TranslationDirection) {
+        self.id = id
+        self.timestamp = timestamp
+        self.sourceText = sourceText
+        self.translatedText = translatedText
+        self.direction = direction
+    }
+
+    // Legacy initializer for backward compatibility
     init(id: UUID = UUID(), timestamp: Date = Date(), creoleText: String, englishText: String) {
         self.id = id
         self.timestamp = timestamp
-        self.creoleText = creoleText
-        self.englishText = englishText
+        self.sourceText = creoleText
+        self.translatedText = englishText
+        self.direction = .creoleToEnglish
     }
-    
+
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -39,26 +59,31 @@ class TranslationHistoryManager: ObservableObject {
         loadHistory()
     }
     
-    func addEntry(creole: String, english: String) {
+    func addEntry(source: String, translated: String, direction: TranslationDirection) {
         // Don't save placeholder text
-        guard !creole.contains("Your transcription") && !english.contains("Your translation") else {
+        guard !source.contains("Your transcription") && !translated.contains("Your translation") else {
             return
         }
-        
+
         // Don't save empty entries
-        guard !creole.isEmpty && !english.isEmpty else {
+        guard !source.isEmpty && !translated.isEmpty else {
             return
         }
-        
-        let entry = TranslationEntry(creoleText: creole, englishText: english)
+
+        let entry = TranslationEntry(sourceText: source, translatedText: translated, direction: direction)
         entries.insert(entry, at: 0) // Most recent first
-        
+
         // Limit history size
         if entries.count > maxEntries {
             entries = Array(entries.prefix(maxEntries))
         }
-        
+
         saveHistory()
+    }
+
+    // Legacy method for backward compatibility
+    func addEntry(creole: String, english: String) {
+        addEntry(source: creole, translated: english, direction: .creoleToEnglish)
     }
     
     func deleteEntry(_ entry: TranslationEntry) {
