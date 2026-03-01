@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2C1D16ECC317DBE35CC3484B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83684C00265DAE85836F7BFF /* Assets.xcassets */; };
 		6E176AB92F328BAF009738C8 /* GeneratedSecrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */; };
 		6E6AB2DE2F31B848008F4143 /* Package.resolved in Resources */ = {isa = PBXBuildFile; fileRef = 6E6AB2DD2F31B848008F4143 /* Package.resolved */; };
 		6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902C2F26C4CF00DF5C62 /* .gitignore */; };
@@ -24,17 +25,20 @@
 		6EE1490C2F300F0A00CFE9BA /* ATTAuthorization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */; };
 		6EE1490D2F300F0A00CFE9BA /* generate_app_icons.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */; };
 		6EE149132F300F0A00CFE9BA /* generate_secrets_plist.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */; };
-		DCDFF919BA2707095807DDC7 /* CreoleTranslatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BCDA7F3495F3212FD98EBB0 /* CreoleTranslatorApp.swift */; };
-		D098CFC275F05E49EC77DAE8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E95F2CDE1F40D7EBB31663A /* ContentView.swift */; };
-		B5E4AE585D6E921238B11EAC /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06119D5B37214D87C744768B /* AudioRecorder.swift */; };
 		7E5AC91C20C1730E5595DCB8 /* GroqService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFFF8A76EBBF12B6FEAA3808 /* GroqService.swift */; };
-		2C1D16ECC317DBE35CC3484B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83684C00265DAE85836F7BFF /* Assets.xcassets */; };
-		920D9D18FC423CFEA3FCE758 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DE2BADE071FE83D207B52FF0 /* FirebaseAnalytics */; };
 		7E785A8648A88CB317E2A192 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1EC3D85E8E22E455B35FC01B /* FirebaseCrashlytics */; };
 		7E87D7CE13978F8BF562834B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */; };
+		920D9D18FC423CFEA3FCE758 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DE2BADE071FE83D207B52FF0 /* FirebaseAnalytics */; };
+		B5E4AE585D6E921238B11EAC /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06119D5B37214D87C744768B /* AudioRecorder.swift */; };
+		D098CFC275F05E49EC77DAE8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E95F2CDE1F40D7EBB31663A /* ContentView.swift */; };
+		DCDFF919BA2707095807DDC7 /* CreoleTranslatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BCDA7F3495F3212FD98EBB0 /* CreoleTranslatorApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		06119D5B37214D87C744768B /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		0CD81CEA841380EF86E29FD6 /* CreoleTranslator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CreoleTranslator.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1BCDA7F3495F3212FD98EBB0 /* CreoleTranslatorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreoleTranslatorApp.swift; sourceTree = "<group>"; };
+		1E95F2CDE1F40D7EBB31663A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		6E176AB72F331098009738C5 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneratedSecrets.swift; sourceTree = "<group>"; };
 		6E6AB2DD2F31B848008F4143 /* Package.resolved */ = {isa = PBXFileReference; lastKnownFileType = text; path = Package.resolved; sourceTree = "<group>"; };
@@ -51,14 +55,10 @@
 		6EE149032F300F0A00CFE9BA /* BannerAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerAdView.swift; sourceTree = "<group>"; };
 		6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_app_icons.sh; sourceTree = "<group>"; };
 		6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_secrets_plist.sh; sourceTree = "<group>"; };
-		1BCDA7F3495F3212FD98EBB0 /* CreoleTranslatorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreoleTranslatorApp.swift; sourceTree = "<group>"; };
-		1E95F2CDE1F40D7EBB31663A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		06119D5B37214D87C744768B /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
-		AFFF8A76EBBF12B6FEAA3808 /* GroqService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqService.swift; sourceTree = "<group>"; };
 		83684C00265DAE85836F7BFF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		0CD81CEA841380EF86E29FD6 /* CreoleTranslator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CreoleTranslator.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		DBD1399329CE637BF2B7F42D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AFFF8A76EBBF12B6FEAA3808 /* GroqService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqService.swift; sourceTree = "<group>"; };
+		DBD1399329CE637BF2B7F42D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F6774A539FCC2A4506632213 /* GoogleService-Info.plist.template */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist.template"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -77,33 +77,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6E6E81542F35A4990009E692 /* Recovered References */ = {
+		0250A671FC77C9F2B2DB5748 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */,
+				0CD81CEA841380EF86E29FD6 /* CreoleTranslator.app */,
 			);
-			name = "Recovered References";
-			sourceTree = "<group>";
-		};
-		6ED7AC792F302BA6000E65B1 /* Docs */ = {
-			isa = PBXGroup;
-			children = (
-				6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */,
-				6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */,
-				6ED7AC752F302BA6000E65B1 /* QUICKSTART.md */,
-				6ED7AC762F302BA6000E65B1 /* README.md */,
-				6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */,
-			);
-			path = Docs;
-			sourceTree = "<group>";
-		};
-		6EE149092F300F0A00CFE9BA /* scripts */ = {
-			isa = PBXGroup;
-			children = (
-				6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */,
-				6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */,
-			);
-			path = scripts;
+			name = Products;
 			sourceTree = "<group>";
 		};
 		6A134922115473236C386D97 = {
@@ -132,12 +111,33 @@
 			);
 			sourceTree = "<group>";
 		};
-		0250A671FC77C9F2B2DB5748 /* Products */ = {
+		6E6E81542F35A4990009E692 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				0CD81CEA841380EF86E29FD6 /* CreoleTranslator.app */,
+				6E176AB82F328BAF009738C7 /* GeneratedSecrets.swift */,
 			);
-			name = Products;
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		6ED7AC792F302BA6000E65B1 /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */,
+				6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */,
+				6ED7AC752F302BA6000E65B1 /* QUICKSTART.md */,
+				6ED7AC762F302BA6000E65B1 /* README.md */,
+				6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */,
+			);
+			path = Docs;
+			sourceTree = "<group>";
+		};
+		6EE149092F300F0A00CFE9BA /* scripts */ = {
+			isa = PBXGroup;
+			children = (
+				6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */,
+				6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */,
+			);
+			path = scripts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -221,28 +221,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		6E176AB62F328BAF009738C5 /* Inject API Key Pre-Compile */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/Secrets.plist",
-			);
-			name = "Inject API Key Pre-Compile";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/GeneratedSecrets.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "# Generate Secrets.swift with embedded API key\necho \"🔐 Generating Secrets with API key\"\n\nOUTPUT_FILE=\"${SRCROOT}/GeneratedSecrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   ✅ Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    API_KEY=$(/usr/libexec/PlistBuddy -c \"Print :GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" 2>/dev/null)\n    if [ -n \"${API_KEY}\" ]; then\n        echo \"   ✅ Using API key from Secrets.plist (${#API_KEY} chars)\"\n    else\n        echo \"   ⚠️  Could not read Secrets.plist, using placeholder\"\n        API_KEY=\"YOUR_API_KEY_HERE\"\n    fi\nelse\n    echo \"   ⚠️  No API key source found, using placeholder\"\n    API_KEY=\"YOUR_API_KEY_HERE\"\nfi\n\n# Generate Swift file with the key\ncat > \"${OUTPUT_FILE}\" << EOF\nimport Foundation\n\n/// Auto-generated secrets file - DO NOT EDIT\n/// Generated at build time from environment variable or Secrets.plist\nstruct Secrets {\n    static var apiKey: String? {\n        let key = \"${API_KEY}\"\n        return key == \"YOUR_API_KEY_HERE\" ? nil : key\n    }\n}\nEOF\n\necho \"   ✅ Generated: ${OUTPUT_FILE}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		507EC05EFDCD4EFED474EF44 /* Generate GoogleService-Info.plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -263,6 +241,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "# Generate GoogleService-Info.plist from template if it does not exist.\n# For local builds: if the file already exists (gitignored), do nothing.\n# For CI builds: substitute FIREBASE_API_KEY env var into the template.\n\nTEMPLATE=\"$SRCROOT/GoogleService-Info.plist.template\"\nOUTPUT=\"$SRCROOT/GoogleService-Info.plist\"\n\nif [ -f \"$OUTPUT\" ]; then\n  echo \"GoogleService-Info.plist already exists — using local copy.\"\n  exit 0\nfi\n\nif [ -z \"$FIREBASE_API_KEY\" ]; then\n  echo \"error: GoogleService-Info.plist is missing and FIREBASE_API_KEY is not set.\"\n  echo \"error: For local builds, place GoogleService-Info.plist in the project root.\"\n  echo \"error: For CI, set FIREBASE_API_KEY in the environment or Xcode scheme.\"\n  exit 1\nfi\n\nsed \"s|\\${FIREBASE_API_KEY}|$FIREBASE_API_KEY|g\" \"$TEMPLATE\" > \"$OUTPUT\"\necho \"GoogleService-Info.plist generated from template.\"\n";
+			showEnvVarsInLog = 0;
+		};
+		6E176AB62F328BAF009738C5 /* Inject API Key Pre-Compile */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Secrets.plist",
+			);
+			name = "Inject API Key Pre-Compile";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/GeneratedSecrets.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Generate Secrets.swift with embedded API key\necho \"🔐 Generating Secrets with API key\"\n\nOUTPUT_FILE=\"${SRCROOT}/GeneratedSecrets.swift\"\n\n# Determine API key source\nif [ -n \"${GROQ_API_KEY}\" ]; then\n    API_KEY=\"${GROQ_API_KEY}\"\n    echo \"   ✅ Using GROQ_API_KEY from environment\"\nelif [ -f \"${SRCROOT}/Secrets.plist\" ]; then\n    API_KEY=$(/usr/libexec/PlistBuddy -c \"Print :GROQ_API_KEY\" \"${SRCROOT}/Secrets.plist\" 2>/dev/null)\n    if [ -n \"${API_KEY}\" ]; then\n        echo \"   ✅ Using API key from Secrets.plist (${#API_KEY} chars)\"\n    else\n        echo \"   ⚠️  Could not read Secrets.plist, using placeholder\"\n        API_KEY=\"YOUR_API_KEY_HERE\"\n    fi\nelse\n    echo \"   ⚠️  No API key source found, using placeholder\"\n    API_KEY=\"YOUR_API_KEY_HERE\"\nfi\n\n# Generate Swift file with the key\ncat > \"${OUTPUT_FILE}\" << EOF\nimport Foundation\n\n/// Auto-generated secrets file - DO NOT EDIT\n/// Generated at build time from environment variable or Secrets.plist\nstruct Secrets {\n    static var apiKey: String? {\n        let key = \"${API_KEY}\"\n        return key == \"YOUR_API_KEY_HERE\" ? nil : key\n    }\n}\nEOF\n\necho \"   ✅ Generated: ${OUTPUT_FILE}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -288,6 +288,39 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		1C67F2975FFB890B2A87BC62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = G3P9A8Z2NP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Creole Translator";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		3F2CA3CF3DEAA18E51CE3E68 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -353,6 +386,39 @@
 			};
 			name = Debug;
 		};
+		739B6BCE650C86CEF257396D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = G3P9A8Z2NP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Creole Translator";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		D80215591CBBC0CC4AF7FC5F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -411,70 +477,6 @@
 			};
 			name = Release;
 		};
-		1C67F2975FFB890B2A87BC62 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = G3P9A8Z2NP;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Creole Translator";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		739B6BCE650C86CEF257396D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = G3P9A8Z2NP;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Creole Translator";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -526,6 +528,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1EC3D85E8E22E455B35FC01B /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E579E7A868F78DB2C25726F0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
 		6ED996392F3089CE00FCFA8E /* GoogleMobileAds */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6ED996382F3089CE00FCFA8E /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
@@ -540,11 +547,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E579E7A868F78DB2C25726F0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAnalytics;
-		};
-		1EC3D85E8E22E455B35FC01B /* FirebaseCrashlytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E579E7A868F78DB2C25726F0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
