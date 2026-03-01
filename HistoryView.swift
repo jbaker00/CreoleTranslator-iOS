@@ -92,7 +92,8 @@ struct HistoryEntryCard: View {
                     if ttsManager.isSpeaking {
                         ttsManager.stop()
                     } else {
-                        ttsManager.speak(text: entry.englishText)
+                        let language = entry.direction == .creoleToEnglish ? "en-US" : "ht-HT"
+                        ttsManager.speak(text: entry.translatedText, language: language)
                     }
                 }) {
                     Image(systemName: ttsManager.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
@@ -112,28 +113,28 @@ struct HistoryEntryCard: View {
             
             // Creole text
             HStack(alignment: .top, spacing: 8) {
-                Text("🇭🇹")
+                Text(entry.direction == .creoleToEnglish ? "🇭🇹" : "🇺🇸")
                     .font(.title3)
-                Text(entry.creoleText)
+                Text(entry.sourceText)
                     .font(.body)
                     .foregroundColor(.primary)
                     .lineLimit(isExpanded ? nil : 2)
             }
-            
+
             Divider()
-            
+
             // English translation
             HStack(alignment: .top, spacing: 8) {
-                Text("🇺🇸")
+                Text(entry.direction == .creoleToEnglish ? "🇺🇸" : "🇭🇹")
                     .font(.title3)
-                Text(entry.englishText)
+                Text(entry.translatedText)
                     .font(.body)
                     .foregroundColor(.primary)
                     .lineLimit(isExpanded ? nil : 2)
             }
-            
+
             // Expand/collapse button if text is long
-            if entry.creoleText.count > 100 || entry.englishText.count > 100 {
+            if entry.sourceText.count > 100 || entry.translatedText.count > 100 {
                 Button(action: {
                     withAnimation {
                         isExpanded.toggle()
