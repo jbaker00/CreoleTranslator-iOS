@@ -63,26 +63,6 @@ struct ContentView: View {
                                 Text("Powered by Groq AI")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-
-                                // Direction toggle button
-                                Button(action: {
-                                    withAnimation {
-                                        translationDirection = translationDirection == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
-                                    }
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "arrow.left.arrow.right")
-                                            .font(.system(size: 14))
-                                        Text("Switch Direction")
-                                            .font(.subheadline)
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color(UIColor.secondarySystemBackground))
-                                    .foregroundColor(.accentColor)
-                                    .cornerRadius(20)
-                                }
-                                .disabled(isProcessing)
                             }
 
                             Spacer()
@@ -216,6 +196,26 @@ struct ContentView: View {
                     },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source"
                 )
+
+                // Switch Direction button between the two cards
+                Button(action: {
+                    withAnimation {
+                        translationDirection = translationDirection == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .font(.system(size: 14))
+                        Text("Switch Direction")
+                            .font(.subheadline)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .foregroundColor(.accentColor)
+                    .cornerRadius(20)
+                }
+                .disabled(isProcessing)
 
                 // Target language card
                 let targetLanguage = translationDirection == .creoleToEnglish ? "en-US" : "ht-HT"
