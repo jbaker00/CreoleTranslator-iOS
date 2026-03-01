@@ -12,6 +12,7 @@
 		6E92902D2F26C4CF00DF5C62 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E92902C2F26C4CF00DF5C62 /* .gitignore */; };
 		6E9F19632F38131C0094AF1F /* TranslationHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9F19622F38131C0094AF1F /* TranslationHistory.swift */; };
 		6E9F19642F38131C0094AF1F /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9F19612F38131C0094AF1F /* HistoryView.swift */; };
+		6EA0B1C2D3E4F00000000001 /* TextToSpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA0B1C2D3E4F00000000002 /* TextToSpeechManager.swift */; };
 		6ED7AC7A2F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */; };
 		6ED7AC7B2F302BA6000E65B1 /* CONVERSION-SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */; };
 		6ED7AC7D2F302BA6000E65B1 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 6ED7AC762F302BA6000E65B1 /* README.md */; };
@@ -28,7 +29,6 @@
 		AA0000000005 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000006 /* AudioRecorder.swift */; };
 		AA0000000007 /* GroqService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000008 /* GroqService.swift */; };
 		AA0000000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000010 /* Assets.xcassets */; };
-		6EA0B1C2D3E4F00000000001 /* TextToSpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA0B1C2D3E4F00000000002 /* TextToSpeechManager.swift */; };
 		FB0001000000000000000000000000001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = FB0001000000000000000000000000002 /* FirebaseAnalytics */; };
 		FB0001000000000000000000000000003 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = FB0001000000000000000000000000004 /* FirebaseCrashlytics */; };
 		FB000100000000000000000000000000C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FB000100000000000000000000000000D /* GoogleService-Info.plist */; };
@@ -41,6 +41,7 @@
 		6E92902C2F26C4CF00DF5C62 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		6E9F19612F38131C0094AF1F /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		6E9F19622F38131C0094AF1F /* TranslationHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationHistory.swift; sourceTree = "<group>"; };
+		6EA0B1C2D3E4F00000000002 /* TextToSpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeechManager.swift; sourceTree = "<group>"; };
 		6ED7AC732F302BA6000E65B1 /* BANNER_AD_INTEGRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BANNER_AD_INTEGRATION.md; sourceTree = "<group>"; };
 		6ED7AC742F302BA6000E65B1 /* CONVERSION-SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "CONVERSION-SUMMARY.md"; sourceTree = "<group>"; };
 		6ED7AC752F302BA6000E65B1 /* QUICKSTART.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICKSTART.md; sourceTree = "<group>"; };
@@ -57,7 +58,6 @@
 		AA0000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA0000000011 /* CreoleTranslator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CreoleTranslator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		6EA0B1C2D3E4F00000000002 /* TextToSpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeechManager.swift; sourceTree = "<group>"; };
 		FB000100000000000000000000000000D /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FB000100000000000000000000000000E /* GoogleService-Info.plist.template */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist.template"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -417,7 +417,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = G3P9A8Z2NP;
 				ENABLE_PREVIEWS = YES;
@@ -435,7 +434,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -450,7 +449,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = G3P9A8Z2NP;
 				ENABLE_PREVIEWS = YES;
@@ -468,7 +466,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
