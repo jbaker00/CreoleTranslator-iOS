@@ -10,7 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @StateObject private var historyManager = TranslationHistoryManager()
-    @StateObject private var ttsManager = TextToSpeechManager()
+    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey)
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var permissionGranted = false
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
+    @State private var speakingCardTitle: String? = nil
     
     var body: some View {
         // ZStack allows us to overlay the banner at the bottom while content scrolls above
@@ -180,7 +181,17 @@ struct ContentView: View {
                     title: "Haitian Creole",
                     icon: "🇭🇹",
                     content: transcription,
-                    isLoading: isProcessing
+                    isLoading: isProcessing,
+                    speakerAction: {
+                        if ttsManager.isSpeaking {
+                            ttsManager.stop()
+                            speakingCardTitle = nil
+                        } else {
+                            speakingCardTitle = "creole"
+                            ttsManager.speak(text: transcription, language: "ht-HT")
+                        }
+                    },
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "creole"
                 )
 
                 ResultCard(
@@ -191,14 +202,21 @@ struct ContentView: View {
                     speakerAction: {
                         if ttsManager.isSpeaking {
                             ttsManager.stop()
+                            speakingCardTitle = nil
                         } else {
+                            speakingCardTitle = "english"
                             ttsManager.speak(text: translation)
                         }
                     },
-                    isSpeaking: ttsManager.isSpeaking
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "english"
                 )
             }
             .padding(.horizontal, 20)
+            .onChange(of: ttsManager.isSpeaking) { speaking in
+                if !speaking {
+                    speakingCardTitle = nil
+                }
+            }
             
             // Error message
             if let error = errorMessage {
@@ -316,7 +334,7 @@ struct ResultCard: View {
                             .background(Color(UIColor.secondarySystemBackground))
                             .cornerRadius(8)
                     }
-                    .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
+                    .disabled(content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
                 }
             }
 
