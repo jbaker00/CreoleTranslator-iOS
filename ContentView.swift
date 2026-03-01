@@ -10,7 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @StateObject private var historyManager = TranslationHistoryManager()
-    @StateObject private var ttsManager = TextToSpeechManager()
+    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey)
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
     @State private var translationDirection: TranslationDirection = .creoleToEnglish
+    @State private var speakingCardTitle: String? = nil
     
     var body: some View {
         // ZStack allows us to overlay the banner at the bottom while content scrolls above
@@ -198,14 +199,26 @@ struct ContentView: View {
             // Results section
             VStack(spacing: 20) {
                 // Source language card
+                let sourceLanguage = translationDirection == .creoleToEnglish ? "ht-HT" : "en-US"
                 ResultCard(
                     title: translationDirection == .creoleToEnglish ? "Haitian Creole" : "English",
                     icon: translationDirection == .creoleToEnglish ? "🇭🇹" : "🇺🇸",
                     content: transcription,
-                    isLoading: isProcessing
+                    isLoading: isProcessing,
+                    speakerAction: {
+                        if ttsManager.isSpeaking {
+                            ttsManager.stop()
+                            speakingCardTitle = nil
+                        } else {
+                            speakingCardTitle = "source"
+                            ttsManager.speak(text: transcription, language: sourceLanguage)
+                        }
+                    },
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source"
                 )
 
-                // Target language card with speaker
+                // Target language card
+                let targetLanguage = translationDirection == .creoleToEnglish ? "en-US" : "ht-HT"
                 ResultCard(
                     title: translationDirection == .creoleToEnglish ? "English Translation" : "Creole Translation",
                     icon: translationDirection == .creoleToEnglish ? "🇺🇸" : "🇭🇹",
@@ -214,16 +227,33 @@ struct ContentView: View {
                     speakerAction: {
                         if ttsManager.isSpeaking {
                             ttsManager.stop()
+                            speakingCardTitle = nil
                         } else {
-                            let language = translationDirection == .creoleToEnglish ? "en-US" : "ht-HT"
-                            ttsManager.speak(text: translation, language: language)
+                            speakingCardTitle = "target"
+                            ttsManager.speak(text: translation, language: targetLanguage)
                         }
                     },
-                    isSpeaking: ttsManager.isSpeaking
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target"
                 )
             }
             .padding(.horizontal, 20)
+            .onChange(of: ttsManager.isSpeaking) { speaking in
+                if !speaking {
+                    speakingCardTitle = nil
+                }
+            }
             
+            // TTS error message (helps diagnose Groq TTS fallback issues)
+            if let ttsError = ttsManager.lastError {
+                Text(ttsError)
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .padding()
+                    .background(Color(UIColor.systemBackground).opacity(0.95))
+                    .cornerRadius(10)
+                    .padding(.horizontal, 30)
+            }
+
             // Error message
             if let error = errorMessage {
                 Text(error)

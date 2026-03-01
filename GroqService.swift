@@ -64,6 +64,7 @@ enum GroqError: LocalizedError {
     case networkError(String)
     case transcriptionFailed(String)
     case translationFailed(String)
+    case speechFailed(String)
     case invalidResponse
     
     var errorDescription: String? {
@@ -76,6 +77,8 @@ enum GroqError: LocalizedError {
             return "Transcription failed: \(message)"
         case .translationFailed(let message):
             return "Translation failed: \(message)"
+        case .speechFailed(let message):
+            return "Speech synthesis failed: \(message)"
         case .invalidResponse:
             return "Received invalid response from server"
         }
@@ -86,6 +89,7 @@ class GroqService {
     private let apiKey: String
     private let transcriptionURL = URL(string: "https://api.groq.com/openai/v1/audio/transcriptions")!
     private let chatURL = URL(string: "https://api.groq.com/openai/v1/chat/completions")!
+    private let speechURL = URL(string: "https://api.groq.com/openai/v1/audio/speech")!
     
     init(apiKey: String) {
         self.apiKey = apiKey
@@ -221,6 +225,48 @@ class GroqService {
             
             return translation
             
+        } catch let error as GroqError {
+            throw error
+        } catch {
+            throw GroqError.networkError(error.localizedDescription)
+        }
+    }
+
+    // Synthesize speech from text using Groq's Orpheus TTS model.
+    // Returns raw WAV audio data suitable for playback with AVAudioPlayer.
+    func synthesizeSpeech(text: String, voice: String = "diana") async throws -> Data {
+        var request = URLRequest(url: speechURL)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload: [String: Any] = [
+            "model": "canopylabs/orpheus-v1-english",
+            "input": text,
+            "voice": voice,
+            "response_format": "wav"
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw GroqError.invalidResponse
+            }
+
+            if httpResponse.statusCode == 401 {
+                throw GroqError.invalidAPIKey
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw GroqError.speechFailed(errorMessage)
+            }
+
+            return data
+
         } catch let error as GroqError {
             throw error
         } catch {
