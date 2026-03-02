@@ -10,7 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @StateObject private var historyManager = TranslationHistoryManager()
-    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey)
+    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.

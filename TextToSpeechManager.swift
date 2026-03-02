@@ -2,7 +2,8 @@
 //  TextToSpeechManager.swift
 //  CreoleTranslator
 //
-//  Text-to-speech manager using Groq playai-tts with AVSpeechSynthesizer fallback
+//  Text-to-speech manager using Groq playai-tts (English) and OpenAI TTS (Haitian Creole),
+//  with AVSpeechSynthesizer as a final fallback.
 //
 
 import AVFoundation
@@ -15,15 +16,19 @@ class TextToSpeechManager: NSObject, ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
     private var audioPlayer: AVAudioPlayer?
     private var groqService: GroqService?
+    private var openAITTSService: OpenAITTSService?
 
-    // Initialise with an optional Groq API key.
-    // When a valid key is provided, Groq playai-tts is used for supported languages;
-    // AVSpeechSynthesizer is used as a fallback.
-    init(apiKey: String? = nil) {
+    // Initialise with optional API keys.
+    // Groq playai-tts is used for English; OpenAI TTS for Haitian Creole;
+    // AVSpeechSynthesizer is used as a fallback when no matching service key is available.
+    init(apiKey: String? = nil, openAIApiKey: String? = nil) {
         super.init()
         synthesizer.delegate = self
         if let key = apiKey, !key.isEmpty {
             groqService = GroqService(apiKey: key)
+        }
+        if let key = openAIApiKey, !key.isEmpty {
+            openAITTSService = OpenAITTSService(apiKey: key)
         }
     }
 
@@ -35,10 +40,8 @@ class TextToSpeechManager: NSObject, ObservableObject {
 
         stop()
 
-        // Groq playai-tts currently supports English; fall back to native for other languages.
-        let useGroq = groqService != nil && language.hasPrefix("en")
-
-        if useGroq, let service = groqService {
+        if language.hasPrefix("en"), let service = groqService {
+            // Groq playai-tts for English
             isSpeaking = true
             Task {
                 do {
@@ -47,10 +50,26 @@ class TextToSpeechManager: NSObject, ObservableObject {
                         self.playAudioData(audioData)
                     }
                 } catch {
-                    // Fall back to AVSpeechSynthesizer on any Groq TTS error
                     print("[TTS] Groq TTS failed, falling back to native: \(error)")
                     await MainActor.run {
                         self.lastError = "Groq TTS failed: \(error.localizedDescription)"
+                        self.speakNatively(text: text, language: language)
+                    }
+                }
+            }
+        } else if language.hasPrefix("ht"), let service = openAITTSService {
+            // OpenAI TTS for Haitian Creole (ht, ht-HT)
+            isSpeaking = true
+            Task {
+                do {
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: "alloy")
+                    await MainActor.run {
+                        self.playAudioData(audioData)
+                    }
+                } catch {
+                    print("[TTS] OpenAI TTS failed, falling back to native: \(error)")
+                    await MainActor.run {
+                        self.lastError = "OpenAI TTS failed: \(error.localizedDescription)"
                         self.speakNatively(text: text, language: language)
                     }
                 }
