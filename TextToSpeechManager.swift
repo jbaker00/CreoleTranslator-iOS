@@ -7,6 +7,7 @@
 //
 
 import AVFoundation
+import FirebaseAnalytics
 import Foundation
 
 class TextToSpeechManager: NSObject, ObservableObject {
@@ -40,41 +41,69 @@ class TextToSpeechManager: NSObject, ObservableObject {
 
         stop()
 
-        if language.hasPrefix("en"), let service = groqService {
-            // Groq playai-tts for English
+        // Read voice preferences from UserDefaults (set via SettingsView / VoiceSettings)
+        let groqVoice = UserDefaults.standard.string(forKey: "groqVoice") ?? "diana"
+        let openAIVoice = UserDefaults.standard.string(forKey: "openAIVoice") ?? "alloy"
+
+        let isComputerVoice = { (voice: String) in voice == VoiceSettings.computerVoiceID }
+
+        if language.hasPrefix("en"), let service = groqService, !isComputerVoice(groqVoice) {
+            // Groq Orpheus TTS for English
             isSpeaking = true
             Task {
                 do {
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: "diana")
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: groqVoice)
                     await MainActor.run {
                         self.playAudioData(audioData)
                     }
                 } catch {
+                    let errorDesc = error.localizedDescription
+                    Analytics.logEvent("tts_fallback_to_computer", parameters: [
+                        "provider": "groq",
+                        "language": language,
+                        "reason": errorDesc
+                    ])
                     print("[TTS] Groq TTS failed, falling back to native: \(error)")
                     await MainActor.run {
-                        self.lastError = "Groq TTS failed: \(error.localizedDescription)"
+                        self.lastError = "Groq TTS failed: \(errorDesc)"
                         self.speakNatively(text: text, language: language)
                     }
                 }
             }
-        } else if language.hasPrefix("ht"), let service = openAITTSService {
+        } else if language.hasPrefix("ht"), let service = openAITTSService, !isComputerVoice(openAIVoice) {
             // OpenAI TTS for Haitian Creole (ht, ht-HT)
             isSpeaking = true
             Task {
                 do {
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: "alloy")
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: openAIVoice)
                     await MainActor.run {
                         self.playAudioData(audioData)
                     }
                 } catch {
+                    let errorDesc = error.localizedDescription
+                    // Detect and log OpenAI quota exhaustion specifically
+                    if errorDesc.localizedCaseInsensitiveContains("insufficient_quota") ||
+                       errorDesc.localizedCaseInsensitiveContains("exceeded your current quota") {
+                        Analytics.logEvent("openai_tts_quota_exceeded", parameters: [
+                            "voice": openAIVoice,
+                            "text_length": text.count
+                        ])
+                        print("[TTS] OpenAI quota exceeded — logged to Firebase Analytics")
+                    }
+                    Analytics.logEvent("tts_fallback_to_computer", parameters: [
+                        "provider": "openai",
+                        "language": language,
+                        "reason": errorDesc
+                    ])
                     print("[TTS] OpenAI TTS failed, falling back to native: \(error)")
                     await MainActor.run {
-                        self.lastError = "OpenAI TTS failed: \(error.localizedDescription)"
+                        self.lastError = "OpenAI TTS failed: \(errorDesc)"
                         self.speakNatively(text: text, language: language)
                     }
                 }
             }
         } else {
+            // Computer voice selected by user, or no API service available
             speakNatively(text: text, language: language)
         }
     }
