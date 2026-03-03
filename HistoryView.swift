@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HistoryView: View {
     @ObservedObject var historyManager: TranslationHistoryManager
-    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey)
+    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {

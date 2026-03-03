@@ -10,7 +10,8 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @StateObject private var historyManager = TranslationHistoryManager()
-    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey)
+    @StateObject private var voiceSettings = VoiceSettings()
+    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -25,6 +26,7 @@ struct ContentView: View {
     @State private var permissionGranted = false
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
+    @State private var showSettings = false
     @State private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
     
@@ -67,8 +69,8 @@ struct ContentView: View {
 
                             Spacer()
 
-                            // History button
-                            VStack {
+                            // History + Settings buttons
+                            VStack(spacing: 8) {
                                 Button(action: {
                                     withAnimation {
                                         showHistory.toggle()
@@ -91,7 +93,22 @@ struct ContentView: View {
                                         .foregroundColor(.secondary)
                                 }
 
+                                Button(action: { showSettings = true }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(UIColor.secondarySystemBackground))
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: "gearshape")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+
                                 Spacer()
+                            }
+                            .sheet(isPresented: $showSettings) {
+                                SettingsView(voiceSettings: voiceSettings)
                             }
                         }
                         .padding(.horizontal)
