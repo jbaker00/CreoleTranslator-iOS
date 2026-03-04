@@ -9,7 +9,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var voiceSettings: VoiceSettings
+    @ObservedObject var privacyConsent: DataPrivacyConsent
     @Environment(\.dismiss) private var dismiss
+    @State private var showPrivacyAlert = false
 
     var body: some View {
         NavigationView {
@@ -45,13 +47,54 @@ struct SettingsView: View {
                     Text("Used when playing English text.")
                         .font(.caption)
                 }
+
+                Section {
+                    HStack {
+                        Label("Data Sharing Consent", systemImage: "shield.checkered")
+                        Spacer()
+                        Text(privacyConsent.hasConsented ? "Granted" : "Not Granted")
+                            .font(.subheadline)
+                            .foregroundColor(privacyConsent.hasConsented ? .green : .red)
+                    }
+
+                    Button(action: {
+                        showPrivacyAlert = true
+                    }) {
+                        HStack {
+                            Text("Review Privacy Notice")
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                } header: {
+                    Label("Privacy & Data Sharing", systemImage: "hand.raised")
+                } footer: {
+                    Text("This app shares your audio recordings with Groq AI (for transcription and translation) and OpenAI (for text-to-speech). You can review or revoke consent at any time.")
+                        .font(.caption)
+                }
             }
-            .navigationTitle("Voice Settings")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
+            }
+            .alert("Data Privacy Notice", isPresented: $showPrivacyAlert) {
+                if privacyConsent.hasConsented {
+                    Button("Revoke Consent", role: .destructive) {
+                        privacyConsent.revokeConsent()
+                    }
+                } else {
+                    Button("Grant Consent") {
+                        privacyConsent.grantConsent()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This app shares your audio recordings with Groq AI (for transcription and translation) and OpenAI (for text-to-speech). Audio is processed temporarily and not stored on your device.\n\nYou can revoke this consent at any time, but app features will be disabled until consent is granted again.")
             }
         }
     }
@@ -86,5 +129,5 @@ private struct VoiceRow: View {
 }
 
 #Preview {
-    SettingsView(voiceSettings: VoiceSettings())
+    SettingsView(voiceSettings: VoiceSettings(), privacyConsent: DataPrivacyConsent())
 }
