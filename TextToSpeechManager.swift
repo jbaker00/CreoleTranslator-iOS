@@ -41,13 +41,17 @@ class TextToSpeechManager: NSObject, ObservableObject {
 
         stop()
 
-        // Read voice preferences from UserDefaults (set via SettingsView / VoiceSettings)
+        // Read voice preferences and privacy consent from UserDefaults
         let groqVoice = UserDefaults.standard.string(forKey: "groqVoice") ?? "diana"
         let openAIVoice = UserDefaults.standard.string(forKey: "openAIVoice") ?? "alloy"
+        let hasConsented = UserDefaults.standard.bool(forKey: "userConsentForAIDataSharing")
 
-        let isComputerVoice = { (voice: String) in voice == VoiceSettings.computerVoiceID }
-
-        if language.hasPrefix("en"), let service = groqService, !isComputerVoice(groqVoice) {
+        if language.hasPrefix("en") {
+            // Use computer voice if: user selected it, or no privacy consent, or no Groq service
+            guard groqVoice != VoiceSettings.computerVoiceID, hasConsented, let service = groqService else {
+                speakNatively(text: text, language: language)
+                return
+            }
             // Groq Orpheus TTS for English
             isSpeaking = true
             Task {
@@ -64,13 +68,13 @@ class TextToSpeechManager: NSObject, ObservableObject {
                         "reason": errorDesc
                     ])
                     print("[TTS] Groq TTS failed, falling back to native: \(error)")
+                    // Fall back silently — don't surface an error to the user
                     await MainActor.run {
-                        self.lastError = "Groq TTS failed: \(errorDesc)"
                         self.speakNatively(text: text, language: language)
                     }
                 }
             }
-        } else if language.hasPrefix("ht"), let service = openAITTSService, !isComputerVoice(openAIVoice) {
+        } else if language.hasPrefix("ht"), let service = openAITTSService, openAIVoice != VoiceSettings.computerVoiceID {
             // OpenAI TTS for Haitian Creole (ht, ht-HT)
             isSpeaking = true
             Task {

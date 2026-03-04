@@ -11,7 +11,7 @@ import SwiftUI
 class VoiceSettings: ObservableObject {
     // Voice used for Haitian Creole TTS (OpenAI)
     @AppStorage("openAIVoice") var openAIVoice: String = "alloy"
-    // Voice used for English TTS (Groq Orpheus)
+    // Voice used for English TTS (Groq). Defaults to Diana.
     @AppStorage("groqVoice") var groqVoice: String = "diana"
 
     struct Voice: Identifiable {
@@ -34,7 +34,7 @@ class VoiceSettings: ObservableObject {
         Voice(id: "computer", name: "Computer Voice", description: "Built-in iOS synthesizer"),
     ]
 
-    // Only Diana is confirmed working on Groq Orpheus + computer fallback
+    // Groq Orpheus English voices (Diana is the only confirmed working voice)
     static let groqVoices: [Voice] = [
         Voice(id: "diana",    name: "Diana",          description: "Clear & professional"),
         Voice(id: "computer", name: "Computer Voice", description: "Built-in iOS synthesizer"),
