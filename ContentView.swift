@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var historyManager = TranslationHistoryManager()
     @StateObject private var voiceSettings = VoiceSettings()
     @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
+    @StateObject private var privacyConsent = DataPrivacyConsent()
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -38,14 +39,14 @@ struct ContentView: View {
             let bgColors: [Color] = colorScheme == .dark
                 ? [Color(UIColor.systemGray6), Color(UIColor.systemBackground)]
                 : [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.8, green: 0.3, blue: 0.5)]
-            
+
             LinearGradient(
                 colors: bgColors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             ScrollView {
                 VStack(spacing: 30) {
                     // Header
@@ -108,13 +109,13 @@ struct ContentView: View {
                                 Spacer()
                             }
                             .sheet(isPresented: $showSettings) {
-                                SettingsView(voiceSettings: voiceSettings)
+                                SettingsView(voiceSettings: voiceSettings, privacyConsent: privacyConsent)
                             }
                         }
                         .padding(.horizontal)
                     }
                     .padding(.top, 40)
-                    
+
                     // Show history or main content
                     if showHistory {
                         HistoryView(historyManager: historyManager)
@@ -124,7 +125,7 @@ struct ContentView: View {
                         mainContentView
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     }
-                    
+
                     Spacer(minLength: 80) // leave room for banner
                 }
             }
@@ -135,7 +136,7 @@ struct ContentView: View {
                     errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
                 }
             }
-            
+
             // Host the banner in a GeometryReader so we can pass the current width to compute an adaptive size.
             GeometryReader { geo in
                 BannerAdView(width: geo.size.width)
@@ -147,6 +148,13 @@ struct ContentView: View {
                     .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
             .frame(height: 50, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
+
+            // Privacy consent dialog overlay
+            if privacyConsent.shouldShowConsentDialog {
+                DataPrivacyConsentView(consentManager: privacyConsent)
+                    .transition(.opacity)
+                    .zIndex(1000) // Ensure it appears above all other content
+            }
         }
     }
     
@@ -174,7 +182,7 @@ struct ContentView: View {
                 .cornerRadius(15)
                 .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
             }
-            .disabled(isProcessing || !permissionGranted)
+            .disabled(isProcessing || !permissionGranted || !privacyConsent.hasConsented)
             .padding(.horizontal, 30)
             
             // Status message
