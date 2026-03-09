@@ -109,7 +109,7 @@ struct ContentView: View {
                                 Spacer()
                             }
                             .sheet(isPresented: $showSettings) {
-                                SettingsView(voiceSettings: voiceSettings, privacyConsent: privacyConsent)
+                                SettingsView(voiceSettings: voiceSettings)
                             }
                         }
                         .padding(.horizontal)
