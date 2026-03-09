@@ -76,10 +76,28 @@ struct HistoryEntryCard: View {
     @ObservedObject var historyManager: TranslationHistoryManager
     @ObservedObject var ttsManager: TextToSpeechManager
     @State private var isExpanded = false
-    
+    @State private var speakingRow: String? = nil // "source" or "translated"
+
+    private func speakerButton(row: String, text: String, language: String) -> some View {
+        let isThisRowSpeaking = ttsManager.isSpeaking && speakingRow == row
+        return Button(action: {
+            if ttsManager.isSpeaking {
+                ttsManager.stop()
+                speakingRow = nil
+            } else {
+                speakingRow = row
+                ttsManager.speak(text: text, language: language)
+            }
+        }) {
+            Image(systemName: isThisRowSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
+                .font(.caption)
+                .foregroundColor(.accentColor)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Header with timestamp
+            // Header with timestamp and delete
             HStack {
                 Text(entry.formattedDate)
                     .font(.caption)
@@ -87,31 +105,14 @@ struct HistoryEntryCard: View {
 
                 Spacer()
 
-                // Speaker button
-                Button(action: {
-                    if ttsManager.isSpeaking {
-                        ttsManager.stop()
-                    } else {
-                        let language = entry.direction == .creoleToEnglish ? "en-US" : "ht-HT"
-                        ttsManager.speak(text: entry.translatedText, language: language)
-                    }
-                }) {
-                    Image(systemName: ttsManager.isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                }
-
-                // Delete button
-                Button(action: {
-                    historyManager.deleteEntry(entry)
-                }) {
+                Button(action: { historyManager.deleteEntry(entry) }) {
                     Image(systemName: "trash")
                         .font(.caption)
                         .foregroundColor(.red)
                 }
             }
-            
-            // Creole text
+
+            // Source text row with speaker
             HStack(alignment: .top, spacing: 8) {
                 Text(entry.direction == .creoleToEnglish ? "🇭🇹" : "🇺🇸")
                     .font(.title3)
@@ -119,11 +120,17 @@ struct HistoryEntryCard: View {
                     .font(.body)
                     .foregroundColor(.primary)
                     .lineLimit(isExpanded ? nil : 2)
+                Spacer()
+                speakerButton(
+                    row: "source",
+                    text: entry.sourceText,
+                    language: entry.direction == .creoleToEnglish ? "ht-HT" : "en-US"
+                )
             }
 
             Divider()
 
-            // English translation
+            // Translated text row with speaker
             HStack(alignment: .top, spacing: 8) {
                 Text(entry.direction == .creoleToEnglish ? "🇺🇸" : "🇭🇹")
                     .font(.title3)
@@ -131,6 +138,12 @@ struct HistoryEntryCard: View {
                     .font(.body)
                     .foregroundColor(.primary)
                     .lineLimit(isExpanded ? nil : 2)
+                Spacer()
+                speakerButton(
+                    row: "translated",
+                    text: entry.translatedText,
+                    language: entry.direction == .creoleToEnglish ? "en-US" : "ht-HT"
+                )
             }
 
             // Expand/collapse button if text is long
@@ -149,5 +162,8 @@ struct HistoryEntryCard: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
+        .onChange(of: ttsManager.isSpeaking) { speaking in
+            if !speaking { speakingRow = nil }
+        }
     }
 }
