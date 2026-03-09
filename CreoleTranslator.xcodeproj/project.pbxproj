@@ -23,16 +23,16 @@
 		6EE149002F300ECD00CFE9BA /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 6EE148FF2F300ECD00CFE9BA /* GoogleMobileAds */; };
 		6EE1490B2F300F0A00CFE9BA /* BannerAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149032F300F0A00CFE9BA /* BannerAdView.swift */; };
 		6EE1490C2F300F0A00CFE9BA /* ATTAuthorization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */; };
-		70CAB2D2D648438990315FF3 /* DataPrivacyConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */; };
 		6EE1490D2F300F0A00CFE9BA /* generate_app_icons.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */; };
 		6EE149132F300F0A00CFE9BA /* generate_secrets_plist.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */; };
 		6EF0A0B1C2D3E4F500000002 /* OpenAITTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF0A0B1C2D3E4F500000001 /* OpenAITTSService.swift */; };
-		AA000001000000000000AAA1 /* VoiceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001000000000000AAA2 /* VoiceSettings.swift */; };
-		AA000002000000000000AAA1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002000000000000AAA2 /* SettingsView.swift */; };
+		70CAB2D2D648438990315FF3 /* DataPrivacyConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */; };
 		7E5AC91C20C1730E5595DCB8 /* GroqService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFFF8A76EBBF12B6FEAA3808 /* GroqService.swift */; };
 		7E785A8648A88CB317E2A192 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1EC3D85E8E22E455B35FC01B /* FirebaseCrashlytics */; };
 		7E87D7CE13978F8BF562834B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */; };
 		920D9D18FC423CFEA3FCE758 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DE2BADE071FE83D207B52FF0 /* FirebaseAnalytics */; };
+		AA000001000000000000AAA1 /* VoiceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001000000000000AAA2 /* VoiceSettings.swift */; };
+		AA000002000000000000AAA1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002000000000000AAA2 /* SettingsView.swift */; };
 		B5E4AE585D6E921238B11EAC /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06119D5B37214D87C744768B /* AudioRecorder.swift */; };
 		D098CFC275F05E49EC77DAE8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E95F2CDE1F40D7EBB31663A /* ContentView.swift */; };
 		DCDFF919BA2707095807DDC7 /* CreoleTranslatorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BCDA7F3495F3212FD98EBB0 /* CreoleTranslatorApp.swift */; };
@@ -56,16 +56,16 @@
 		6ED7AC762F302BA6000E65B1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Secrets.plist.example; sourceTree = "<group>"; };
 		6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATTAuthorization.swift; sourceTree = "<group>"; };
-		C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPrivacyConsent.swift; sourceTree = "<group>"; };
 		6EE149032F300F0A00CFE9BA /* BannerAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerAdView.swift; sourceTree = "<group>"; };
 		6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_app_icons.sh; sourceTree = "<group>"; };
 		6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_secrets_plist.sh; sourceTree = "<group>"; };
 		6EF0A0B1C2D3E4F500000001 /* OpenAITTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSService.swift; sourceTree = "<group>"; };
-		AA000001000000000000AAA2 /* VoiceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettings.swift; sourceTree = "<group>"; };
-		AA000002000000000000AAA2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		83684C00265DAE85836F7BFF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AA000001000000000000AAA2 /* VoiceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettings.swift; sourceTree = "<group>"; };
+		AA000002000000000000AAA2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AFFF8A76EBBF12B6FEAA3808 /* GroqService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqService.swift; sourceTree = "<group>"; };
+		C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPrivacyConsent.swift; sourceTree = "<group>"; };
 		DBD1399329CE637BF2B7F42D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F6774A539FCC2A4506632213 /* GoogleService-Info.plist.template */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist.template"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -328,7 +328,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.5;
+				MARKETING_VERSION = 2.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -426,7 +426,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.5;
+				MARKETING_VERSION = 2.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jbaker.CreoleTranslator;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
