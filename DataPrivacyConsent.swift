@@ -55,7 +55,13 @@ struct DataPrivacyConsentView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            Text("Audio data is not retained after processing. You can revoke this in Settings at any time.")
+            HStack(spacing: 4) {
+                Text("Audio is not retained after processing.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Link("Privacy Policy", destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!)
+                    .font(.caption)
+            }
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
