@@ -23,6 +23,7 @@
 		6EE149002F300ECD00CFE9BA /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 6EE148FF2F300ECD00CFE9BA /* GoogleMobileAds */; };
 		6EE1490B2F300F0A00CFE9BA /* BannerAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149032F300F0A00CFE9BA /* BannerAdView.swift */; };
 		6EE1490C2F300F0A00CFE9BA /* ATTAuthorization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */; };
+		70CAB2D2D648438990315FF3 /* DataPrivacyConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */; };
 		6EE1490D2F300F0A00CFE9BA /* generate_app_icons.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */; };
 		6EE149132F300F0A00CFE9BA /* generate_secrets_plist.sh in Resources */ = {isa = PBXBuildFile; fileRef = 6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */; };
 		6EF0A0B1C2D3E4F500000002 /* OpenAITTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF0A0B1C2D3E4F500000001 /* OpenAITTSService.swift */; };
@@ -55,6 +56,7 @@
 		6ED7AC762F302BA6000E65B1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		6ED7AC782F302BA6000E65B1 /* Secrets.plist.example */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Secrets.plist.example; sourceTree = "<group>"; };
 		6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATTAuthorization.swift; sourceTree = "<group>"; };
+		C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPrivacyConsent.swift; sourceTree = "<group>"; };
 		6EE149032F300F0A00CFE9BA /* BannerAdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerAdView.swift; sourceTree = "<group>"; };
 		6EE149052F300F0A00CFE9BA /* generate_app_icons.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_app_icons.sh; sourceTree = "<group>"; };
 		6EE149082F300F0A00CFE9BA /* generate_secrets_plist.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = generate_secrets_plist.sh; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 				6E9F19622F38131C0094AF1F /* TranslationHistory.swift */,
 				6EE149032F300F0A00CFE9BA /* BannerAdView.swift */,
 				6EE149012F300F0A00CFE9BA /* ATTAuthorization.swift */,
+				C960AD91973A4D9DA5E60BB9 /* DataPrivacyConsent.swift */,
 				1BCDA7F3495F3212FD98EBB0 /* CreoleTranslatorApp.swift */,
 				1E95F2CDE1F40D7EBB31663A /* ContentView.swift */,
 				06119D5B37214D87C744768B /* AudioRecorder.swift */,
@@ -284,6 +287,7 @@
 				6E176AB92F328BAF009738C8 /* GeneratedSecrets.swift in Sources */,
 				6EE1490B2F300F0A00CFE9BA /* BannerAdView.swift in Sources */,
 				6EE1490C2F300F0A00CFE9BA /* ATTAuthorization.swift in Sources */,
+				70CAB2D2D648438990315FF3 /* DataPrivacyConsent.swift in Sources */,
 				D098CFC275F05E49EC77DAE8 /* ContentView.swift in Sources */,
 				B5E4AE585D6E921238B11EAC /* AudioRecorder.swift in Sources */,
 				6E9F19632F38131C0094AF1F /* TranslationHistory.swift in Sources */,
