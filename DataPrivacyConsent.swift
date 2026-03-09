@@ -89,9 +89,20 @@ struct DataPrivacyConsentView: View {
             Spacer(minLength: 16)
         }
         .padding(.top, 8)
-        .presentationDetents([.height(360)])
-        .presentationDragIndicator(.visible)
+        .modifier(ConsentSheetPresentation())
         .interactiveDismissDisabled(true)
+    }
+}
+
+private struct ConsentSheetPresentation: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content
+                .presentationDetents([.height(360)])
+                .presentationDragIndicator(.visible)
+        } else {
+            content
+        }
     }
 }
 
