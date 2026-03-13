@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var voiceSettings = VoiceSettings()
     @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
     @StateObject private var privacyConsent = DataPrivacyConsent()
+    @EnvironmentObject var metricsManager: MetricsManager
     @Environment(\.colorScheme) private var colorScheme
     
     // Use the centralized Secrets helper to load the API key.
@@ -28,6 +29,7 @@ struct ContentView: View {
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
     @State private var showSettings = false
+    @State private var showMetrics = false
     @State private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
     
@@ -70,11 +72,14 @@ struct ContentView: View {
 
                             Spacer()
 
-                            // History + Settings buttons
+                            // History + Settings + Metrics buttons
                             VStack(spacing: 8) {
                                 Button(action: {
                                     withAnimation {
                                         showHistory.toggle()
+                                        if showHistory {
+                                            showMetrics = false
+                                        }
                                     }
                                 }) {
                                     ZStack {
@@ -92,6 +97,25 @@ struct ContentView: View {
                                     Text("\(historyManager.entries.count)")
                                         .font(.caption2)
                                         .foregroundColor(.secondary)
+                                }
+
+                                Button(action: {
+                                    withAnimation {
+                                        showMetrics.toggle()
+                                        if showMetrics {
+                                            showHistory = false
+                                        }
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(UIColor.secondarySystemBackground))
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: showMetrics ? "xmark" : "chart.bar")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
                                 }
 
                                 Button(action: { showSettings = true }) {
@@ -116,10 +140,13 @@ struct ContentView: View {
                     }
                     .padding(.top, 40)
 
-                    // Show history or main content
+                    // Show history, metrics, or main content
                     if showHistory {
                         HistoryView(historyManager: historyManager)
                             .padding(.horizontal, 20)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else if showMetrics {
+                        MetricsView(metricsManager: metricsManager)
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     } else {
                         mainContentView
@@ -217,6 +244,7 @@ struct ContentView: View {
                         } else {
                             speakingCardTitle = "source"
                             ttsManager.speak(text: transcription, language: sourceLanguage)
+                            metricsManager.trackEvent(.ttsPlayed)
                         }
                     },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source"
@@ -256,6 +284,7 @@ struct ContentView: View {
                         } else {
                             speakingCardTitle = "target"
                             ttsManager.speak(text: translation, language: targetLanguage)
+                            metricsManager.trackEvent(.ttsPlayed)
                         }
                     },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target"
@@ -307,6 +336,7 @@ struct ContentView: View {
         errorMessage = nil
         statusMessage = "🔴 Recording..."
         recordingURL = audioRecorder.startRecording()
+        metricsManager.trackEvent(.recordingStarted)
     }
     
     private func stopRecording() {
@@ -314,7 +344,8 @@ struct ContentView: View {
             errorMessage = "Failed to stop recording"
             return
         }
-        
+
+        metricsManager.trackEvent(.recordingStopped)
         recordingURL = url
         statusMessage = "⏳ Processing..."
         processAudio(url: url)
@@ -343,6 +374,9 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
 
+                    // Track translation event
+                    metricsManager.trackEvent(.translation)
+
                     // Save to history with direction
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                 }
@@ -357,6 +391,9 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+
+                    // Track error event
+                    metricsManager.trackEvent(.error)
                 }
 
                 // Clean up audio file
