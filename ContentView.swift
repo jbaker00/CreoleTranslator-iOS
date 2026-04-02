@@ -30,6 +30,12 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
+    @State private var typedInput = ""
+    @State private var inputMode: InputMode = .voice
+
+    enum InputMode {
+        case voice, text
+    }
     
     var body: some View {
         // ZStack allows us to overlay the banner at the bottom while content scrolls above
@@ -161,29 +167,85 @@ struct ContentView: View {
     // Main content view extracted for cleaner code
     private var mainContentView: some View {
         VStack(spacing: 30) {
-            // Recording button
-            Button(action: {
-                if audioRecorder.isRecording {
-                    stopRecording()
-                } else {
-                    startRecording()
-                }
-            }) {
-                HStack(spacing: 12) {
-                    Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
-                        .font(.system(size: 24))
-                    Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
-                        .fontWeight(.semibold)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
-                .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
-                .cornerRadius(15)
-                .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+            // Input mode picker
+            Picker("Input Mode", selection: $inputMode) {
+                Label("Voice", systemImage: "mic.fill").tag(InputMode.voice)
+                Label("Type", systemImage: "keyboard").tag(InputMode.text)
             }
-            .disabled(isProcessing || !permissionGranted || !privacyConsent.hasConsented)
+            .pickerStyle(.segmented)
             .padding(.horizontal, 30)
+            .disabled(isProcessing || audioRecorder.isRecording)
+
+            if inputMode == .voice {
+                // Recording button
+                Button(action: {
+                    if audioRecorder.isRecording {
+                        stopRecording()
+                    } else {
+                        startRecording()
+                    }
+                }) {
+                    HStack(spacing: 12) {
+                        Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
+                            .font(.system(size: 24))
+                        Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
+                    .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
+                    .cornerRadius(15)
+                    .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+                }
+                .disabled(isProcessing || !permissionGranted || !privacyConsent.hasConsented)
+                .padding(.horizontal, 30)
+            } else {
+                // Text input
+                VStack(spacing: 12) {
+                    let inputLabel = translationDirection == .creoleToEnglish ? "Enter Haitian Creole text..." : "Enter English text..."
+                    TextEditor(text: $typedInput)
+                        .frame(minHeight: 100, maxHeight: 160)
+                        .padding(10)
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(UIColor.separator), lineWidth: 1)
+                        )
+                        .overlay(alignment: .topLeading) {
+                            if typedInput.isEmpty {
+                                Text(inputLabel)
+                                    .foregroundColor(Color(UIColor.placeholderText))
+                                    .padding(.top, 18)
+                                    .padding(.leading, 14)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                        .disabled(isProcessing || !privacyConsent.hasConsented)
+
+                    Button(action: { submitTypedText() }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 20))
+                            Text("Translate")
+                                .fontWeight(.semibold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented
+                            ? Color(UIColor.tertiarySystemBackground)
+                            : Color.accentColor)
+                        .foregroundColor(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented
+                            ? Color(UIColor.placeholderText)
+                            : .white)
+                        .cornerRadius(15)
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                    }
+                    .disabled(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented)
+                }
+                .padding(.horizontal, 30)
+            }
             
             // Status message
             if !statusMessage.isEmpty {
@@ -320,6 +382,49 @@ struct ContentView: View {
         processAudio(url: url)
     }
     
+    private func submitTypedText() {
+        let text = typedInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        errorMessage = nil
+        statusMessage = "⏳ Translating..."
+        processTextInput(text)
+    }
+
+    private func processTextInput(_ text: String) {
+        guard let apiKey = groqAPIKey, !apiKey.isEmpty else {
+            errorMessage = "Missing Groq API key. Add GROQ_API_KEY to Secrets.plist or set the environment variable in your scheme."
+            statusMessage = ""
+            return
+        }
+
+        isProcessing = true
+        transcription = "Processing..."
+        translation = "Waiting..."
+
+        Task {
+            do {
+                let groqService = GroqService(apiKey: apiKey)
+                let result = try await groqService.processText(text, direction: translationDirection)
+
+                await MainActor.run {
+                    transcription = result.transcription
+                    translation = result.translation
+                    statusMessage = "✅ Completed using \(result.provider)"
+                    isProcessing = false
+                    historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
+                }
+            } catch {
+                await MainActor.run {
+                    transcription = "Your transcription will appear here..."
+                    translation = "Your translation will appear here..."
+                    errorMessage = "Error: \(error.localizedDescription)"
+                    statusMessage = ""
+                    isProcessing = false
+                }
+            }
+        }
+    }
+
     private func processAudio(url: URL) {
         // Guard that we have an API key before performing network calls
         guard let apiKey = groqAPIKey, !apiKey.isEmpty else {
