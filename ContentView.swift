@@ -115,7 +115,7 @@ struct ContentView: View {
                                 Spacer()
                             }
                             .sheet(isPresented: $showSettings) {
-                                SettingsView(voiceSettings: voiceSettings)
+                                SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager)
                             }
                         }
                         .padding(.horizontal)

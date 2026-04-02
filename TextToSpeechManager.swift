@@ -44,17 +44,19 @@ class TextToSpeechManager: NSObject, ObservableObject {
         // Read voice preferences from UserDefaults (set via SettingsView / VoiceSettings)
         let groqVoice = UserDefaults.standard.string(forKey: "groqVoice") ?? "diana"
         let openAIVoice = UserDefaults.standard.string(forKey: "openAIVoice") ?? "alloy"
+        let playbackSpeed = UserDefaults.standard.double(forKey: "ttsPlaybackSpeed")
+        let speed = playbackSpeed == 0 ? 1.0 : playbackSpeed
 
         let isComputerVoice = { (voice: String) in voice == VoiceSettings.computerVoiceID }
 
         if language.hasPrefix("en"), let service = groqService, !isComputerVoice(groqVoice) {
-            // Groq Orpheus TTS for English
+            // Groq Orpheus TTS for English — speed applied via AVAudioPlayer.rate after decode
             isSpeaking = true
             Task {
                 do {
                     let audioData = try await service.synthesizeSpeech(text: text, voice: groqVoice)
                     await MainActor.run {
-                        self.playAudioData(audioData)
+                        self.playAudioData(audioData, rate: Float(speed))
                     }
                 } catch {
                     let errorDesc = error.localizedDescription
@@ -66,18 +68,18 @@ class TextToSpeechManager: NSObject, ObservableObject {
                     print("[TTS] Groq TTS failed, falling back to native: \(error)")
                     await MainActor.run {
                         self.lastError = "Groq TTS failed: \(errorDesc)"
-                        self.speakNatively(text: text, language: language)
+                        self.speakNatively(text: text, language: language, speed: speed)
                     }
                 }
             }
         } else if language.hasPrefix("ht"), let service = openAITTSService, !isComputerVoice(openAIVoice) {
-            // OpenAI TTS for Haitian Creole (ht, ht-HT)
+            // OpenAI TTS for Haitian Creole — speed sent directly in the API request
             isSpeaking = true
             Task {
                 do {
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: openAIVoice)
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: openAIVoice, speed: speed)
                     await MainActor.run {
-                        self.playAudioData(audioData)
+                        self.playAudioData(audioData, rate: 1.0) // speed already baked in by API
                     }
                 } catch {
                     let errorDesc = error.localizedDescription
@@ -98,13 +100,13 @@ class TextToSpeechManager: NSObject, ObservableObject {
                     print("[TTS] OpenAI TTS failed, falling back to native: \(error)")
                     await MainActor.run {
                         self.lastError = "OpenAI TTS failed: \(errorDesc)"
-                        self.speakNatively(text: text, language: language)
+                        self.speakNatively(text: text, language: language, speed: speed)
                     }
                 }
             }
         } else {
             // Computer voice selected by user, or no API service available
-            speakNatively(text: text, language: language)
+            speakNatively(text: text, language: language, speed: speed)
         }
     }
 
@@ -115,22 +117,27 @@ class TextToSpeechManager: NSObject, ObservableObject {
         isSpeaking = false
     }
 
-    private func playAudioData(_ data: Data) {
+    private func playAudioData(_ data: Data, rate: Float = 1.0) {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
             audioPlayer = try AVAudioPlayer(data: data)
             audioPlayer?.delegate = self
+            // enableRate must be set before prepareToPlay for rate changes to take effect
+            audioPlayer?.enableRate = true
+            audioPlayer?.rate = rate
+            audioPlayer?.prepareToPlay()
             audioPlayer?.play()
         } catch {
             isSpeaking = false
         }
     }
 
-    private func speakNatively(text: String, language: String) {
+    private func speakNatively(text: String, language: String, speed: Double = 1.0) {
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: language)
-        utterance.rate = 0.5
+        // AVSpeechUtterance.rate range is 0.0–1.0; clamp our 0.5–1.5 UI range accordingly
+        utterance.rate = Float(min(max(speed * 0.5, AVSpeechUtteranceMinimumSpeechRate), AVSpeechUtteranceMaximumSpeechRate))
         utterance.pitchMultiplier = 1.0
         utterance.volume = 1.0
         isSpeaking = true
