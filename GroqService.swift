@@ -95,6 +95,16 @@ class GroqService {
         self.apiKey = apiKey
     }
     
+    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
+        let translation = try await translateText(text, direction: direction)
+        return TranslationResult(
+            transcription: text,
+            translation: translation,
+            provider: "Groq (LLAMA)",
+            direction: direction
+        )
+    }
+
     func processAudio(fileURL: URL, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
         // Step 1: Transcribe audio using Whisper
         let transcription = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
