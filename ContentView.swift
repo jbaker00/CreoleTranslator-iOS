@@ -13,11 +13,12 @@ struct ContentView: View {
     @StateObject private var voiceSettings = VoiceSettings()
     @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
     @StateObject private var privacyConsent = DataPrivacyConsent()
+    @StateObject private var interstitialAd = InterstitialAdManager()
     @Environment(\.colorScheme) private var colorScheme
-    
+
     // Use the centralized Secrets helper to load the API key.
     private let groqAPIKey: String? = Secrets.apiKey
-    
+
     @State private var transcription = "Your transcription will appear here..."
     @State private var translation = "Your translation will appear here..."
     @State private var isProcessing = false
@@ -32,6 +33,7 @@ struct ContentView: View {
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
+    @State private var sessionTranslationCount = 0
 
     enum InputMode {
         case voice, text
@@ -412,6 +414,10 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
+                    sessionTranslationCount += 1
+                    if sessionTranslationCount % InterstitialAdManager.interstitialInterval == 0 {
+                        interstitialAd.showIfReady()
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -447,9 +453,11 @@ struct ContentView: View {
                     translation = result.translation
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
-
-                    // Save to history with direction
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
+                    sessionTranslationCount += 1
+                    if sessionTranslationCount % InterstitialAdManager.interstitialInterval == 0 {
+                        interstitialAd.showIfReady()
+                    }
                 }
 
                 // Clean up audio file
