@@ -6,6 +6,7 @@
 //
 
 import FirebaseAnalytics
+import StoreKit
 import SwiftUI
 
 struct ContentView: View {
@@ -34,6 +35,8 @@ struct ContentView: View {
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
+    @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
+    @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
 
     enum InputMode {
         case voice, text
@@ -433,6 +436,7 @@ struct ContentView: View {
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                     logTranslationEvent("translation_completed", inputMode: "text")
+                    maybeRequestReview()
                     interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
             } catch {
@@ -444,6 +448,22 @@ struct ContentView: View {
                     isProcessing = false
                     logTranslationEvent("translation_failed", inputMode: "text")
                 }
+            }
+        }
+    }
+
+    // Fires at the 3rd lifetime success, once per app version — one
+    // translation before the first interstitial (4th), so the rating
+    // sheet never lands on top of a full-screen ad.
+    private func maybeRequestReview() {
+        successfulTranslationCount += 1
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        guard successfulTranslationCount >= 3, lastReviewPromptVersion != version else { return }
+        lastReviewPromptVersion = version
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                SKStoreReviewController.requestReview(in: scene)
             }
         }
     }
@@ -479,6 +499,7 @@ struct ContentView: View {
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                     logTranslationEvent("translation_completed", inputMode: "voice")
+                    maybeRequestReview()
                     interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
 
