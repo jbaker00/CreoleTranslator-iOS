@@ -148,7 +148,12 @@ struct ContentView: View {
                 }
             }
             .onAppear {
-                checkMicrophonePermission()
+                // Returning users never see the consent sheet, so ask ATT
+                // here; first-run users get it after the sheet (see below).
+                // Resolving ATT early keeps banner requests personalized.
+                if privacyConsent.hasConsented {
+                    ATTAuthorization.requestIfNeeded()
+                }
                 // Warn user if API key is missing so they know to add it before using the network features.
                 if groqAPIKey == nil {
                     errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
@@ -173,6 +178,9 @@ struct ContentView: View {
             set: { _ in }
         )) {
             DataPrivacyConsentView(consentManager: privacyConsent)
+        }
+        .onChange(of: privacyConsent.hasConsented) { consented in
+            if consented { ATTAuthorization.requestIfNeeded() }
         }
     }
     
@@ -210,7 +218,7 @@ struct ContentView: View {
                     .cornerRadius(15)
                     .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                 }
-                .disabled(isProcessing || !permissionGranted || !privacyConsent.hasConsented)
+                .disabled(isProcessing || !privacyConsent.hasConsented)
                 .padding(.horizontal, 30)
             } else {
                 // Text input
@@ -368,19 +376,19 @@ struct ContentView: View {
         }
     }
     
-    private func checkMicrophonePermission() {
-        audioRecorder.requestPermission { granted in
-            permissionGranted = granted
-            if !granted {
-                errorMessage = "Microphone access denied. Please enable it in Settings."
-            }
-        }
-    }
-    
     private func startRecording() {
         errorMessage = nil
-        statusMessage = "🔴 Recording..."
-        recordingURL = audioRecorder.startRecording()
+        // Ask for mic access on first record tap — in context, the user
+        // understands exactly why the prompt is appearing.
+        audioRecorder.requestPermission { granted in
+            permissionGranted = granted
+            guard granted else {
+                errorMessage = "Microphone access denied. Please enable it in Settings."
+                return
+            }
+            statusMessage = "🔴 Recording..."
+            recordingURL = audioRecorder.startRecording()
+        }
     }
     
     private func stopRecording() {
