@@ -17,6 +17,7 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
 
     private var rewardedAd: RewardedAd?
     private var onReward: (() -> Void)?
+    private var onDismiss: (() -> Void)?
 
     override init() {
         super.init()
@@ -39,8 +40,9 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
 
     /// Shows the rewarded ad. Returns false if no ad is available
     /// (caller decides whether to grant the unlock anyway).
+    /// `onDismiss` fires after the ad closes — safe point to present UI.
     @discardableResult
-    func show(onReward: @escaping () -> Void) -> Bool {
+    func show(onReward: @escaping () -> Void, onDismiss: (() -> Void)? = nil) -> Bool {
         guard let ad = rewardedAd,
               let root = UIApplication.shared
                 .connectedScenes
@@ -52,6 +54,7 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
             return false
         }
         self.onReward = onReward
+        self.onDismiss = onDismiss
         ad.present(from: root) { [weak self] in
             self?.onReward?()
             self?.onReward = nil
@@ -64,6 +67,8 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         rewardedAd = nil
         isReady = false
+        onDismiss?()
+        onDismiss = nil
         preload()
     }
 
@@ -71,6 +76,8 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
         rewardedAd = nil
         isReady = false
         onReward = nil
+        onDismiss?()
+        onDismiss = nil
         preload()
     }
 }

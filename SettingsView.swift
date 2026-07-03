@@ -14,6 +14,10 @@ struct SettingsView: View {
     @StateObject private var rewardedAd = RewardedAdManager()
     @Environment(\.dismiss) private var dismiss
 
+    @State private var pendingUnlock: (id: String, provider: TTSProvider, isCreole: Bool)?
+    @State private var showUnlockPrompt = false
+    @State private var showUnlockedConfirmation = false
+
     init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager) {
         self.voiceSettings = voiceSettings
         self.ttsManager = ttsManager
@@ -28,6 +32,17 @@ struct SettingsView: View {
             }
             .navigationTitle("Voice Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("Unlock Premium Voices", isPresented: $showUnlockPrompt) {
+                Button("Watch Ad") { startUnlock() }
+                Button("Not Now", role: .cancel) { pendingUnlock = nil }
+            } message: {
+                Text("Watch a short ad to unlock all premium voices for 24 hours.")
+            }
+            .alert("Premium Voices Unlocked 🎉", isPresented: $showUnlockedConfirmation) {
+                Button("OK") {}
+            } message: {
+                Text("All premium voices are yours for the next 24 hours. After that, watch another short ad to unlock them again.")
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -118,7 +133,7 @@ struct SettingsView: View {
                             .font(.caption)
                     }
                     if voiceSettings.premiumVoicesUnlocked {
-                        Text("Premium voices unlocked ✓")
+                        Text("Premium voices unlocked ✓ \(unlockTimeRemaining) left")
                             .font(.caption)
                     } else {
                         Text("Watch one short ad to unlock all premium voices for 24 hours.")
@@ -233,16 +248,32 @@ struct SettingsView: View {
             setVoice(id, provider: provider, isCreole: isCreole)
             return
         }
-        let shown = rewardedAd.show {
-            voiceSettings.unlockPremiumVoices()
-            setVoice(id, provider: provider, isCreole: isCreole)
-            Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": id])
-        }
+        pendingUnlock = (id, provider, isCreole)
+        showUnlockPrompt = true
+    }
+
+    private func startUnlock() {
+        guard let pending = pendingUnlock else { return }
+        pendingUnlock = nil
+        var earned = false
+        let shown = rewardedAd.show(
+            onReward: {
+                earned = true
+                voiceSettings.unlockPremiumVoices()
+                setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
+                Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": pending.id])
+            },
+            onDismiss: {
+                // Confirmation must wait until the ad is off screen.
+                if earned { showUnlockedConfirmation = true }
+            }
+        )
         // No fill / not loaded yet — don't block the user on a missing ad.
         if !shown {
             voiceSettings.unlockPremiumVoices()
-            setVoice(id, provider: provider, isCreole: isCreole)
-            Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "no_fill", "voice": id])
+            setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
+            Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "no_fill", "voice": pending.id])
+            showUnlockedConfirmation = true
         }
     }
 
@@ -262,6 +293,11 @@ struct SettingsView: View {
             else        { voiceSettings.englishOpenAIVoice = id }
         case .system: break
         }
+    }
+
+    private var unlockTimeRemaining: String {
+        let hours = Int(((voiceSettings.premiumVoicesUnlockedUntil - Date().timeIntervalSince1970) / 3600).rounded(.up))
+        return hours <= 1 ? "less than 1 hour" : "\(hours) hours"
     }
 
     private func speedLabel(_ s: Double) -> String {
