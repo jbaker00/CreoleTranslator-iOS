@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var voiceSettings: VoiceSettings
     @ObservedObject var ttsManager: TextToSpeechManager
+    @StateObject private var rewardedAd = RewardedAdManager()
     @Environment(\.dismiss) private var dismiss
 
     init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager) {
@@ -78,17 +79,25 @@ struct SettingsView: View {
 
             Section {
                 ForEach(voices) { voice in
+                    let locked = voiceSettings.isVoiceLocked(voice.id) && voice.id != selectedId
                     Button {
-                        setVoice(voice.id, provider: provider, isCreole: isCreole)
+                        selectVoice(voice.id, locked: locked, provider: provider, isCreole: isCreole)
                     } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(voice.name)
-                                    .font(.body)
-                                    .foregroundColor(.primary)
-                                Text(voice.description)
+                                HStack(spacing: 6) {
+                                    Text(voice.name)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                    if locked {
+                                        Image(systemName: "lock.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                                Text(locked ? "Premium — watch a short ad to unlock" : voice.description)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(locked ? .orange : .secondary)
                             }
                             Spacer()
                             if voice.id == selectedId {
@@ -102,9 +111,18 @@ struct SettingsView: View {
             } header: {
                 Text("Choose \(langName) Voice")
             } footer: {
-                if provider == .groq {
-                    Text("Groq Orpheus has a 200 character limit per utterance.")
-                        .font(.caption)
+                VStack(alignment: .leading, spacing: 4) {
+                    if provider == .groq {
+                        Text("Groq Orpheus has a 200 character limit per utterance.")
+                            .font(.caption)
+                    }
+                    if voiceSettings.premiumVoicesUnlocked {
+                        Text("Premium voices unlocked ✓")
+                            .font(.caption)
+                    } else {
+                        Text("Watch one short ad to unlock all premium voices for 24 hours.")
+                            .font(.caption)
+                    }
                 }
             }
         }
@@ -208,6 +226,22 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private func selectVoice(_ id: String, locked: Bool, provider: TTSProvider, isCreole: Bool) {
+        guard locked else {
+            setVoice(id, provider: provider, isCreole: isCreole)
+            return
+        }
+        let shown = rewardedAd.show {
+            voiceSettings.unlockPremiumVoices()
+            setVoice(id, provider: provider, isCreole: isCreole)
+        }
+        // No fill / not loaded yet — don't block the user on a missing ad.
+        if !shown {
+            voiceSettings.unlockPremiumVoices()
+            setVoice(id, provider: provider, isCreole: isCreole)
+        }
+    }
 
     private func selectedVoiceId(provider: TTSProvider, isCreole: Bool) -> String {
         switch provider {

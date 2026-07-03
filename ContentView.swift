@@ -33,7 +33,6 @@ struct ContentView: View {
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
-    @State private var sessionTranslationCount = 0
 
     enum InputMode {
         case voice, text
@@ -414,10 +413,7 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
-                    sessionTranslationCount += 1
-                    if sessionTranslationCount % InterstitialAdManager.interstitialInterval == 0 {
-                        interstitialAd.showIfReady()
-                    }
+                    interstitialAd.translationCompleted()
                 }
             } catch {
                 await MainActor.run {
@@ -454,10 +450,7 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
-                    sessionTranslationCount += 1
-                    if sessionTranslationCount % InterstitialAdManager.interstitialInterval == 0 {
-                        interstitialAd.showIfReady()
-                    }
+                    interstitialAd.translationCompleted()
                 }
 
                 // Clean up audio file
