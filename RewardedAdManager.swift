@@ -18,6 +18,7 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     private var rewardedAd: RewardedAd?
     private var onReward: (() -> Void)?
     private var onDismiss: (() -> Void)?
+    private var onPresentFailure: (() -> Void)?
 
     override init() {
         super.init()
@@ -41,8 +42,11 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
     /// Shows the rewarded ad. Returns false if no ad is available
     /// (caller decides whether to grant the unlock anyway).
     /// `onDismiss` fires after the ad closes — safe point to present UI.
+    /// `onPresentFailure` fires if the SDK could not put the ad on screen.
     @discardableResult
-    func show(onReward: @escaping () -> Void, onDismiss: (() -> Void)? = nil) -> Bool {
+    func show(onReward: @escaping () -> Void,
+              onDismiss: (() -> Void)? = nil,
+              onPresentFailure: (() -> Void)? = nil) -> Bool {
         guard let ad = rewardedAd,
               let root = UIApplication.shared
                 .connectedScenes
@@ -53,9 +57,15 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
             preload()
             return false
         }
+        // Present from the top-most VC — the root is usually already
+        // presenting the settings sheet, and presenting from a VC that is
+        // already presenting fails silently.
+        var top = root
+        while let presented = top.presentedViewController { top = presented }
         self.onReward = onReward
         self.onDismiss = onDismiss
-        ad.present(from: root) { [weak self] in
+        self.onPresentFailure = onPresentFailure
+        ad.present(from: top) { [weak self] in
             self?.onReward?()
             self?.onReward = nil
         }
@@ -68,16 +78,22 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
         rewardedAd = nil
         isReady = false
         onDismiss?()
-        onDismiss = nil
+        clearCallbacks()
         preload()
     }
 
     func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        print("[RewardedAd] failed to present: \(error.localizedDescription)")
         rewardedAd = nil
         isReady = false
-        onReward = nil
-        onDismiss?()
-        onDismiss = nil
+        onPresentFailure?()
+        clearCallbacks()
         preload()
+    }
+
+    private func clearCallbacks() {
+        onReward = nil
+        onDismiss = nil
+        onPresentFailure = nil
     }
 }

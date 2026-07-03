@@ -255,26 +255,39 @@ struct SettingsView: View {
     private func startUnlock() {
         guard let pending = pendingUnlock else { return }
         pendingUnlock = nil
-        var earned = false
-        let shown = rewardedAd.show(
-            onReward: {
-                earned = true
-                voiceSettings.unlockPremiumVoices()
-                setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
-                Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": pending.id])
-            },
-            onDismiss: {
-                // Confirmation must wait until the ad is off screen.
-                if earned { showUnlockedConfirmation = true }
+        // Wait for the alert's dismiss animation — presenting the ad while
+        // the alert is still on screen makes present() fail silently.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            var earned = false
+            let shown = rewardedAd.show(
+                onReward: {
+                    earned = true
+                    voiceSettings.unlockPremiumVoices()
+                    setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
+                    Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": pending.id])
+                },
+                onDismiss: {
+                    // Confirmation must wait until the ad is off screen.
+                    if earned { showUnlockedConfirmation = true }
+                },
+                onPresentFailure: {
+                    // User already agreed to watch — don't punish an SDK
+                    // presentation failure by keeping voices locked.
+                    grantUnlock(pending, via: "present_failed")
+                }
+            )
+            // No fill / not loaded yet — don't block the user on a missing ad.
+            if !shown {
+                grantUnlock(pending, via: "no_fill")
             }
-        )
-        // No fill / not loaded yet — don't block the user on a missing ad.
-        if !shown {
-            voiceSettings.unlockPremiumVoices()
-            setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
-            Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "no_fill", "voice": pending.id])
-            showUnlockedConfirmation = true
         }
+    }
+
+    private func grantUnlock(_ pending: (id: String, provider: TTSProvider, isCreole: Bool), via: String) {
+        voiceSettings.unlockPremiumVoices()
+        setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
+        Analytics.logEvent("premium_voices_unlocked", parameters: ["via": via, "voice": pending.id])
+        showUnlockedConfirmation = true
     }
 
     private func selectedVoiceId(provider: TTSProvider, isCreole: Bool) -> String {
