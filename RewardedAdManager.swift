@@ -65,6 +65,10 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
         self.onReward = onReward
         self.onDismiss = onDismiss
         self.onPresentFailure = onPresentFailure
+        // One-shot: drop our reference so a re-entrant show() can't
+        // re-present the same ad and overwrite the callbacks above.
+        rewardedAd = nil
+        isReady = false
         ad.present(from: top) { [weak self] in
             self?.onReward?()
             self?.onReward = nil

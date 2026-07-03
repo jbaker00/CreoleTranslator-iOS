@@ -26,10 +26,6 @@ class DataPrivacyConsent: ObservableObject {
         hasConsented = true
     }
 
-    func revokeConsent() {
-        hasConsented = false
-    }
-
     var shouldShowConsentDialog: Bool {
         return !hasConsented
     }
@@ -67,22 +63,17 @@ struct DataPrivacyConsentView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            VStack(spacing: 10) {
-                Button(action: { consentManager.grantConsent() }) {
-                    Text("Allow & Continue")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-
-                Button(action: { consentManager.revokeConsent() }) {
-                    Text("Not Now")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+            // Single honest action: the app cannot function without Groq,
+            // so a decline button that goes nowhere would be a dark pattern
+            // (and an App Store 5.1.1 rejection risk).
+            Button(action: { consentManager.grantConsent() }) {
+                Text("I Understand — Continue")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.accentColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
             }
             .padding(.horizontal, 24)
 

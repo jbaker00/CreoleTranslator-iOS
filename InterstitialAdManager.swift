@@ -11,6 +11,9 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
     static let interstitialInterval = 4
     static let maxPerSession = 6
     static let minSecondsBetweenShows: TimeInterval = 120
+    // iOS keeps apps alive for days; without this, heavy users hit the
+    // session cap once and never see interstitials again.
+    static let sessionResetAfterBackground: TimeInterval = 30 * 60
 
     private let adUnitID = "ca-app-pub-7871017136061682/1614363987"
 
@@ -18,10 +21,29 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
     private var translationCount = 0
     private var shownThisSession = 0
     private var lastShownAt: Date?
+    private var backgroundedAt: Date?
 
     override init() {
         super.init()
         preload()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(didEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(willEnterForeground),
+            name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    @objc private func didEnterBackground() {
+        backgroundedAt = Date()
+    }
+
+    @objc private func willEnterForeground() {
+        guard let bg = backgroundedAt,
+              Date().timeIntervalSince(bg) >= Self.sessionResetAfterBackground else { return }
+        translationCount = 0
+        shownThisSession = 0
+        lastShownAt = nil
     }
 
     /// Call after each successful translation; shows an ad when due.
@@ -56,7 +78,16 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
             preload()
             return
         }
-        ad.present(from: root)
+        var top = root
+        while let presented = top.presentedViewController { top = presented }
+        ad.present(from: top)
+    }
+
+    // MARK: FullScreenContentDelegate
+
+    // Count and log only when the ad actually reaches the screen, so a
+    // failed presentation doesn't burn a session slot or fake an impression.
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
         shownThisSession += 1
         lastShownAt = Date()
         Analytics.logEvent("interstitial_shown", parameters: [
@@ -64,8 +95,6 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
             "shown_this_session": shownThisSession,
         ])
     }
-
-    // MARK: FullScreenContentDelegate
 
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         interstitial = nil

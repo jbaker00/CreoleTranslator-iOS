@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var pendingUnlock: (id: String, provider: TTSProvider, isCreole: Bool)?
     @State private var showUnlockPrompt = false
     @State private var showUnlockedConfirmation = false
+    @State private var isUnlocking = false
 
     init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager) {
         self.voiceSettings = voiceSettings
@@ -32,16 +33,16 @@ struct SettingsView: View {
             }
             .navigationTitle("Voice Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .alert("Unlock Premium Voices", isPresented: $showUnlockPrompt) {
+            .alert("Unlock Extra Voices", isPresented: $showUnlockPrompt) {
                 Button("Watch Ad") { startUnlock() }
                 Button("Not Now", role: .cancel) { pendingUnlock = nil }
             } message: {
-                Text("Watch a short ad to unlock all premium voices for 24 hours.")
+                Text("Watch one short ad. All voices free for 24 hours.\n\nGade yon ti piblisite. Tout vwa yo gratis pou 24 èdtan.")
             }
-            .alert("Premium Voices Unlocked 🎉", isPresented: $showUnlockedConfirmation) {
+            .alert("Voices Unlocked", isPresented: $showUnlockedConfirmation) {
                 Button("OK") {}
             } message: {
-                Text("All premium voices are yours for the next 24 hours. After that, watch another short ad to unlock them again.")
+                Text("All voices are free for the next 24 hours.\n\nTout vwa yo gratis pou pwochen 24 èdtan yo.")
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -95,7 +96,8 @@ struct SettingsView: View {
 
             Section {
                 ForEach(voices) { voice in
-                    let locked = voiceSettings.isVoiceLocked(voice.id) && voice.id != selectedId
+                    let inAdTier = voiceSettings.isVoiceLocked(voice.id)
+                    let locked = inAdTier && voice.id != selectedId
                     Button {
                         selectVoice(voice.id, locked: locked, provider: provider, isCreole: isCreole)
                     } label: {
@@ -111,7 +113,9 @@ struct SettingsView: View {
                                             .foregroundColor(.orange)
                                     }
                                 }
-                                Text(locked ? "Premium — watch a short ad to unlock" : voice.description)
+                                Text(locked ? "Free with a short ad"
+                                     : inAdTier ? "Your current voice — always available"
+                                     : voice.description)
                                     .font(.caption)
                                     .foregroundColor(locked ? .orange : .secondary)
                             }
@@ -133,10 +137,10 @@ struct SettingsView: View {
                             .font(.caption)
                     }
                     if voiceSettings.premiumVoicesUnlocked {
-                        Text("Premium voices unlocked ✓ \(unlockTimeRemaining) left")
+                        Text("All voices unlocked ✓ \(unlockTimeRemaining) left")
                             .font(.caption)
                     } else {
-                        Text("Watch one short ad to unlock all premium voices for 24 hours.")
+                        Text("Extra voices are free for 24 hours after one short ad.")
                             .font(.caption)
                     }
                 }
@@ -248,16 +252,26 @@ struct SettingsView: View {
             setVoice(id, provider: provider, isCreole: isCreole)
             return
         }
+        guard !isUnlocking else { return }
         pendingUnlock = (id, provider, isCreole)
         showUnlockPrompt = true
     }
 
     private func startUnlock() {
-        guard let pending = pendingUnlock else { return }
+        guard let pending = pendingUnlock, !isUnlocking else { return }
         pendingUnlock = nil
-        // Wait for the alert's dismiss animation — presenting the ad while
-        // the alert is still on screen makes present() fail silently.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        isUnlocking = true
+        Task { @MainActor in
+            // Wait for the alert's dismiss animation — presenting the ad
+            // while the alert is still on screen fails silently.
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            // The manager preloads when the sheet opens; give a slow network
+            // up to 3s before falling back to a free grant.
+            var waitedNs: UInt64 = 0
+            while !rewardedAd.isReady && waitedNs < 3_000_000_000 {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                waitedNs += 250_000_000
+            }
             var earned = false
             let shown = rewardedAd.show(
                 onReward: {
@@ -267,6 +281,7 @@ struct SettingsView: View {
                     Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": pending.id])
                 },
                 onDismiss: {
+                    isUnlocking = false
                     // Confirmation must wait until the ad is off screen.
                     if earned { showUnlockedConfirmation = true }
                 },
@@ -276,7 +291,7 @@ struct SettingsView: View {
                     grantUnlock(pending, via: "present_failed")
                 }
             )
-            // No fill / not loaded yet — don't block the user on a missing ad.
+            // Still no ad after waiting — don't block the user on a missing ad.
             if !shown {
                 grantUnlock(pending, via: "no_fill")
             }
@@ -284,6 +299,7 @@ struct SettingsView: View {
     }
 
     private func grantUnlock(_ pending: (id: String, provider: TTSProvider, isCreole: Bool), via: String) {
+        isUnlocking = false
         voiceSettings.unlockPremiumVoices()
         setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
         Analytics.logEvent("premium_voices_unlocked", parameters: ["via": via, "voice": pending.id])
