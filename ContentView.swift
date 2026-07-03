@@ -5,6 +5,7 @@
 //  Main UI for Creole to English Translator
 //
 
+import FirebaseAnalytics
 import SwiftUI
 
 struct ContentView: View {
@@ -83,6 +84,11 @@ struct ContentView: View {
                                     withAnimation {
                                         showHistory.toggle()
                                     }
+                                    if showHistory {
+                                        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                                            AnalyticsParameterScreenName: "history",
+                                        ])
+                                    }
                                 }) {
                                     ZStack {
                                         Circle()
@@ -101,7 +107,12 @@ struct ContentView: View {
                                         .foregroundColor(.secondary)
                                 }
 
-                                Button(action: { showSettings = true }) {
+                                Button(action: {
+                                    showSettings = true
+                                    Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                                        AnalyticsParameterScreenName: "settings",
+                                    ])
+                                }) {
                                     ZStack {
                                         Circle()
                                             .fill(Color(UIColor.secondarySystemBackground))
@@ -413,6 +424,7 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
+                    logTranslationEvent("translation_completed", inputMode: "text")
                     interstitialAd.translationCompleted()
                 }
             } catch {
@@ -422,9 +434,17 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+                    logTranslationEvent("translation_failed", inputMode: "text")
                 }
             }
         }
+    }
+
+    private func logTranslationEvent(_ name: String, inputMode: String) {
+        Analytics.logEvent(name, parameters: [
+            "direction": translationDirection == .creoleToEnglish ? "creole_to_english" : "english_to_creole",
+            "input_mode": inputMode,
+        ])
     }
 
     private func processAudio(url: URL) {
@@ -450,6 +470,7 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
+                    logTranslationEvent("translation_completed", inputMode: "voice")
                     interstitialAd.translationCompleted()
                 }
 
@@ -463,6 +484,7 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+                    logTranslationEvent("translation_failed", inputMode: "voice")
                 }
 
                 // Clean up audio file

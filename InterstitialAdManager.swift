@@ -1,3 +1,4 @@
+import FirebaseAnalytics
 import GoogleMobileAds
 import UIKit
 
@@ -58,6 +59,10 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
         ad.present(from: root)
         shownThisSession += 1
         lastShownAt = Date()
+        Analytics.logEvent("interstitial_shown", parameters: [
+            "translation_count": translationCount,
+            "shown_this_session": shownThisSession,
+        ])
     }
 
     // MARK: FullScreenContentDelegate

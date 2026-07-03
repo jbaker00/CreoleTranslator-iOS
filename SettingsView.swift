@@ -5,6 +5,7 @@
 //  Per-language voice provider, voice selection, playback speed, and test buttons.
 //
 
+import FirebaseAnalytics
 import SwiftUI
 
 struct SettingsView: View {
@@ -235,11 +236,13 @@ struct SettingsView: View {
         let shown = rewardedAd.show {
             voiceSettings.unlockPremiumVoices()
             setVoice(id, provider: provider, isCreole: isCreole)
+            Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": id])
         }
         // No fill / not loaded yet — don't block the user on a missing ad.
         if !shown {
             voiceSettings.unlockPremiumVoices()
             setVoice(id, provider: provider, isCreole: isCreole)
+            Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "no_fill", "voice": id])
         }
     }
 
