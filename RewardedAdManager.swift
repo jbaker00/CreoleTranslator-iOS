@@ -5,7 +5,13 @@ import UIKit
 @MainActor
 class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
 
+#if DEBUG
+    // Google sample rewarded unit — new production units can take hours to
+    // start serving, so debug builds use this to always get a fill.
+    private let adUnitID = "ca-app-pub-3940256099942544/1712485313"
+#else
     private let adUnitID = "ca-app-pub-7871017136061682/5611090338"
+#endif
 
     @Published private(set) var isReady = false
 
@@ -23,8 +29,10 @@ class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
                 rewardedAd = try await RewardedAd.load(with: adUnitID, request: Request())
                 rewardedAd?.fullScreenContentDelegate = self
                 isReady = true
+                print("[RewardedAd] loaded and ready")
             } catch {
                 isReady = false
+                print("[RewardedAd] failed to load: \(error.localizedDescription)")
             }
         }
     }
