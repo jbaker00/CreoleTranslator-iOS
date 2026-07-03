@@ -26,6 +26,8 @@ class DataPrivacyConsent: ObservableObject {
         hasConsented = true
     }
 
+    // The privacy policy promises consent can be revoked in Settings —
+    // this backs that promise. Revoking re-presents the consent sheet.
     func revokeConsent() {
         hasConsented = false
     }
@@ -49,7 +51,7 @@ struct DataPrivacyConsentView: View {
                 .font(.title3)
                 .fontWeight(.bold)
 
-            Text("Your speech is sent to Groq AI for transcription and translation. Audio is processed temporarily and never stored.")
+            Text("Your speech is sent to Groq AI for transcription and translation, and translated text is sent to OpenAI to generate spoken audio. Audio is processed temporarily and never stored; translations are saved only on your device.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -67,22 +69,17 @@ struct DataPrivacyConsentView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            VStack(spacing: 10) {
-                Button(action: { consentManager.grantConsent() }) {
-                    Text("Allow & Continue")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                }
-
-                Button(action: { consentManager.revokeConsent() }) {
-                    Text("Not Now")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+            // Single honest action: the app cannot function without Groq,
+            // so a decline button that goes nowhere would be a dark pattern
+            // (and an App Store 5.1.1 rejection risk).
+            Button(action: { consentManager.grantConsent() }) {
+                Text("I Understand — Continue")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.accentColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
             }
             .padding(.horizontal, 24)
 
@@ -98,7 +95,7 @@ private struct ConsentSheetPresentation: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 16, *) {
             content
-                .presentationDetents([.height(360)])
+                .presentationDetents([.height(400)])
                 .presentationDragIndicator(.visible)
         } else {
             content

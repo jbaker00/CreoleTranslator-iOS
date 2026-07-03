@@ -5,6 +5,7 @@
 //  Main UI for Creole to English Translator
 //
 
+import FirebaseAnalytics
 import SwiftUI
 
 struct ContentView: View {
@@ -33,7 +34,6 @@ struct ContentView: View {
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
-    @State private var sessionTranslationCount = 0
 
     enum InputMode {
         case voice, text
@@ -84,6 +84,11 @@ struct ContentView: View {
                                     withAnimation {
                                         showHistory.toggle()
                                     }
+                                    if showHistory {
+                                        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                                            AnalyticsParameterScreenName: "history",
+                                        ])
+                                    }
                                 }) {
                                     ZStack {
                                         Circle()
@@ -102,7 +107,12 @@ struct ContentView: View {
                                         .foregroundColor(.secondary)
                                 }
 
-                                Button(action: { showSettings = true }) {
+                                Button(action: {
+                                    showSettings = true
+                                    Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                                        AnalyticsParameterScreenName: "settings",
+                                    ])
+                                }) {
                                     ZStack {
                                         Circle()
                                             .fill(Color(UIColor.secondarySystemBackground))
@@ -117,7 +127,7 @@ struct ContentView: View {
                                 Spacer()
                             }
                             .sheet(isPresented: $showSettings) {
-                                SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager)
+                                SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager, privacyConsent: privacyConsent)
                             }
                         }
                         .padding(.horizontal)
@@ -138,7 +148,12 @@ struct ContentView: View {
                 }
             }
             .onAppear {
-                checkMicrophonePermission()
+                // Returning users never see the consent sheet, so ask ATT
+                // here; first-run users get it after the sheet (see below).
+                // Resolving ATT early keeps banner requests personalized.
+                if privacyConsent.hasConsented {
+                    ATTAuthorization.requestIfNeeded()
+                }
                 // Warn user if API key is missing so they know to add it before using the network features.
                 if groqAPIKey == nil {
                     errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
@@ -163,6 +178,9 @@ struct ContentView: View {
             set: { _ in }
         )) {
             DataPrivacyConsentView(consentManager: privacyConsent)
+        }
+        .onChange(of: privacyConsent.hasConsented) { consented in
+            if consented { ATTAuthorization.requestIfNeeded() }
         }
     }
     
@@ -200,7 +218,7 @@ struct ContentView: View {
                     .cornerRadius(15)
                     .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                 }
-                .disabled(isProcessing || !permissionGranted || !privacyConsent.hasConsented)
+                .disabled(isProcessing || !privacyConsent.hasConsented)
                 .padding(.horizontal, 30)
             } else {
                 // Text input
@@ -358,19 +376,19 @@ struct ContentView: View {
         }
     }
     
-    private func checkMicrophonePermission() {
-        audioRecorder.requestPermission { granted in
-            permissionGranted = granted
-            if !granted {
-                errorMessage = "Microphone access denied. Please enable it in Settings."
-            }
-        }
-    }
-    
     private func startRecording() {
         errorMessage = nil
-        statusMessage = "🔴 Recording..."
-        recordingURL = audioRecorder.startRecording()
+        // Ask for mic access on first record tap — in context, the user
+        // understands exactly why the prompt is appearing.
+        audioRecorder.requestPermission { granted in
+            permissionGranted = granted
+            guard granted else {
+                errorMessage = "Microphone access denied. Please enable it in Settings."
+                return
+            }
+            statusMessage = "🔴 Recording..."
+            recordingURL = audioRecorder.startRecording()
+        }
     }
     
     private func stopRecording() {
@@ -414,10 +432,8 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
-                    sessionTranslationCount += 1
-                    if sessionTranslationCount % InterstitialAdManager.interstitialInterval == 0 {
-                        interstitialAd.showIfReady()
-                    }
+                    logTranslationEvent("translation_completed", inputMode: "text")
+                    interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
             } catch {
                 await MainActor.run {
@@ -426,9 +442,17 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+                    logTranslationEvent("translation_failed", inputMode: "text")
                 }
             }
         }
+    }
+
+    private func logTranslationEvent(_ name: String, inputMode: String) {
+        Analytics.logEvent(name, parameters: [
+            "direction": translationDirection == .creoleToEnglish ? "creole_to_english" : "english_to_creole",
+            "input_mode": inputMode,
+        ])
     }
 
     private func processAudio(url: URL) {
@@ -454,10 +478,8 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
-                    sessionTranslationCount += 1
-                    if sessionTranslationCount % InterstitialAdManager.interstitialInterval == 0 {
-                        interstitialAd.showIfReady()
-                    }
+                    logTranslationEvent("translation_completed", inputMode: "voice")
+                    interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
 
                 // Clean up audio file
@@ -470,6 +492,7 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+                    logTranslationEvent("translation_failed", inputMode: "voice")
                 }
 
                 // Clean up audio file

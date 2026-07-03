@@ -63,6 +63,29 @@ class VoiceSettings: ObservableObject {
         Voice(id: "shimmer", name: "Shimmer", description: "Soft & gentle (female)"),
     ]
 
+    // MARK: - Premium voice unlock (rewarded ad)
+
+    // Default voices stay free; the rest are "premium" and unlock for 24h
+    // after watching a rewarded ad. Already-selected voices are grandfathered
+    // (the gate applies at selection time only).
+    static let freeVoiceIds: Set<String> = ["diana", "alloy"]
+    static let premiumUnlockHours: Double = 24
+
+    @AppStorage("premiumVoicesUnlockedUntil") var premiumVoicesUnlockedUntil: Double = 0
+
+    var premiumVoicesUnlocked: Bool {
+        Date().timeIntervalSince1970 < premiumVoicesUnlockedUntil
+    }
+
+    func unlockPremiumVoices() {
+        premiumVoicesUnlockedUntil = Date().timeIntervalSince1970 + Self.premiumUnlockHours * 3600
+        objectWillChange.send()
+    }
+
+    func isVoiceLocked(_ id: String) -> Bool {
+        !Self.freeVoiceIds.contains(id) && !premiumVoicesUnlocked
+    }
+
     // MARK: - Helpers
 
     /// Providers valid for English

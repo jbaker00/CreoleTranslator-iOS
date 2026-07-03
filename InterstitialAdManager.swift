@@ -1,20 +1,65 @@
+import FirebaseAnalytics
 import GoogleMobileAds
 import UIKit
 
-// Shows an interstitial ad every interstitialInterval successful translations per session.
-// Replace adUnitID with the real unit ID from your AdMob dashboard before release.
+// Shows an interstitial ad every interstitialInterval successful translations,
+// capped per session and spaced by a minimum time gap so rapid translators
+// aren't hit with back-to-back full-screen ads.
 @MainActor
 class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
 
-    static let interstitialInterval = 25
+    static let interstitialInterval = 4
+    static let maxPerSession = 6
+    static let minSecondsBetweenShows: TimeInterval = 120
+    // iOS keeps apps alive for days; without this, heavy users hit the
+    // session cap once and never see interstitials again.
+    static let sessionResetAfterBackground: TimeInterval = 30 * 60
 
     private let adUnitID = "ca-app-pub-7871017136061682/1614363987"
 
     private var interstitial: InterstitialAd?
+    private var translationCount = 0
+    private var translationsSinceLastShow = 0
+    private var shownThisSession = 0
+    private var lastShownAt: Date?
+    private var backgroundedAt: Date?
 
     override init() {
         super.init()
         preload()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(didEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(willEnterForeground),
+            name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    @objc private func didEnterBackground() {
+        backgroundedAt = Date()
+    }
+
+    @objc private func willEnterForeground() {
+        guard let bg = backgroundedAt,
+              Date().timeIntervalSince(bg) >= Self.sessionResetAfterBackground else { return }
+        translationCount = 0
+        translationsSinceLastShow = 0
+        shownThisSession = 0
+        lastShownAt = nil
+    }
+
+    /// Call after each successful translation; shows an ad when due.
+    /// Pass `isSpeaking` so an ad never covers a spoken translation —
+    /// a skipped opportunity retries on the next translation.
+    func translationCompleted(isSpeaking: Bool = false) {
+        translationCount += 1
+        translationsSinceLastShow += 1
+        guard translationsSinceLastShow >= Self.interstitialInterval,
+              shownThisSession < Self.maxPerSession,
+              !isSpeaking,
+              lastShownAt.map({ Date().timeIntervalSince($0) >= Self.minSecondsBetweenShows }) ?? true
+        else { return }
+        showIfReady()
     }
 
     func preload() {
@@ -28,7 +73,7 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
         }
     }
 
-    func showIfReady() {
+    private func showIfReady() {
         guard let ad = interstitial,
               let root = UIApplication.shared
                 .connectedScenes
@@ -39,10 +84,24 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
             preload()
             return
         }
-        ad.present(from: root)
+        var top = root
+        while let presented = top.presentedViewController { top = presented }
+        ad.present(from: top)
     }
 
     // MARK: FullScreenContentDelegate
+
+    // Count and log only when the ad actually reaches the screen, so a
+    // failed presentation doesn't burn a session slot or fake an impression.
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
+        shownThisSession += 1
+        translationsSinceLastShow = 0
+        lastShownAt = Date()
+        Analytics.logEvent("interstitial_shown", parameters: [
+            "translation_count": translationCount,
+            "shown_this_session": shownThisSession,
+        ])
+    }
 
     func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         interstitial = nil

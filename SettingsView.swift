@@ -5,16 +5,25 @@
 //  Per-language voice provider, voice selection, playback speed, and test buttons.
 //
 
+import FirebaseAnalytics
 import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var voiceSettings: VoiceSettings
     @ObservedObject var ttsManager: TextToSpeechManager
+    @ObservedObject var privacyConsent: DataPrivacyConsent
+    @StateObject private var rewardedAd = RewardedAdManager()
     @Environment(\.dismiss) private var dismiss
 
-    init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager) {
+    @State private var pendingUnlock: (id: String, provider: TTSProvider, isCreole: Bool)?
+    @State private var showUnlockPrompt = false
+    @State private var showUnlockedConfirmation = false
+    @State private var isUnlocking = false
+
+    init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager, privacyConsent: DataPrivacyConsent) {
         self.voiceSettings = voiceSettings
         self.ttsManager = ttsManager
+        self.privacyConsent = privacyConsent
     }
 
     var body: some View {
@@ -23,9 +32,21 @@ struct SettingsView: View {
                 languageSection(isCreole: false)
                 languageSection(isCreole: true)
                 testSection
+                privacySection
             }
             .navigationTitle("Voice Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("Unlock Extra Voices", isPresented: $showUnlockPrompt) {
+                Button("Watch Ad") { startUnlock() }
+                Button("Not Now", role: .cancel) { pendingUnlock = nil }
+            } message: {
+                Text("Watch one short ad. All voices free for 24 hours.\n\nGade yon ti piblisite. Tout vwa yo gratis pou 24 èdtan.")
+            }
+            .alert("Voices Unlocked", isPresented: $showUnlockedConfirmation) {
+                Button("OK") {}
+            } message: {
+                Text("All voices are free for the next 24 hours.\n\nTout vwa yo gratis pou pwochen 24 èdtan yo.")
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -78,17 +99,28 @@ struct SettingsView: View {
 
             Section {
                 ForEach(voices) { voice in
+                    let inAdTier = voiceSettings.isVoiceLocked(voice.id)
+                    let locked = inAdTier && voice.id != selectedId
                     Button {
-                        setVoice(voice.id, provider: provider, isCreole: isCreole)
+                        selectVoice(voice.id, locked: locked, provider: provider, isCreole: isCreole)
                     } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(voice.name)
-                                    .font(.body)
-                                    .foregroundColor(.primary)
-                                Text(voice.description)
+                                HStack(spacing: 6) {
+                                    Text(voice.name)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                    if locked {
+                                        Image(systemName: "lock.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                                Text(locked ? "Free with a short ad"
+                                     : inAdTier ? "Your current voice — always available"
+                                     : voice.description)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(locked ? .orange : .secondary)
                             }
                             Spacer()
                             if voice.id == selectedId {
@@ -102,9 +134,18 @@ struct SettingsView: View {
             } header: {
                 Text("Choose \(langName) Voice")
             } footer: {
-                if provider == .groq {
-                    Text("Groq Orpheus has a 200 character limit per utterance.")
-                        .font(.caption)
+                VStack(alignment: .leading, spacing: 4) {
+                    if provider == .groq {
+                        Text("Groq Orpheus has a 200 character limit per utterance.")
+                            .font(.caption)
+                    }
+                    if voiceSettings.premiumVoicesUnlocked {
+                        Text("All voices unlocked ✓ \(unlockTimeRemaining) left")
+                            .font(.caption)
+                    } else {
+                        Text("Extra voices are free for 24 hours after one short ad.")
+                            .font(.caption)
+                    }
                 }
             }
         }
@@ -207,7 +248,87 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Privacy section
+
+    private var privacySection: some View {
+        Section {
+            Link(destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!) {
+                Label("Privacy Policy", systemImage: "doc.text")
+            }
+            Button(role: .destructive) {
+                privacyConsent.revokeConsent()
+                dismiss()
+            } label: {
+                Label("Revoke AI Data Consent", systemImage: "hand.raised")
+            }
+        } header: {
+            Label("Privacy", systemImage: "lock.shield")
+        } footer: {
+            Text("Revoking consent disables recording and translation until you consent again.")
+                .font(.caption)
+        }
+    }
+
     // MARK: - Helpers
+
+    private func selectVoice(_ id: String, locked: Bool, provider: TTSProvider, isCreole: Bool) {
+        guard locked else {
+            setVoice(id, provider: provider, isCreole: isCreole)
+            return
+        }
+        guard !isUnlocking else { return }
+        pendingUnlock = (id, provider, isCreole)
+        showUnlockPrompt = true
+    }
+
+    private func startUnlock() {
+        guard let pending = pendingUnlock, !isUnlocking else { return }
+        pendingUnlock = nil
+        isUnlocking = true
+        Task { @MainActor in
+            // Wait for the alert's dismiss animation — presenting the ad
+            // while the alert is still on screen fails silently.
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            // The manager preloads when the sheet opens; give a slow network
+            // up to 3s before falling back to a free grant.
+            var waitedNs: UInt64 = 0
+            while !rewardedAd.isReady && waitedNs < 3_000_000_000 {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                waitedNs += 250_000_000
+            }
+            var earned = false
+            let shown = rewardedAd.show(
+                onReward: {
+                    earned = true
+                    voiceSettings.unlockPremiumVoices()
+                    setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
+                    Analytics.logEvent("premium_voices_unlocked", parameters: ["via": "rewarded_ad", "voice": pending.id])
+                },
+                onDismiss: {
+                    isUnlocking = false
+                    // Confirmation must wait until the ad is off screen.
+                    if earned { showUnlockedConfirmation = true }
+                },
+                onPresentFailure: {
+                    // User already agreed to watch — don't punish an SDK
+                    // presentation failure by keeping voices locked.
+                    grantUnlock(pending, via: "present_failed")
+                }
+            )
+            // Still no ad after waiting — don't block the user on a missing ad.
+            if !shown {
+                grantUnlock(pending, via: "no_fill")
+            }
+        }
+    }
+
+    private func grantUnlock(_ pending: (id: String, provider: TTSProvider, isCreole: Bool), via: String) {
+        isUnlocking = false
+        voiceSettings.unlockPremiumVoices()
+        setVoice(pending.id, provider: pending.provider, isCreole: pending.isCreole)
+        Analytics.logEvent("premium_voices_unlocked", parameters: ["via": via, "voice": pending.id])
+        showUnlockedConfirmation = true
+    }
 
     private func selectedVoiceId(provider: TTSProvider, isCreole: Bool) -> String {
         switch provider {
@@ -227,6 +348,11 @@ struct SettingsView: View {
         }
     }
 
+    private var unlockTimeRemaining: String {
+        let hours = Int(((voiceSettings.premiumVoicesUnlockedUntil - Date().timeIntervalSince1970) / 3600).rounded(.up))
+        return hours <= 1 ? "less than 1 hour" : "\(hours) hours"
+    }
+
     private func speedLabel(_ s: Double) -> String {
         switch s {
         case ..<0.65: return "Very Slow (\(String(format: "%.2f", s))×)"
@@ -241,6 +367,7 @@ struct SettingsView: View {
 #Preview {
     SettingsView(
         voiceSettings: VoiceSettings(),
-        ttsManager: TextToSpeechManager()
+        ttsManager: TextToSpeechManager(),
+        privacyConsent: DataPrivacyConsent()
     )
 }
