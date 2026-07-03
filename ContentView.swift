@@ -127,7 +127,7 @@ struct ContentView: View {
                                 Spacer()
                             }
                             .sheet(isPresented: $showSettings) {
-                                SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager)
+                                SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager, privacyConsent: privacyConsent)
                             }
                         }
                         .padding(.horizontal)
@@ -433,7 +433,7 @@ struct ContentView: View {
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                     logTranslationEvent("translation_completed", inputMode: "text")
-                    interstitialAd.translationCompleted()
+                    interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
             } catch {
                 await MainActor.run {
@@ -479,7 +479,7 @@ struct ContentView: View {
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                     logTranslationEvent("translation_completed", inputMode: "voice")
-                    interstitialAd.translationCompleted()
+                    interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
 
                 // Clean up audio file

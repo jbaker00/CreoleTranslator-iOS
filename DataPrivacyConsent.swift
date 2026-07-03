@@ -26,6 +26,12 @@ class DataPrivacyConsent: ObservableObject {
         hasConsented = true
     }
 
+    // The privacy policy promises consent can be revoked in Settings —
+    // this backs that promise. Revoking re-presents the consent sheet.
+    func revokeConsent() {
+        hasConsented = false
+    }
+
     var shouldShowConsentDialog: Bool {
         return !hasConsented
     }
@@ -45,7 +51,7 @@ struct DataPrivacyConsentView: View {
                 .font(.title3)
                 .fontWeight(.bold)
 
-            Text("Your speech is sent to Groq AI for transcription and translation. Audio is processed temporarily and never stored.")
+            Text("Your speech is sent to Groq AI for transcription and translation, and translated text is sent to OpenAI to generate spoken audio. Audio is processed temporarily and never stored; translations are saved only on your device.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -89,7 +95,7 @@ private struct ConsentSheetPresentation: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 16, *) {
             content
-                .presentationDetents([.height(360)])
+                .presentationDetents([.height(400)])
                 .presentationDragIndicator(.visible)
         } else {
             content

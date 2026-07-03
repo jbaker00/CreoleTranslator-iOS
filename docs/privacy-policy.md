@@ -6,7 +6,7 @@ title: Privacy Policy — Creole Translator
 # Privacy Policy
 
 **Creole Translator**
-*Last Updated: March 8, 2026*
+*Last Updated: July 3, 2026*
 
 ## Overview
 
@@ -27,8 +27,9 @@ When you use the App's recording feature, your voice is captured by your device'
 
 When you use the "speak" feature to hear a translation read aloud:
 
-- The translated text is sent to **Groq AI** to generate speech audio.
-- Text is transmitted over an encrypted HTTPS connection and is not stored on your device after playback.
+- English text is sent to **Groq AI** and Haitian Creole text is sent to **OpenAI** to generate speech audio, depending on the voice you select.
+- Text is transmitted over an encrypted HTTPS connection. The generated audio is not stored after playback.
+- Please review [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy/) for details on how they handle submitted data.
 
 ### Analytics
 
@@ -42,7 +43,7 @@ Firebase Analytics does **not** collect the content of your speech or translatio
 
 ### Advertising
 
-The App displays banner advertisements served by **Google AdMob**. AdMob may use device identifiers and other information to serve personalized or non-personalized ads, subject to your App Tracking Transparency (ATT) preference on your device. Review [Google's Advertising Privacy Policy](https://policies.google.com/technologies/ads) for more detail.
+The App displays advertisements served by **Google AdMob**: banner ads, occasional full-screen interstitial ads between translations, and optional rewarded ads you can choose to watch to unlock extra voices. AdMob may use device identifiers and other information to serve personalized or non-personalized ads, subject to your App Tracking Transparency (ATT) preference on your device. Review [Google's Advertising Privacy Policy](https://policies.google.com/technologies/ads) for more detail.
 
 ## Microphone Permission
 
@@ -51,7 +52,7 @@ The App requires microphone access to record your speech. You will be prompted t
 ## Data Retention
 
 - **Audio:** Not stored on your device after processing. Groq AI's retention practices are governed by their own privacy policy.
-- **Translation history:** Stored locally on your device only. It is never transmitted to any server.
+- **Translation history:** Transcribed and translated text is saved to your on-device history (up to 50 entries). It is stored locally only and never transmitted to any server. You can clear it in the App at any time.
 - **Analytics:** Retained by Firebase per Google's standard data retention settings.
 
 ## Children's Privacy
@@ -69,7 +70,8 @@ The App is not directed at children under 13. We do not knowingly collect person
 
 | Service | Purpose | Privacy Policy |
 |---|---|---|
-| Groq AI | Speech transcription, translation, text-to-speech | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
+| Groq AI | Speech transcription, translation, English text-to-speech | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
+| OpenAI | Haitian Creole text-to-speech | [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy/) |
 | Google Firebase | Analytics and crash reporting | [policies.google.com/privacy](https://policies.google.com/privacy) |
 | Google AdMob | In-app advertising | [policies.google.com/technologies/ads](https://policies.google.com/technologies/ads) |
 

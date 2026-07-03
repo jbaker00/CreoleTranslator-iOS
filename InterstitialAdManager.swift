@@ -19,6 +19,7 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
 
     private var interstitial: InterstitialAd?
     private var translationCount = 0
+    private var translationsSinceLastShow = 0
     private var shownThisSession = 0
     private var lastShownAt: Date?
     private var backgroundedAt: Date?
@@ -42,15 +43,20 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
         guard let bg = backgroundedAt,
               Date().timeIntervalSince(bg) >= Self.sessionResetAfterBackground else { return }
         translationCount = 0
+        translationsSinceLastShow = 0
         shownThisSession = 0
         lastShownAt = nil
     }
 
     /// Call after each successful translation; shows an ad when due.
-    func translationCompleted() {
+    /// Pass `isSpeaking` so an ad never covers a spoken translation —
+    /// a skipped opportunity retries on the next translation.
+    func translationCompleted(isSpeaking: Bool = false) {
         translationCount += 1
-        guard translationCount % Self.interstitialInterval == 0,
+        translationsSinceLastShow += 1
+        guard translationsSinceLastShow >= Self.interstitialInterval,
               shownThisSession < Self.maxPerSession,
+              !isSpeaking,
               lastShownAt.map({ Date().timeIntervalSince($0) >= Self.minSecondsBetweenShows }) ?? true
         else { return }
         showIfReady()
@@ -89,6 +95,7 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
     // failed presentation doesn't burn a session slot or fake an impression.
     func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
         shownThisSession += 1
+        translationsSinceLastShow = 0
         lastShownAt = Date()
         Analytics.logEvent("interstitial_shown", parameters: [
             "translation_count": translationCount,

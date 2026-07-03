@@ -11,6 +11,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var voiceSettings: VoiceSettings
     @ObservedObject var ttsManager: TextToSpeechManager
+    @ObservedObject var privacyConsent: DataPrivacyConsent
     @StateObject private var rewardedAd = RewardedAdManager()
     @Environment(\.dismiss) private var dismiss
 
@@ -19,9 +20,10 @@ struct SettingsView: View {
     @State private var showUnlockedConfirmation = false
     @State private var isUnlocking = false
 
-    init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager) {
+    init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager, privacyConsent: DataPrivacyConsent) {
         self.voiceSettings = voiceSettings
         self.ttsManager = ttsManager
+        self.privacyConsent = privacyConsent
     }
 
     var body: some View {
@@ -30,6 +32,7 @@ struct SettingsView: View {
                 languageSection(isCreole: false)
                 languageSection(isCreole: true)
                 testSection
+                privacySection
             }
             .navigationTitle("Voice Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -245,6 +248,27 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Privacy section
+
+    private var privacySection: some View {
+        Section {
+            Link(destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!) {
+                Label("Privacy Policy", systemImage: "doc.text")
+            }
+            Button(role: .destructive) {
+                privacyConsent.revokeConsent()
+                dismiss()
+            } label: {
+                Label("Revoke AI Data Consent", systemImage: "hand.raised")
+            }
+        } header: {
+            Label("Privacy", systemImage: "lock.shield")
+        } footer: {
+            Text("Revoking consent disables recording and translation until you consent again.")
+                .font(.caption)
+        }
+    }
+
     // MARK: - Helpers
 
     private func selectVoice(_ id: String, locked: Bool, provider: TTSProvider, isCreole: Bool) {
@@ -343,6 +367,7 @@ struct SettingsView: View {
 #Preview {
     SettingsView(
         voiceSettings: VoiceSettings(),
-        ttsManager: TextToSpeechManager()
+        ttsManager: TextToSpeechManager(),
+        privacyConsent: DataPrivacyConsent()
     )
 }
