@@ -5,10 +5,7 @@ import UIKit
 @MainActor
 class RewardedAdManager: NSObject, ObservableObject, FullScreenContentDelegate {
 
-    // TODO: replace with a real REWARDED ad unit created in the AdMob console
-    // (no rewarded unit exists yet for pub-7871017136061682). This is Google's
-    // official test ID — it serves test ads and earns nothing.
-    private let adUnitID = "ca-app-pub-3940256099942544/1712485313"
+    private let adUnitID = "ca-app-pub-7871017136061682/5611090338"
 
     @Published private(set) var isReady = false
 
