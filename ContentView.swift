@@ -13,13 +13,12 @@ struct ContentView: View {
     @StateObject private var audioRecorder = AudioRecorder()
     @StateObject private var historyManager = TranslationHistoryManager()
     @StateObject private var voiceSettings = VoiceSettings()
-    @StateObject private var ttsManager = TextToSpeechManager(apiKey: Secrets.apiKey, openAIApiKey: Secrets.openAIApiKey)
+    @StateObject private var ttsManager = TextToSpeechManager()
     @StateObject private var privacyConsent = DataPrivacyConsent()
     @StateObject private var interstitialAd = InterstitialAdManager()
     @Environment(\.colorScheme) private var colorScheme
 
     // Use the centralized Secrets helper to load the API key.
-    private let groqAPIKey: String? = Secrets.apiKey
 
     @State private var transcription = "Your transcription will appear here..."
     @State private var translation = "Your translation will appear here..."
@@ -156,10 +155,6 @@ struct ContentView: View {
                 // Resolving ATT early keeps banner requests personalized.
                 if privacyConsent.hasConsented {
                     ATTAuthorization.requestIfNeeded()
-                }
-                // Warn user if API key is missing so they know to add it before using the network features.
-                if groqAPIKey == nil {
-                    errorMessage = "Missing Groq API key. Add GROQ_API_KEY to a gitignored Secrets.plist or set the GROQ_API_KEY environment variable in your Xcode scheme. See README for setup."
                 }
             }
 
@@ -414,19 +409,13 @@ struct ContentView: View {
     }
 
     private func processTextInput(_ text: String) {
-        guard let apiKey = groqAPIKey, !apiKey.isEmpty else {
-            errorMessage = "Missing Groq API key. Add GROQ_API_KEY to Secrets.plist or set the environment variable in your scheme."
-            statusMessage = ""
-            return
-        }
-
         isProcessing = true
         transcription = "Processing..."
         translation = "Waiting..."
 
         Task {
             do {
-                let groqService = GroqService(apiKey: apiKey)
+                let groqService = GroqService()
                 let result = try await groqService.processText(text, direction: translationDirection)
 
                 await MainActor.run {
@@ -476,20 +465,13 @@ struct ContentView: View {
     }
 
     private func processAudio(url: URL) {
-        // Guard that we have an API key before performing network calls
-        guard let apiKey = groqAPIKey, !apiKey.isEmpty else {
-            errorMessage = "Missing Groq API key. Add GROQ_API_KEY to Secrets.plist or set the environment variable in your scheme."
-            statusMessage = ""
-            return
-        }
-
         isProcessing = true
         transcription = "Processing..."
         translation = "Waiting..."
 
         Task {
             do {
-                let groqService = GroqService(apiKey: apiKey)
+                let groqService = GroqService()
                 let result = try await groqService.processAudio(fileURL: url, direction: translationDirection)
 
                 await MainActor.run {

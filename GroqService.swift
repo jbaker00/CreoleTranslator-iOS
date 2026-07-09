@@ -2,7 +2,8 @@
 //  GroqService.swift
 //  CreoleTranslator
 //
-//  Service for interacting with Groq API (Whisper + LLAMA)
+//  Speech/translation via the api-proxy Cloud Function (Groq upstream).
+//  The Groq key lives in Firebase Secret Manager; the app ships no credentials.
 //
 
 import Foundation
@@ -25,12 +26,11 @@ enum TranslationDirection: String, Codable {
         }
     }
 
-    var systemPrompt: String {
+    // Proxy direction code — the system prompt lives server-side
+    var proxyDirection: String {
         switch self {
-        case .creoleToEnglish:
-            return "You are a professional translator. Translate the following Haitian Creole text to English. Only respond with the English translation, nothing else."
-        case .englishToCreole:
-            return "You are a professional translator. Translate the following English text to Haitian Creole. Only respond with the Creole translation, nothing else."
+        case .creoleToEnglish: return "ht-en"
+        case .englishToCreole: return "en-ht"
         }
     }
 }
@@ -39,17 +39,8 @@ struct TranscriptionResponse: Codable {
     let text: String
 }
 
-struct ChatResponse: Codable {
-    let choices: [ChatChoice]
-}
-
-struct ChatChoice: Codable {
-    let message: ChatMessage
-}
-
-struct ChatMessage: Codable {
-    let role: String
-    let content: String
+struct ProxyTranslationResponse: Codable {
+    let translation: String
 }
 
 struct TranslationResult {
@@ -66,11 +57,11 @@ enum GroqError: LocalizedError {
     case translationFailed(String)
     case speechFailed(String)
     case invalidResponse
-    
+
     var errorDescription: String? {
         switch self {
         case .invalidAPIKey:
-            return "Invalid API key. Please check your Groq API key."
+            return "Service authorization failed. Please try again later."
         case .networkError(let message):
             return "Network error: \(message)"
         case .transcriptionFailed(let message):
@@ -86,15 +77,14 @@ enum GroqError: LocalizedError {
 }
 
 class GroqService {
-    private let apiKey: String
-    private let transcriptionURL = URL(string: "https://api.groq.com/openai/v1/audio/transcriptions")!
-    private let chatURL = URL(string: "https://api.groq.com/openai/v1/chat/completions")!
-    private let speechURL = URL(string: "https://api.groq.com/openai/v1/audio/speech")!
-    
-    init(apiKey: String) {
-        self.apiKey = apiKey
-    }
-    
+    private static let proxyBase = "https://us-central1-jbaker-api-proxy.cloudfunctions.net/api"
+    private let transcriptionURL = URL(string: "\(proxyBase)/v1/transcribe")!
+    private let translateURL = URL(string: "\(proxyBase)/v1/translate")!
+    private let speechURL = URL(string: "\(proxyBase)/v1/tts-groq")!
+
+    // apiKey retained for call-site compatibility; the proxy needs no key
+    init(apiKey: String? = nil) {}
+
     func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
         let translation = try await translateText(text, direction: direction)
         return TranslationResult(
@@ -119,122 +109,74 @@ class GroqService {
             direction: direction
         )
     }
-    
-    private func transcribeAudio(fileURL: URL, language: String) async throws -> String {
-        let boundary = "Boundary-\(UUID().uuidString)"
-        var request = URLRequest(url: transcriptionURL)
+
+    private func proxyRequest(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue(ProxyDevice.id, forHTTPHeaderField: "x-device-id")
+        request.timeoutInterval = 30
+        return request
+    }
 
-        // Read audio file data
-        let audioData = try Data(contentsOf: fileURL)
+    private func transcribeAudio(fileURL: URL, language: String) async throws -> String {
+        var request = proxyRequest(url: transcriptionURL)
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+        request.setValue(language, forHTTPHeaderField: "x-language")
+        request.httpBody = try Data(contentsOf: fileURL)
 
-        // Build multipart form data
-        var body = Data()
-
-        // Add file field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"recording.m4a\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: audio/m4a\r\n\r\n".data(using: .utf8)!)
-        body.append(audioData)
-        body.append("\r\n".data(using: .utf8)!)
-
-        // Add model field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
-        body.append("whisper-large-v3\r\n".data(using: .utf8)!)
-
-        // Add language field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
-        body.append("\(language)\r\n".data(using: .utf8)!)
-
-        // Add response_format field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n".data(using: .utf8)!)
-        body.append("json\r\n".data(using: .utf8)!)
-
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-
-        request.httpBody = body
-        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            
+
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw GroqError.invalidResponse
             }
-            
+
             if httpResponse.statusCode == 401 {
                 throw GroqError.invalidAPIKey
             }
-            
+
             guard httpResponse.statusCode == 200 else {
                 let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw GroqError.transcriptionFailed(errorMessage)
             }
-            
-            let decoder = JSONDecoder()
-            let result = try decoder.decode(TranscriptionResponse.self, from: data)
+
+            let result = try JSONDecoder().decode(TranscriptionResponse.self, from: data)
             return result.text
-            
+
         } catch let error as GroqError {
             throw error
         } catch {
             throw GroqError.networkError(error.localizedDescription)
         }
     }
-    
+
     private func translateText(_ text: String, direction: TranslationDirection) async throws -> String {
-        var request = URLRequest(url: chatURL)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        var request = proxyRequest(url: translateURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "text": text,
+            "direction": direction.proxyDirection
+        ])
 
-        let payload: [String: Any] = [
-            "model": "llama-3.3-70b-versatile",
-            "messages": [
-                [
-                    "role": "system",
-                    "content": direction.systemPrompt
-                ],
-                [
-                    "role": "user",
-                    "content": text
-                ]
-            ],
-            "temperature": 0.3,
-            "max_tokens": 1024
-        ]
-
-        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
-        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            
+
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw GroqError.invalidResponse
             }
-            
+
             if httpResponse.statusCode == 401 {
                 throw GroqError.invalidAPIKey
             }
-            
+
             guard httpResponse.statusCode == 200 else {
                 let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw GroqError.translationFailed(errorMessage)
             }
-            
-            let decoder = JSONDecoder()
-            let result = try decoder.decode(ChatResponse.self, from: data)
-            
-            guard let translation = result.choices.first?.message.content else {
-                throw GroqError.invalidResponse
-            }
-            
-            return translation
-            
+
+            let result = try JSONDecoder().decode(ProxyTranslationResponse.self, from: data)
+            return result.translation
+
         } catch let error as GroqError {
             throw error
         } catch {
@@ -242,22 +184,15 @@ class GroqService {
         }
     }
 
-    // Synthesize speech from text using Groq's Orpheus TTS model.
+    // Synthesize speech from text using Groq's Orpheus TTS model (via proxy).
     // Returns raw WAV audio data suitable for playback with AVAudioPlayer.
     func synthesizeSpeech(text: String, voice: String = "diana") async throws -> Data {
-        var request = URLRequest(url: speechURL)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        var request = proxyRequest(url: speechURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let payload: [String: Any] = [
-            "model": "canopylabs/orpheus-v1-english",
-            "input": text,
-            "voice": voice,
-            "response_format": "wav"
-        ]
-
-        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "text": text,
+            "voice": voice
+        ])
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)

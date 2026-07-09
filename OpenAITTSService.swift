@@ -2,38 +2,39 @@
 //  OpenAITTSService.swift
 //  CreoleTranslator
 //
-//  Service for OpenAI text-to-speech API, used for multilingual TTS (e.g. Haitian Creole)
-//  where Groq's English-only models are not suitable.
+//  Multilingual TTS (e.g. Haitian Creole) via the api-proxy Cloud Function.
+//  The OpenAI key lives server-side; app binaries ship no credentials.
 //
 
 import Foundation
 
-class OpenAITTSService {
-    private let apiKey: String
-    private let speechURL = URL(string: "https://api.openai.com/v1/audio/speech")!
-
-    init(apiKey: String) {
-        self.apiKey = apiKey
+enum ProxyDevice {
+    static var id: String {
+        let key = "proxyDeviceId"
+        if let existing = UserDefaults.standard.string(forKey: key) {
+            return existing
+        }
+        let fresh = UUID().uuidString
+        UserDefaults.standard.set(fresh, forKey: key)
+        return fresh
     }
+}
 
-    // Synthesize speech using OpenAI TTS (tts-1 model). Returns MP3 audio data.
-    // The tts-1 model is multilingual and will speak whatever language the input text is in.
-    // speed: 0.25–4.0 per OpenAI docs; 1.0 is normal speed.
+class OpenAITTSService {
+    private let speechURL = URL(string: "https://us-central1-jbaker-api-proxy.cloudfunctions.net/api/v1/tts")!
+
+    // Synthesize speech via the proxy (tts-1 server-side). Returns MP3 audio data.
+    // The model is multilingual and will speak whatever language the input text is in.
     func synthesizeSpeech(text: String, voice: String = "alloy", speed: Double = 1.0) async throws -> Data {
         var request = URLRequest(url: speechURL)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // Clamp speed to OpenAI's supported range
-        let clampedSpeed = min(max(speed, 0.25), 4.0)
+        request.setValue(ProxyDevice.id, forHTTPHeaderField: "x-device-id")
 
         let payload: [String: Any] = [
-            "model": "tts-1",
-            "input": text,
+            "text": text,
             "voice": voice,
-            "response_format": "mp3",
-            "speed": clampedSpeed
+            "speed": min(max(speed, 0.25), 2.0)
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -43,10 +44,6 @@ class OpenAITTSService {
 
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw GroqError.invalidResponse
-            }
-
-            if httpResponse.statusCode == 401 {
-                throw GroqError.invalidAPIKey
             }
 
             guard httpResponse.statusCode == 200 else {

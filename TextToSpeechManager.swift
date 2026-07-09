@@ -19,15 +19,11 @@ class TextToSpeechManager: NSObject, ObservableObject {
     private var groqService: GroqService?
     private var openAITTSService: OpenAITTSService?
 
-    init(apiKey: String? = nil, openAIApiKey: String? = nil) {
+    init(apiKey: String? = nil) {
         super.init()
         synthesizer.delegate = self
-        if let key = apiKey, !key.isEmpty {
-            groqService = GroqService(apiKey: key)
-        }
-        if let key = openAIApiKey, !key.isEmpty {
-            openAITTSService = OpenAITTSService(apiKey: key)
-        }
+        groqService = GroqService()
+        openAITTSService = OpenAITTSService()
     }
 
     func speak(text: String, language: String = "en-US") {
