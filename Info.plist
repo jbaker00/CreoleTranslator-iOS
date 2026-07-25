@@ -27,9 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs access to your microphone to record Haitian Creole speech for translation.</string>
+	<string>Tap Start Recording to speak instead of typing — for example, say a sentence in Haitian Creole and see it written out in English. Your recording is sent to our speech service to be transcribed and translated, and the copy on your device is deleted once the translation comes back. The microphone is only used between Start Recording and Stop Recording.</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier will be used to deliver personalized ads to you.</string>
+	<string>Creole Translator is free and ad-supported. Allowing this lets your device's advertising identifier be shared with our ad provider so the ads you see match your interests — for example, ads for language learning or travel to Haiti instead of unrelated products — and so we can tell which ads led to an install. Decline and translation works exactly the same; you'll just see less relevant ads.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
