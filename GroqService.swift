@@ -37,10 +37,22 @@ enum TranslationDirection: String, Codable {
 
 struct TranscriptionResponse: Codable {
     let text: String
+    let provider: String?
 }
 
 struct ProxyTranslationResponse: Codable {
     let translation: String
+    let provider: String?
+}
+
+// Maps the proxy's raw provider id to a short, user-facing label.
+private func displayProvider(_ raw: String?) -> String {
+    switch raw {
+    case "groq": return "Groq"
+    case "openai-fallback": return "OpenAI (backup)"
+    case "openrouter-fallback": return "OpenRouter (backup)"
+    default: return "Groq"
+    }
 }
 
 struct TranslationResult {
@@ -86,26 +98,28 @@ class GroqService {
     init(apiKey: String? = nil) {}
 
     func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
-        let translation = try await translateText(text, direction: direction)
+        let (translation, provider) = try await translateText(text, direction: direction)
         return TranslationResult(
             transcription: text,
             translation: translation,
-            provider: "Groq (LLAMA)",
+            provider: displayProvider(provider),
             direction: direction
         )
     }
 
     func processAudio(fileURL: URL, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
         // Step 1: Transcribe audio using Whisper
-        let transcription = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
+        let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
 
-        // Step 2: Translate using LLAMA
-        let translation = try await translateText(transcription, direction: direction)
+        // Step 2: Translate
+        let (translation, translateProvider) = try await translateText(transcription, direction: direction)
 
+        // If either leg used its fallback, surface that — it's the more useful signal.
+        let provider = transcribeProvider == "groq" ? translateProvider : transcribeProvider
         return TranslationResult(
             transcription: transcription,
             translation: translation,
-            provider: "Groq (Whisper + LLAMA)",
+            provider: displayProvider(provider),
             direction: direction
         )
     }
@@ -118,7 +132,7 @@ class GroqService {
         return request
     }
 
-    private func transcribeAudio(fileURL: URL, language: String) async throws -> String {
+    private func transcribeAudio(fileURL: URL, language: String) async throws -> (text: String, provider: String?) {
         var request = proxyRequest(url: transcriptionURL)
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(language, forHTTPHeaderField: "x-language")
@@ -141,7 +155,7 @@ class GroqService {
             }
 
             let result = try JSONDecoder().decode(TranscriptionResponse.self, from: data)
-            return result.text
+            return (result.text, result.provider)
 
         } catch let error as GroqError {
             throw error
@@ -150,7 +164,7 @@ class GroqService {
         }
     }
 
-    private func translateText(_ text: String, direction: TranslationDirection) async throws -> String {
+    private func translateText(_ text: String, direction: TranslationDirection) async throws -> (text: String, provider: String?) {
         var request = proxyRequest(url: translateURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
@@ -175,7 +189,7 @@ class GroqService {
             }
 
             let result = try JSONDecoder().decode(ProxyTranslationResponse.self, from: data)
-            return result.translation
+            return (result.translation, result.provider)
 
         } catch let error as GroqError {
             throw error
