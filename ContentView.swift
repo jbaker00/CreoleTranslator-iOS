@@ -30,7 +30,6 @@ struct ContentView: View {
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
     @State private var showPhrasebook = false
-    @State private var showKnowYourRights = false
     @State private var showSettings = false
     @State private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
@@ -87,7 +86,6 @@ struct ContentView: View {
                                 Button(action: {
                                     withAnimation {
                                         showPhrasebook = false
-                                        showKnowYourRights = false
                                         showHistory.toggle()
                                     }
                                     if showHistory {
@@ -116,7 +114,6 @@ struct ContentView: View {
                                 Button(action: {
                                     withAnimation {
                                         showHistory = false
-                                        showKnowYourRights = false
                                         showPhrasebook.toggle()
                                     }
                                     if showPhrasebook {
@@ -131,29 +128,6 @@ struct ContentView: View {
                                             .frame(width: 44, height: 44)
 
                                         Image(systemName: showPhrasebook ? "xmark" : "book.fill")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.accentColor)
-                                    }
-                                }
-
-                                Button(action: {
-                                    withAnimation {
-                                        showHistory = false
-                                        showPhrasebook = false
-                                        showKnowYourRights.toggle()
-                                    }
-                                    if showKnowYourRights {
-                                        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
-                                            AnalyticsParameterScreenName: "know_your_rights",
-                                        ])
-                                    }
-                                }) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(UIColor.secondarySystemBackground))
-                                            .frame(width: 44, height: 44)
-
-                                        Image(systemName: showKnowYourRights ? "xmark" : "hand.raised.fill")
                                             .font(.system(size: 20))
                                             .foregroundColor(.accentColor)
                                     }
@@ -186,17 +160,13 @@ struct ContentView: View {
                     }
                     .padding(.top, 40)
 
-                    // Show history, phrasebook, know your rights, or main content
+                    // Show history, phrasebook, or main content
                     if showHistory {
                         HistoryView(historyManager: historyManager)
                             .padding(.horizontal, 20)
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     } else if showPhrasebook {
                         PhrasebookView()
-                            .padding(.horizontal, 20)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                    } else if showKnowYourRights {
-                        KnowYourRightsView()
                             .padding(.horizontal, 20)
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     } else {
