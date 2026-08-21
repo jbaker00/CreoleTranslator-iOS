@@ -81,7 +81,7 @@ struct PhrasebookView: View {
     }
 }
 
-private struct PhrasebookRow: View {
+struct PhrasebookRow: View {
     let entry: PhrasebookEntry
     let direction: TranslationDirection
     @ObservedObject var ttsManager: TextToSpeechManager
@@ -164,7 +164,7 @@ private struct PhrasebookRow: View {
 // window or door for someone else to read — text auto-shrinks to fill the
 // screen without scrolling, and reflows automatically if the phone is
 // rotated (the app already supports both orientations).
-private struct FullScreenStatementView: View {
+struct FullScreenStatementView: View {
     let text: String
     @Environment(\.dismiss) private var dismiss
 

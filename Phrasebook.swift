@@ -34,16 +34,16 @@ struct PhrasebookCategory: Identifiable {
 enum Phrasebook {
     static let categories: [PhrasebookCategory] = [
         PhrasebookCategory(name: "Greetings", icon: "hand.wave.fill", entries: [
-            PhrasebookEntry(english: "Hello / Good day", creole: "Bonjou"),
+            PhrasebookEntry(english: "Hello / Good day", creole: "Allo bonjou"),
             PhrasebookEntry(english: "Good evening", creole: "Bonswa"),
             PhrasebookEntry(english: "How are you?", creole: "Kijan ou ye?"),
             PhrasebookEntry(english: "I'm fine, thank you", creole: "Mwen byen, mèsi"),
             PhrasebookEntry(english: "Thank you", creole: "Mèsi"),
-            PhrasebookEntry(english: "You're welcome", creole: "Pa gen dekwa"),
-            PhrasebookEntry(english: "Please", creole: "Souple"),
+            PhrasebookEntry(english: "You're welcome", creole: "Pa dekwa"),
+            PhrasebookEntry(english: "Please", creole: "Sil vous plè"),
             PhrasebookEntry(english: "Goodbye", creole: "Orevwa"),
             PhrasebookEntry(english: "My name is...", creole: "Mwen rele..."),
-            PhrasebookEntry(english: "Nice to meet you", creole: "Kontan konnen ou"),
+            PhrasebookEntry(english: "Nice to meet you", creole: "Mwen byen kontan fè konesans ou"),
         ]),
         PhrasebookCategory(name: "Basics", icon: "text.bubble.fill", entries: [
             PhrasebookEntry(english: "Yes", creole: "Wi"),
@@ -52,47 +52,8 @@ enum Phrasebook {
             PhrasebookEntry(english: "I don't understand", creole: "Mwen pa konprann"),
             PhrasebookEntry(english: "Do you speak English?", creole: "Èske ou pale angle?"),
             PhrasebookEntry(english: "How much does this cost?", creole: "Konbyen sa koute?"),
-            PhrasebookEntry(english: "Where is the bathroom?", creole: "Kote twalèt la?"),
+            PhrasebookEntry(english: "Where is the bathroom?", creole: "Kote twalèt la ye sil vous plè"),
             PhrasebookEntry(english: "One, two, three", creole: "En, de, twa"),
-        ]),
-        // Source: Immigrant Legal Resource Center (ILRC) "Red Card" — the standard,
-        // widely-distributed know-your-rights card for immigration/ICE encounters.
-        // English: https://www.ilrc.org/sites/default/files/documents/red_card-self_srv-english.pdf
-        // Haitian Creole (ILRC's own official translation):
-        // https://www.ilrc.org/sites/default/files/2023-06/Artwork%20for%20Printing%20Your%20Own%20Red%20Cards%20-%20Haitian%20Creole.pdf
-        // ILRC's own card keeps the legal statement (the amendment-citing paragraph you
-        // hand to an officer) in English on every language version — that's preserved
-        // below, not translated by us. Fetched/verified 2026-08-21.
-        PhrasebookCategory(name: "Know Your Rights", icon: "hand.raised.fill", entries: [
-            PhrasebookEntry(
-                english: "Do not open the door if an immigration agent is knocking",
-                creole: "Pa louvri pòt la si yon ajan imigrasyon frape pòt la"
-            ),
-            PhrasebookEntry(
-                english: "Do not answer any questions from an immigration officer. You have the right to remain silent",
-                creole: "Pa reponn okenn keksyon yon ofisye imigrasyon si yo eseye pale avèk ou. Ou gen dwa pou rete an silans"
-            ),
-            PhrasebookEntry(
-                english: "Do not sign anything without speaking to a lawyer first. You have the right to speak with a lawyer",
-                creole: "Pa siyen anyen san w' pa pale anvan avèk yon avoka. Ou gen dwa pale ak yon avoka"
-            ),
-            PhrasebookEntry(
-                english: "Am I free to leave?",
-                creole: "Èske m' lib pou ale?"
-            ),
-            PhrasebookEntry(
-                english: "I want to speak to a lawyer",
-                creole: "Mwen vle pale ak yon avoka"
-            ),
-            PhrasebookEntry(
-                english: "Give this card to the officer. If you're inside, show it through the window or slide it under the door",
-                creole: "Bay ofisye a kat sa a. Si ou anndan, montre l nan fenèt la oswa glise l anba pòt la"
-            ),
-            PhrasebookEntry(
-                english: "Legal statement — show or hand this to the officer",
-                creole: "I do not wish to speak with you, answer your questions, or sign or hand you any documents based on my 5th Amendment rights under the United States Constitution. I do not give you permission to enter my home based on my 4th Amendment rights under the United States Constitution unless you have a warrant to enter, signed by a judge or magistrate with my name on it that you slide under the door. I do not give you permission to search any of my belongings based on my 4th Amendment rights. I choose to exercise my constitutional rights.",
-                note: "Kept in English on purpose, matching ILRC's own card — this exact wording is what's legally recognized, so it isn't translated."
-            ),
         ]),
         PhrasebookCategory(name: "Directions", icon: "signpost.right.fill", entries: [
             PhrasebookEntry(english: "Where is...?", creole: "Kote... ye?"),
@@ -124,13 +85,58 @@ enum Phrasebook {
             PhrasebookEntry(english: "I need water", creole: "Mwen bezwen dlo"),
         ]),
         PhrasebookCategory(name: "Travel", icon: "airplane", entries: [
-            PhrasebookEntry(english: "Where is the airport?", creole: "Kote ayewopò a ye?"),
-            PhrasebookEntry(english: "I would like a taxi", creole: "Mwen ta renmen yon taksi"),
+            PhrasebookEntry(english: "Where is the airport?", creole: "Kote ayewopò a ye sil vous plè"),
+            PhrasebookEntry(english: "I would like a taxi", creole: "Mwen bezwen yon taksi sil vous plè"),
             PhrasebookEntry(english: "How do I get to...?", creole: "Kijan pou m rive nan...?"),
             PhrasebookEntry(english: "What time is it?", creole: "Ki lè li ye?"),
             PhrasebookEntry(english: "I am a tourist", creole: "Mwen se yon touris"),
             PhrasebookEntry(english: "Can you recommend a restaurant?", creole: "Èske ou ka rekòmande yon restoran?"),
             PhrasebookEntry(english: "Safe travels", creole: "Bon vwayaj"),
         ]),
+    ]
+
+    // Its own screen, not a Phrasebook category — see ContentView's header button.
+    // Source: Immigrant Legal Resource Center (ILRC) "Red Card" — the standard,
+    // widely-distributed know-your-rights card for immigration encounters.
+    // English: https://www.ilrc.org/sites/default/files/documents/red_card-self_srv-english.pdf
+    // Haitian Creole (ILRC's own official translation):
+    // https://www.ilrc.org/sites/default/files/2023-06/Artwork%20for%20Printing%20Your%20Own%20Red%20Cards%20-%20Haitian%20Creole.pdf
+    // ILRC's own card keeps the legal statement (the amendment-citing paragraph you
+    // show to an officer) in English on every language version — that's preserved
+    // below, not translated by us. Fetched/verified 2026-08-21.
+    // NOTE: ILRC's original card is a physical card meant to be handed over, shown
+    // through a window, or slid under a door — that instruction doesn't work for a
+    // phone screen, so the "give this card" entry below is adapted for on-screen
+    // display, not sourced verbatim like the others. Flag for extra review.
+    static let knowYourRights: [PhrasebookEntry] = [
+        PhrasebookEntry(
+            english: "Do not open the door if an immigration agent is knocking",
+            creole: "Pa louvri pòt la si yon ajan imigrasyon frape pòt la"
+        ),
+        PhrasebookEntry(
+            english: "Do not answer any questions from an immigration officer. You have the right to remain silent",
+            creole: "Pa reponn okenn keksyon yon ofisye imigrasyon si yo eseye pale avèk ou. Ou gen dwa pou rete an silans"
+        ),
+        PhrasebookEntry(
+            english: "Do not sign anything without speaking to a lawyer first. You have the right to speak with a lawyer",
+            creole: "Pa siyen anyen san w' pa pale anvan avèk yon avoka. Ou gen dwa pale ak yon avoka"
+        ),
+        PhrasebookEntry(
+            english: "Am I free to leave?",
+            creole: "Èske m' lib pou ale?"
+        ),
+        PhrasebookEntry(
+            english: "I want to speak to a lawyer",
+            creole: "Mwen vle pale ak yon avoka"
+        ),
+        PhrasebookEntry(
+            english: "Show this phrase to the officer by holding your phone up to the car window",
+            creole: "Montre ofisye a fraz sa a. Si ou anndan machin ou, montre l nan fenèt la"
+        ),
+        PhrasebookEntry(
+            english: "Legal statement — show this to the officer",
+            creole: "I do not wish to speak with you, answer your questions, or sign or hand you any documents based on my 5th Amendment rights under the United States Constitution. I do not give you permission to enter my home based on my 4th Amendment rights under the United States Constitution unless you have a warrant to enter, signed by a judge or magistrate with my name on it that you slide under the door. I do not give you permission to search any of my belongings based on my 4th Amendment rights. I choose to exercise my constitutional rights.",
+            note: "Kept in English on purpose, matching ILRC's own card — this exact wording is what's legally recognized, so it isn't translated."
+        ),
     ]
 }
