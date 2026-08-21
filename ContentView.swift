@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var permissionGranted = false
     @State private var availableWidth: CGFloat = 320
     @State private var showHistory = false
+    @State private var showPhrasebook = false
     @State private var showSettings = false
     @State private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
@@ -80,10 +81,11 @@ struct ContentView: View {
 
                             Spacer()
 
-                            // History + Settings buttons
+                            // History + Phrasebook + Settings buttons
                             VStack(spacing: 8) {
                                 Button(action: {
                                     withAnimation {
+                                        showPhrasebook = false
                                         showHistory.toggle()
                                     }
                                     if showHistory {
@@ -107,6 +109,28 @@ struct ContentView: View {
                                     Text("\(historyManager.entries.count)")
                                         .font(.caption2)
                                         .foregroundColor(.secondary)
+                                }
+
+                                Button(action: {
+                                    withAnimation {
+                                        showHistory = false
+                                        showPhrasebook.toggle()
+                                    }
+                                    if showPhrasebook {
+                                        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                                            AnalyticsParameterScreenName: "phrasebook",
+                                        ])
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(UIColor.secondarySystemBackground))
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: showPhrasebook ? "xmark" : "book.fill")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
                                 }
 
                                 Button(action: {
@@ -136,9 +160,13 @@ struct ContentView: View {
                     }
                     .padding(.top, 40)
 
-                    // Show history or main content
+                    // Show history, phrasebook, or main content
                     if showHistory {
                         HistoryView(historyManager: historyManager)
+                            .padding(.horizontal, 20)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else if showPhrasebook {
+                        PhrasebookView()
                             .padding(.horizontal, 20)
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     } else {

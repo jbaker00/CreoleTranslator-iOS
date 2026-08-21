@@ -11,30 +11,51 @@ struct HistoryView: View {
     @ObservedObject var historyManager: TranslationHistoryManager
     @StateObject private var ttsManager = TextToSpeechManager()
     @Environment(\.colorScheme) private var colorScheme
-    
+    @State private var favoritesOnly = false
+
+    private var displayedEntries: [TranslationEntry] {
+        favoritesOnly ? historyManager.entries.filter(\.isFavorite) : historyManager.entries
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Text("Translation History")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
+            VStack(spacing: 10) {
+                HStack {
+                    Text("Translation History")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    if !historyManager.entries.isEmpty {
+                        Button(action: {
+                            historyManager.clearAll()
+                        }) {
+                            Text("Clear All")
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+
                 if !historyManager.entries.isEmpty {
-                    Button(action: {
-                        historyManager.clearAll()
-                    }) {
-                        Text("Clear All")
+                    HStack {
+                        Button(action: { favoritesOnly.toggle() }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: favoritesOnly ? "star.fill" : "star")
+                                Text("Favorites only")
+                            }
                             .font(.subheadline)
-                            .foregroundColor(.red)
+                            .foregroundColor(favoritesOnly ? .yellow : .secondary)
+                        }
+                        Spacer()
                     }
                 }
             }
             .padding()
             .background(Color(UIColor.secondarySystemBackground))
-            
+
             if historyManager.entries.isEmpty {
                 // Empty state
                 VStack(spacing: 15) {
@@ -49,11 +70,25 @@ struct HistoryView: View {
                 }
                 .frame(maxHeight: .infinity)
                 .padding()
+            } else if displayedEntries.isEmpty {
+                // No favorites yet
+                VStack(spacing: 15) {
+                    Text("⭐️")
+                        .font(.system(size: 50))
+                    Text("No favorites yet")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("Tap the star on a translation to save it here")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxHeight: .infinity)
+                .padding()
             } else {
                 // History list
                 ScrollView {
                     LazyVStack(spacing: 12) {
-                        ForEach(historyManager.entries) { entry in
+                        ForEach(displayedEntries) { entry in
                             HistoryEntryCard(
                                 entry: entry,
                                 historyManager: historyManager,
@@ -97,13 +132,19 @@ struct HistoryEntryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Header with timestamp and delete
+            // Header with timestamp, favorite star, and delete
             HStack {
                 Text(entry.formattedDate)
                     .font(.caption)
                     .foregroundColor(.secondary)
 
                 Spacer()
+
+                Button(action: { historyManager.toggleFavorite(entry) }) {
+                    Image(systemName: entry.isFavorite ? "star.fill" : "star")
+                        .font(.caption)
+                        .foregroundColor(entry.isFavorite ? .yellow : .secondary)
+                }
 
                 Button(action: { historyManager.deleteEntry(entry) }) {
                     Image(systemName: "trash")

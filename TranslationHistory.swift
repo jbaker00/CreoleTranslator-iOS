@@ -13,6 +13,7 @@ struct TranslationEntry: Identifiable, Codable, Equatable {
     let sourceText: String
     let translatedText: String
     let direction: TranslationDirection
+    var isFavorite: Bool
 
     // Legacy support for old entries
     var creoleText: String {
@@ -23,12 +24,13 @@ struct TranslationEntry: Identifiable, Codable, Equatable {
         direction == .creoleToEnglish ? translatedText : sourceText
     }
 
-    init(id: UUID = UUID(), timestamp: Date = Date(), sourceText: String, translatedText: String, direction: TranslationDirection) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), sourceText: String, translatedText: String, direction: TranslationDirection, isFavorite: Bool = false) {
         self.id = id
         self.timestamp = timestamp
         self.sourceText = sourceText
         self.translatedText = translatedText
         self.direction = direction
+        self.isFavorite = isFavorite
     }
 
     // Legacy initializer for backward compatibility
@@ -38,6 +40,23 @@ struct TranslationEntry: Identifiable, Codable, Equatable {
         self.sourceText = creoleText
         self.translatedText = englishText
         self.direction = .creoleToEnglish
+        self.isFavorite = false
+    }
+
+    // Custom decoding so existing stored history (saved before `isFavorite`
+    // existed) still decodes instead of silently wiping a user's history.
+    enum CodingKeys: String, CodingKey {
+        case id, timestamp, sourceText, translatedText, direction, isFavorite
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        sourceText = try container.decode(String.self, forKey: .sourceText)
+        translatedText = try container.decode(String.self, forKey: .translatedText)
+        direction = try container.decode(TranslationDirection.self, forKey: .direction)
+        isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
     }
 
     var formattedDate: String {
@@ -73,9 +92,13 @@ class TranslationHistoryManager: ObservableObject {
         let entry = TranslationEntry(sourceText: source, translatedText: translated, direction: direction)
         entries.insert(entry, at: 0) // Most recent first
 
-        // Limit history size
+        // Limit history size — always keep favorites, trim only the
+        // non-favorite tail so a starred entry never gets silently evicted.
         if entries.count > maxEntries {
-            entries = Array(entries.prefix(maxEntries))
+            let favorites = entries.filter(\.isFavorite)
+            let nonFavorites = entries.filter { !$0.isFavorite }
+            let keptNonFavorites = Array(nonFavorites.prefix(max(0, maxEntries - favorites.count)))
+            entries = (favorites + keptNonFavorites).sorted { $0.timestamp > $1.timestamp }
         }
 
         saveHistory()
@@ -85,7 +108,13 @@ class TranslationHistoryManager: ObservableObject {
     func addEntry(creole: String, english: String) {
         addEntry(source: creole, translated: english, direction: .creoleToEnglish)
     }
-    
+
+    func toggleFavorite(_ entry: TranslationEntry) {
+        guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
+        entries[index].isFavorite.toggle()
+        saveHistory()
+    }
+
     func deleteEntry(_ entry: TranslationEntry) {
         entries.removeAll { $0.id == entry.id }
         saveHistory()
