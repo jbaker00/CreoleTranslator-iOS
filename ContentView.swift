@@ -477,6 +477,9 @@ struct ContentView: View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
         guard successfulTranslationCount >= 3, lastReviewPromptVersion != version else { return }
         lastReviewPromptVersion = version
+        // Matches Android's AnalyticsManager.logReviewRequested: the prompt
+        // fires once per version, so this is what makes the rate measurable.
+        Analytics.logEvent("review_requested", parameters: ["version": version])
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             if let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
