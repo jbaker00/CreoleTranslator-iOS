@@ -452,7 +452,7 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
-                    logTranslationEvent("translation_completed", inputMode: "text")
+                    logTranslationCompleted(inputMode: "text", charLength: text.count)
                     maybeRequestReview()
                     interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
@@ -463,7 +463,7 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
-                    logTranslationEvent("translation_failed", inputMode: "text")
+                    logTranslationFailed(inputMode: "text", error: error)
                 }
             }
         }
@@ -485,10 +485,31 @@ struct ContentView: View {
         }
     }
 
-    private func logTranslationEvent(_ name: String, inputMode: String) {
-        Analytics.logEvent(name, parameters: [
-            "direction": translationDirection == .creoleToEnglish ? "creole_to_english" : "english_to_creole",
+    /// Mirrors Android's AnalyticsManager.logTranslation / logTranslationFailed
+    /// so both platforms answer the same questions in GA4. `char_length` and
+    /// `result` were iOS-side gaps; `error` only applies to the failure path.
+    ///
+    /// `direction` deliberately keeps its existing iOS spelling — FirebaseViewer
+    /// folds creole_to_english and ht-en onto one row, and changing it here
+    /// would orphan every event logged before this release.
+    private var directionCode: String {
+        translationDirection == .creoleToEnglish ? "creole_to_english" : "english_to_creole"
+    }
+
+    private func logTranslationCompleted(inputMode: String, charLength: Int) {
+        Analytics.logEvent("translation_completed", parameters: [
+            "direction": directionCode,
             "input_mode": inputMode,
+            "char_length": charLength,
+            "result": "success",
+        ])
+    }
+
+    private func logTranslationFailed(inputMode: String, error: Error) {
+        Analytics.logEvent("translation_failed", parameters: [
+            "direction": directionCode,
+            "input_mode": inputMode,
+            "error": String(error.localizedDescription.prefix(100)),
         ])
     }
 
@@ -508,7 +529,7 @@ struct ContentView: View {
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
-                    logTranslationEvent("translation_completed", inputMode: "voice")
+                    logTranslationCompleted(inputMode: "voice", charLength: result.transcription.count)
                     maybeRequestReview()
                     interstitialAd.translationCompleted(isSpeaking: ttsManager.isSpeaking)
                 }
@@ -523,7 +544,7 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
-                    logTranslationEvent("translation_failed", inputMode: "voice")
+                    logTranslationFailed(inputMode: "voice", error: error)
                 }
 
                 // Clean up audio file

@@ -54,11 +54,31 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
     func translationCompleted(isSpeaking: Bool = false) {
         translationCount += 1
         translationsSinceLastShow += 1
-        guard translationsSinceLastShow >= Self.interstitialInterval,
-              shownThisSession < Self.maxPerSession,
-              !isSpeaking,
-              lastShownAt.map({ Date().timeIntervalSince($0) >= Self.minSecondsBetweenShows }) ?? true
-        else { return }
+
+        let spacedOut = lastShownAt
+            .map { Date().timeIntervalSince($0) >= Self.minSecondsBetweenShows } ?? true
+
+        // Every skip is an impression not served, so record why. Mirrors
+        // Android's InterstitialAdManager, including the reason strings and the
+        // order they are tested in, so the two platforms are comparable.
+        if translationsSinceLastShow < Self.interstitialInterval
+            || shownThisSession >= Self.maxPerSession
+            || isSpeaking
+            || !spacedOut {
+            let reason: String
+            if translationsSinceLastShow < Self.interstitialInterval {
+                reason = "interval"
+            } else if shownThisSession >= Self.maxPerSession {
+                reason = "max_per_session"
+            } else if isSpeaking {
+                reason = "is_speaking"
+            } else {
+                reason = "min_spacing"
+            }
+            Analytics.logEvent("interstitial_skipped", parameters: ["reason": reason])
+            return
+        }
+
         showIfReady()
     }
 
