@@ -20,7 +20,7 @@ When you use the App's recording feature, your voice is captured by your device'
 
 - Your recording is sent through our translation service to **Groq AI**, which transcribes it. If Groq is unavailable, **OpenAI** is used as a fallback for transcription.
 - Audio is transmitted over an encrypted HTTPS connection.
-- Audio is **not stored** — not on your device after processing, and not by our translation service. Only the resulting text is retained, as described under "Translation Quality Review" below.
+- Your recording is **kept by our translation service for up to 7 days** so that, if the translation that follows is flagged (the AI reports low confidence, or you rate it 👎), the clip can be kept for **up to 30 days** and listened to by our named Creole-speaking reviewers to check whether it was transcribed correctly. Clips are stored without any identifier, are never linked to you or your device, and are deleted automatically on those schedules. A reviewer's corrected transcript may be kept permanently as text. Clips that were not flagged are never reviewed.
 - Groq AI and OpenAI process audio temporarily to produce results. Please review [Groq's Privacy Policy](https://groq.com/privacy-policy/) and [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy/) for details on how they handle submitted data.
 
 ### Translation Text
@@ -72,7 +72,7 @@ The App requires microphone access to record your speech. You will be prompted t
 
 ## Data Retention
 
-- **Audio:** Not stored on your device after processing and not stored by our translation service. Groq AI's and OpenAI's retention practices are governed by their own privacy policies.
+- **Audio:** Not stored on your device after processing. Our translation service keeps each recording for up to 7 days, and for up to 30 days when the resulting translation was flagged for review (see "Audio Data"); clips carry no identifier and are deleted automatically. Groq AI's and OpenAI's retention practices are governed by their own privacy policies.
 - **Translations (quality review):** Stored by our translation service for 90 days without any identifier, then deleted automatically. See "Translation Quality Review".
 - **Corrections dictionary:** Reviewer-corrected translations are kept permanently; they contain only phrase text, never identifiers.
 - **Translation history:** Transcribed and translated text is also saved to your on-device history (up to 50 entries). That copy is stored locally only and you can clear it in the App at any time.
@@ -88,7 +88,7 @@ The App is not directed at children under 13. We do not knowingly collect person
 - **Microphone:** Disable in your device's Settings (see "Microphone Permission").
 - **Ad Tracking:** iOS — managed via Settings → Privacy & Security → Tracking, or via Apple's App Tracking Transparency prompt on first launch. Android — via the consent dialog shown on first launch and the "Privacy Options" button in the App's Settings screen.
 - **Translation history:** Can be cleared within the App at any time.
-- **Stored translations:** You can ask us to delete a stored translation or dictionary entry containing your text — see "Contact". Typing to translate instead of recording avoids sending audio, but the text is still stored for quality review as described above.
+- **Stored translations and recordings:** You can ask us to delete a stored translation, a kept voice clip, or a dictionary entry containing your text — see "Contact". Typing to translate instead of recording avoids sending audio, but the text is still stored for quality review as described above.
 - **AI data consent:** You can revoke your consent to share audio with AI services in the App's Settings screen at any time. Revoking consent will disable the recording and translation features.
 
 ## Third-Party Services
