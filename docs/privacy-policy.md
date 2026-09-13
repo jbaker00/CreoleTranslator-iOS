@@ -109,5 +109,6 @@ We may update this Privacy Policy from time to time. Any changes will be posted 
 
 If you have questions about this Privacy Policy, or want a stored translation or dictionary entry containing your text deleted, please contact us:
 
+- **Email:** jbaker00+privacy@gmail.com
 - **GitHub:** [github.com/jbaker00/CreoleTranslator-iOS](https://github.com/jbaker00/CreoleTranslator-iOS)
 - **Issues:** [github.com/jbaker00/CreoleTranslator-iOS/issues](https://github.com/jbaker00/CreoleTranslator-iOS/issues)
