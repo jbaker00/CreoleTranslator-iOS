@@ -25,16 +25,19 @@ class OpenAITTSService {
 
     // Synthesize speech via the proxy (tts-1 server-side). Returns MP3 audio data.
     // The model is multilingual and will speak whatever language the input text is in.
-    func synthesizeSpeech(text: String, voice: String = "alloy", speed: Double = 1.0) async throws -> Data {
+    func synthesizeSpeech(text: String, voice: String = "alloy", speed: Double = 1.0, language: String = "en") async throws -> Data {
         var request = URLRequest(url: speechURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(ProxyDevice.id, forHTTPHeaderField: "x-device-id")
 
+        // `language` lets the proxy apply pronunciation respellings for
+        // Creole; it is ignored by today's proxy.
         let payload: [String: Any] = [
             "text": text,
             "voice": voice,
-            "speed": min(max(speed, 0.25), 2.0)
+            "speed": min(max(speed, 0.25), 2.0),
+            "language": language
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)

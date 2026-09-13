@@ -39,6 +39,12 @@ struct ContentView: View {
     // and the rating already sent for it, so the thumbs lock after one tap.
     @State private var currentSampleId: String? = nil
     @State private var sentRating: String? = nil
+    /// Direction the current result was actually translated in (differs
+    /// from translationDirection after an auto-detect flip). nil = no result.
+    @State private var resultDirection: TranslationDirection? = nil
+    @State private var autoDetectedFlip = false
+    /// What produced the current result, so Undo can redo it manually.
+    @State private var lastInput: (text: String, source: TranslationSource)? = nil
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
 
@@ -316,10 +322,11 @@ struct ContentView: View {
             // Results section
             VStack(spacing: 20) {
                 // Source language card
-                let sourceLanguage = translationDirection == .creoleToEnglish ? "ht-HT" : "en-US"
+                let shownDirection = resultDirection ?? translationDirection
+                let sourceLanguage = shownDirection == .creoleToEnglish ? "ht-HT" : "en-US"
                 ResultCard(
-                    title: translationDirection == .creoleToEnglish ? "Haitian Creole" : "English",
-                    icon: translationDirection == .creoleToEnglish ? "🇭🇹" : "🇺🇸",
+                    title: shownDirection == .creoleToEnglish ? "Haitian Creole" : "English",
+                    icon: shownDirection == .creoleToEnglish ? "🇭🇹" : "🇺🇸",
                     content: transcription,
                     isLoading: isProcessing,
                     speakerAction: {
@@ -334,10 +341,31 @@ struct ContentView: View {
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source"
                 )
 
+                if autoDetectedFlip, let shown = resultDirection {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wand.and.stars")
+                            .font(.system(size: 12))
+                        Text("Auto-detected \(shown == .creoleToEnglish ? "Creole → English" : "English → Creole")")
+                            .font(.caption)
+                        Text("·").font(.caption).foregroundColor(.secondary)
+                        Button("Undo") { undoAutoDetect() }
+                            .font(.caption.bold())
+                            .disabled(isProcessing)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.accentColor.opacity(0.12))
+                    .foregroundColor(.accentColor)
+                    .cornerRadius(14)
+                }
+
                 // Switch Direction button between the two cards
                 Button(action: {
                     withAnimation {
                         translationDirection = translationDirection == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
+                        // A manual switch re-labels the cards; the result no longer belongs to a detected direction.
+                        resultDirection = nil
+                        autoDetectedFlip = false
                     }
                 }) {
                     HStack(spacing: 8) {
@@ -355,10 +383,10 @@ struct ContentView: View {
                 .disabled(isProcessing)
 
                 // Target language card
-                let targetLanguage = translationDirection == .creoleToEnglish ? "en-US" : "ht-HT"
+                let targetLanguage = shownDirection == .creoleToEnglish ? "en-US" : "ht-HT"
                 ResultCard(
-                    title: translationDirection == .creoleToEnglish ? "English Translation" : "Creole Translation",
-                    icon: translationDirection == .creoleToEnglish ? "🇺🇸" : "🇭🇹",
+                    title: shownDirection == .creoleToEnglish ? "English Translation" : "Creole Translation",
+                    icon: shownDirection == .creoleToEnglish ? "🇺🇸" : "🇭🇹",
                     content: translation,
                     isLoading: isProcessing,
                     speakerAction: {
@@ -448,21 +476,45 @@ struct ContentView: View {
         processTextInput(text)
     }
 
-    private func processTextInput(_ text: String) {
+    /// Applies the auto-detect setting: returns the direction to translate
+    /// `text` in, given the user's chosen direction.
+    private static func detectedDirection(for text: String, manual: TranslationDirection, autoDetectEnabled: Bool) -> TranslationDirection {
+        guard autoDetectEnabled else { return manual }
+        switch LanguageDetector.detect(text) {
+        case .creole:  return .creoleToEnglish
+        case .english: return .englishToCreole
+        case .unknown: return manual
+        }
+    }
+
+    private func undoAutoDetect() {
+        guard let input = lastInput else { return }
+        Analytics.logEvent("auto_detect_undo", parameters: ["direction": directionCode])
+        processTextInput(input.text, source: input.source, allowAutoDetect: false)
+    }
+
+    private func processTextInput(_ text: String, source: TranslationSource = .typed, allowAutoDetect: Bool = true) {
         isProcessing = true
         transcription = "Processing..."
         translation = "Waiting..."
+        let direction = Self.detectedDirection(for: text, manual: translationDirection,
+                                               autoDetectEnabled: allowAutoDetect && voiceSettings.autoDetectLanguage)
+        let flipped = direction != translationDirection
 
         Task {
             do {
                 let groqService = GroqService()
-                let result = try await groqService.processText(text, direction: translationDirection)
+                let result = try await groqService.processText(text, direction: direction, source: source)
 
                 await MainActor.run {
                     transcription = result.transcription
                     translation = result.translation
                     currentSampleId = result.sampleId
                     sentRating = nil
+                    resultDirection = result.direction
+                    autoDetectedFlip = flipped
+                    lastInput = (text, source)
+                    if flipped { Analytics.logEvent("auto_detect_flip", parameters: ["input_mode": source.rawValue]) }
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -478,6 +530,8 @@ struct ContentView: View {
                     statusMessage = ""
                     isProcessing = false
                     currentSampleId = nil
+                    resultDirection = nil
+                    autoDetectedFlip = false
                     logTranslationFailed(inputMode: "text", error: error)
                 }
             }
@@ -539,13 +593,22 @@ struct ContentView: View {
         Task {
             do {
                 let groqService = GroqService()
-                let result = try await groqService.processAudio(fileURL: url, direction: translationDirection)
+                let manual = translationDirection
+                let autoDetect = voiceSettings.autoDetectLanguage   // read on the main actor, used off it
+                let result = try await groqService.processAudio(fileURL: url, direction: manual) { transcript in
+                    Self.detectedDirection(for: transcript, manual: manual, autoDetectEnabled: autoDetect)
+                }
+                let flipped = result.direction != manual
 
                 await MainActor.run {
                     transcription = result.transcription
                     translation = result.translation
                     currentSampleId = result.sampleId
                     sentRating = nil
+                    resultDirection = result.direction
+                    autoDetectedFlip = flipped
+                    lastInput = (result.transcription, .voice)
+                    if flipped { Analytics.logEvent("auto_detect_flip", parameters: ["input_mode": "voice"]) }
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -565,6 +628,8 @@ struct ContentView: View {
                     statusMessage = ""
                     isProcessing = false
                     currentSampleId = nil
+                    resultDirection = nil
+                    autoDetectedFlip = false
                     logTranslationFailed(inputMode: "voice", error: error)
                 }
 

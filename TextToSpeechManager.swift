@@ -57,7 +57,7 @@ class TextToSpeechManager: NSObject, ObservableObject {
             isSpeaking = true
             Task {
                 do {
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: voice)
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: voice, language: isCreole ? "ht" : "en")
                     await MainActor.run { self.playAudioData(audioData, rate: Float(speed)) }
                 } catch {
                     let msg = error.localizedDescription
@@ -83,7 +83,7 @@ class TextToSpeechManager: NSObject, ObservableObject {
                 do {
                     // OpenAI accepts speed directly; clamp to 0.25–4.0
                     let apiSpeed = min(max(speed, 0.25), 4.0)
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: voice, speed: apiSpeed)
+                    let audioData = try await service.synthesizeSpeech(text: text, voice: voice, speed: apiSpeed, language: isCreole ? "ht" : "en")
                     await MainActor.run { self.playAudioData(audioData, rate: 1.0) }
                 } catch {
                     let msg = error.localizedDescription

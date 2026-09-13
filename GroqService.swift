@@ -112,8 +112,8 @@ class GroqService {
     // apiKey retained for call-site compatibility; the proxy needs no key
     init(apiKey: String? = nil) {}
 
-    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
-        let translated = try await translateText(text, direction: direction, source: .typed)
+    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish, source: TranslationSource = .typed) async throws -> TranslationResult {
+        let translated = try await translateText(text, direction: direction, source: source)
         return TranslationResult(
             transcription: text,
             translation: translated.text,
@@ -123,11 +123,18 @@ class GroqService {
         )
     }
 
-    func processAudio(fileURL: URL, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
+    /// `resolveDirection` sees the transcript before translation so the caller
+    /// can apply language auto-detect; it returns the direction to translate in.
+    /// Transcription itself always uses the caller's direction as Whisper's
+    /// language hint — that's the only signal available before any text exists.
+    func processAudio(fileURL: URL,
+                      direction: TranslationDirection = .creoleToEnglish,
+                      resolveDirection: ((String) -> TranslationDirection)? = nil) async throws -> TranslationResult {
         // Step 1: Transcribe audio using Whisper
         let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
 
-        // Step 2: Translate
+        // Step 2: Translate — in the detected direction if the caller asks
+        let direction = resolveDirection?(transcription) ?? direction
         let translated = try await translateText(transcription, direction: direction, source: .voice)
 
         // If either leg used its fallback, surface that — it's the more useful signal.
@@ -234,12 +241,15 @@ class GroqService {
 
     // Synthesize speech from text using Groq's Orpheus TTS model (via proxy).
     // Returns raw WAV audio data suitable for playback with AVAudioPlayer.
-    func synthesizeSpeech(text: String, voice: String = "diana") async throws -> Data {
+    func synthesizeSpeech(text: String, voice: String = "diana", language: String = "en") async throws -> Data {
         var request = proxyRequest(url: speechURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // `language` lets the proxy apply pronunciation respellings for
+        // Creole; it is ignored by today's proxy.
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "text": text,
-            "voice": voice
+            "voice": voice,
+            "language": language
         ])
 
         do {

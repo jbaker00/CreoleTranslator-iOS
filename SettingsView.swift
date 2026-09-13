@@ -29,6 +29,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                translationSection
                 languageSection(isCreole: false)
                 languageSection(isCreole: true)
                 testSection
@@ -188,6 +189,16 @@ struct SettingsView: View {
     }
 
     // MARK: - Test section
+
+    private var translationSection: some View {
+        Section {
+            Toggle("Auto-detect language", isOn: $voiceSettings.autoDetectLanguage)
+        } header: {
+            Text("Translation")
+        } footer: {
+            Text("If you type or say English while set to Creole → English (or the other way round), the app translates in the right direction and shows an Undo button. Turn off to always use the direction you picked.")
+        }
+    }
 
     private var testSection: some View {
         Section {

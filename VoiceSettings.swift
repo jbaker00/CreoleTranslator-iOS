@@ -35,6 +35,11 @@ class VoiceSettings: ObservableObject {
     // Speed: default 0.7 — Creole voices tend to speak fast
     @AppStorage("creolePlaybackSpeed") var creolePlaybackSpeed: Double = 0.7
 
+    // --- Translation ---
+    // When on, clearly-English text sent while in Creole→English (or vice
+    // versa) is translated in the detected direction, with an Undo chip.
+    @AppStorage("autoDetectLanguage") var autoDetectLanguage: Bool = true
+
     // MARK: - Voice catalogues
 
     struct Voice: Identifiable {
