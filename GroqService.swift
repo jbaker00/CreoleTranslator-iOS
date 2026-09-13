@@ -43,6 +43,17 @@ struct TranscriptionResponse: Codable {
 struct ProxyTranslationResponse: Codable {
     let translation: String
     let provider: String?
+    // Set by the proxy's translation-QA capture; absent for override hits or
+    // an older proxy. sampleId is what /v1/feedback rates.
+    let sampleId: String?
+    let confidence: Int?
+}
+
+/// Whether the text sent to /v1/translate was spoken or typed. The proxy
+/// records it on the captured sample so reviewers know a garbled input may
+/// be a transcription error rather than a translation one.
+enum TranslationSource: String {
+    case voice, typed
 }
 
 // Maps the proxy's raw provider id to a short, user-facing label.
@@ -60,6 +71,9 @@ struct TranslationResult {
     let translation: String
     let provider: String
     let direction: TranslationDirection
+    /// Proxy sample id for 👍/👎 feedback; nil when the proxy served an
+    /// override or didn't capture.
+    var sampleId: String? = nil
 }
 
 enum GroqError: LocalizedError {
@@ -92,18 +106,20 @@ class GroqService {
     private static let proxyBase = "https://us-central1-jbaker-api-proxy.cloudfunctions.net/api"
     private let transcriptionURL = URL(string: "\(proxyBase)/v1/transcribe")!
     private let translateURL = URL(string: "\(proxyBase)/v1/translate")!
+    private let feedbackURL = URL(string: "\(proxyBase)/v1/feedback")!
     private let speechURL = URL(string: "\(proxyBase)/v1/tts-groq")!
 
     // apiKey retained for call-site compatibility; the proxy needs no key
     init(apiKey: String? = nil) {}
 
     func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish) async throws -> TranslationResult {
-        let (translation, provider) = try await translateText(text, direction: direction)
+        let translated = try await translateText(text, direction: direction, source: .typed)
         return TranslationResult(
             transcription: text,
-            translation: translation,
-            provider: displayProvider(provider),
-            direction: direction
+            translation: translated.text,
+            provider: displayProvider(translated.provider),
+            direction: direction,
+            sampleId: translated.sampleId
         )
     }
 
@@ -112,16 +128,33 @@ class GroqService {
         let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
 
         // Step 2: Translate
-        let (translation, translateProvider) = try await translateText(transcription, direction: direction)
+        let translated = try await translateText(transcription, direction: direction, source: .voice)
 
         // If either leg used its fallback, surface that — it's the more useful signal.
-        let provider = transcribeProvider == "groq" ? translateProvider : transcribeProvider
+        let provider = transcribeProvider == "groq" ? translated.provider : transcribeProvider
         return TranslationResult(
             transcription: transcription,
-            translation: translation,
+            translation: translated.text,
             provider: displayProvider(provider),
-            direction: direction
+            direction: direction,
+            sampleId: translated.sampleId
         )
+    }
+
+    /// Rates a translation the proxy captured. Fire-and-forget: a failure
+    /// here is never worth surfacing to the user.
+    func sendFeedback(sampleId: String, rating: String) async {
+        var request = proxyRequest(url: feedbackURL)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: ["sampleId": sampleId, "rating": rating])
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                print("feedback: HTTP \(http.statusCode)")
+            }
+        } catch {
+            print("feedback failed: \(error.localizedDescription)")
+        }
     }
 
     private func proxyRequest(url: URL) -> URLRequest {
@@ -164,12 +197,13 @@ class GroqService {
         }
     }
 
-    private func translateText(_ text: String, direction: TranslationDirection) async throws -> (text: String, provider: String?) {
+    private func translateText(_ text: String, direction: TranslationDirection, source: TranslationSource) async throws -> (text: String, provider: String?, sampleId: String?) {
         var request = proxyRequest(url: translateURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "text": text,
-            "direction": direction.proxyDirection
+            "direction": direction.proxyDirection,
+            "source": source.rawValue
         ])
 
         do {
@@ -189,7 +223,7 @@ class GroqService {
             }
 
             let result = try JSONDecoder().decode(ProxyTranslationResponse.self, from: data)
-            return (result.translation, result.provider)
+            return (result.translation, result.provider, result.sampleId)
 
         } catch let error as GroqError {
             throw error

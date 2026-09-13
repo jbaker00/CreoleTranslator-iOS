@@ -35,6 +35,10 @@ struct ContentView: View {
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
+    // Proxy sample id of the translation on screen (nil = nothing to rate)
+    // and the rating already sent for it, so the thumbs lock after one tap.
+    @State private var currentSampleId: String? = nil
+    @State private var sentRating: String? = nil
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
 
@@ -366,7 +370,15 @@ struct ContentView: View {
                             ttsManager.speak(text: translation, language: targetLanguage)
                         }
                     },
-                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target"
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target",
+                    feedbackSampleId: isProcessing ? nil : currentSampleId,
+                    sentRating: sentRating,
+                    onFeedback: { rating in
+                        guard let id = currentSampleId, sentRating == nil else { return }
+                        sentRating = rating
+                        Analytics.logEvent("translation_feedback", parameters: ["rating": rating])
+                        Task { await GroqService().sendFeedback(sampleId: id, rating: rating) }
+                    }
                 )
             }
             .padding(.horizontal, 20)
@@ -449,6 +461,8 @@ struct ContentView: View {
                 await MainActor.run {
                     transcription = result.transcription
                     translation = result.translation
+                    currentSampleId = result.sampleId
+                    sentRating = nil
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -463,6 +477,7 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+                    currentSampleId = nil
                     logTranslationFailed(inputMode: "text", error: error)
                 }
             }
@@ -529,6 +544,8 @@ struct ContentView: View {
                 await MainActor.run {
                     transcription = result.transcription
                     translation = result.translation
+                    currentSampleId = result.sampleId
+                    sentRating = nil
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -547,6 +564,7 @@ struct ContentView: View {
                     errorMessage = "Error: \(error.localizedDescription)"
                     statusMessage = ""
                     isProcessing = false
+                    currentSampleId = nil
                     logTranslationFailed(inputMode: "voice", error: error)
                 }
 
@@ -564,6 +582,10 @@ struct ResultCard: View {
     let isLoading: Bool
     var speakerAction: (() -> Void)? = nil
     var isSpeaking: Bool = false
+    // 👍/👎 for the translation; shown only when the proxy gave us a sampleId.
+    var feedbackSampleId: String? = nil
+    var sentRating: String? = nil
+    var onFeedback: ((String) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -595,6 +617,29 @@ struct ResultCard: View {
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .opacity(isLoading && content == "Processing..." ? 0.6 : 1.0)
+
+            if feedbackSampleId != nil, let onFeedback = onFeedback {
+                HStack(spacing: 10) {
+                    Text(sentRating == nil ? "Was this right?" : "Thanks for the feedback")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    ForEach(["up", "down"], id: \.self) { rating in
+                        Button(action: { onFeedback(rating) }) {
+                            Image(systemName: (rating == "up" ? "hand.thumbsup" : "hand.thumbsdown")
+                                  + (sentRating == rating ? ".fill" : ""))
+                                .font(.title3)
+                                .foregroundColor(sentRating == nil || sentRating == rating ? .accentColor : .secondary)
+                                .padding(8)
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .cornerRadius(8)
+                        }
+                        .disabled(sentRating != nil)
+                        .accessibilityLabel(rating == "up" ? "Translation was good" : "Translation was wrong")
+                    }
+                }
+                .padding(.top, 4)
+            }
         }
         .padding(20)
         // Use a system background for cards so they contrast correctly in both appearances
