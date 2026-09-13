@@ -150,11 +150,11 @@ class GroqService {
 
     /// Rates a translation the proxy captured. Fire-and-forget: a failure
     /// here is never worth surfacing to the user.
-    func sendFeedback(sampleId: String, rating: String) async {
+    func sendFeedback(sampleId: String, rating: String, target: String = "translation") async {
         var request = proxyRequest(url: feedbackURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: ["sampleId": sampleId, "rating": rating])
+            request.httpBody = try JSONSerialization.data(withJSONObject: ["sampleId": sampleId, "rating": rating, "target": target])
             let (_, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse, http.statusCode != 200 {
                 print("feedback: HTTP \(http.statusCode)")

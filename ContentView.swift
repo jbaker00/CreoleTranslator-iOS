@@ -39,6 +39,7 @@ struct ContentView: View {
     // and the rating already sent for it, so the thumbs lock after one tap.
     @State private var currentSampleId: String? = nil
     @State private var sentRating: String? = nil
+    @State private var sentSttRating: String? = nil
     /// Direction the current result was actually translated in (differs
     /// from translationDirection after an auto-detect flip). nil = no result.
     @State private var resultDirection: TranslationDirection? = nil
@@ -338,7 +339,17 @@ struct ContentView: View {
                             ttsManager.speak(text: transcription, language: sourceLanguage)
                         }
                     },
-                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source"
+                    isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source",
+                    feedbackSampleId: (isProcessing || lastInput?.source != .voice) ? nil : currentSampleId,
+                    sentRating: sentSttRating,
+                    onFeedback: { rating in
+                        guard let id = currentSampleId, sentSttRating == nil else { return }
+                        sentSttRating = rating
+                        Analytics.logEvent("stt_feedback", parameters: ["rating": rating])
+                        Task { await GroqService().sendFeedback(sampleId: id, rating: rating, target: "stt") }
+                    },
+                    feedbackPrompt: "Heard right?",
+                    feedbackNoun: "Transcription"
                 )
 
                 if autoDetectedFlip, let shown = resultDirection {
@@ -511,6 +522,7 @@ struct ContentView: View {
                     translation = result.translation
                     currentSampleId = result.sampleId
                     sentRating = nil
+                    sentSttRating = nil
                     resultDirection = result.direction
                     autoDetectedFlip = flipped
                     lastInput = (text, source)
@@ -530,6 +542,7 @@ struct ContentView: View {
                     statusMessage = ""
                     isProcessing = false
                     currentSampleId = nil
+                    sentSttRating = nil
                     resultDirection = nil
                     autoDetectedFlip = false
                     logTranslationFailed(inputMode: "text", error: error)
@@ -605,6 +618,7 @@ struct ContentView: View {
                     translation = result.translation
                     currentSampleId = result.sampleId
                     sentRating = nil
+                    sentSttRating = nil
                     resultDirection = result.direction
                     autoDetectedFlip = flipped
                     lastInput = (result.transcription, .voice)
@@ -628,6 +642,7 @@ struct ContentView: View {
                     statusMessage = ""
                     isProcessing = false
                     currentSampleId = nil
+                    sentSttRating = nil
                     resultDirection = nil
                     autoDetectedFlip = false
                     logTranslationFailed(inputMode: "voice", error: error)
@@ -651,6 +666,8 @@ struct ResultCard: View {
     var feedbackSampleId: String? = nil
     var sentRating: String? = nil
     var onFeedback: ((String) -> Void)? = nil
+    var feedbackPrompt: String = "Was this right?"
+    var feedbackNoun: String = "Translation"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -685,7 +702,7 @@ struct ResultCard: View {
 
             if feedbackSampleId != nil, let onFeedback = onFeedback {
                 HStack(spacing: 10) {
-                    Text(sentRating == nil ? "Was this right?" : "Thanks for the feedback")
+                    Text(sentRating == nil ? feedbackPrompt : "Thanks for the feedback")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
@@ -700,7 +717,7 @@ struct ResultCard: View {
                                 .cornerRadius(8)
                         }
                         .disabled(sentRating != nil)
-                        .accessibilityLabel(rating == "up" ? "Translation was good" : "Translation was wrong")
+                        .accessibilityLabel(rating == "up" ? "\(feedbackNoun) was good" : "\(feedbackNoun) was wrong")
                     }
                 }
                 .padding(.top, 4)
