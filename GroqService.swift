@@ -38,7 +38,16 @@ enum TranslationDirection: String, Codable {
 struct TranscriptionResponse: Codable {
     let text: String
     let provider: String?
+    let engine: String?
 }
+
+/// TEST BUILD (branch stt-gpt-transcribe): ask the proxy to transcribe Creole
+/// with OpenAI gpt-transcribe instead of Groq Whisper. Unlike Whisper, it
+/// returns an empty transcript when it can't make out the speech, so
+/// processAudio() turns that into `GroqError.nothingHeard` rather than sending
+/// empty text to /translate. Remove the header (or set nil) to get production
+/// behaviour.
+let sttEngineOverride: String? = "gpt-transcribe"
 
 struct ProxyTranslationResponse: Codable {
     let translation: String
@@ -60,6 +69,8 @@ enum TranslationSource: String {
 private func displayProvider(_ raw: String?) -> String {
     switch raw {
     case "groq": return "Groq"
+    case "openai": return "OpenAI gpt-transcribe (test)"
+    case "groq-fallback": return "Groq (backup)"
     case "openai-fallback": return "OpenAI (backup)"
     case "openrouter-fallback": return "OpenRouter (backup)"
     default: return "Groq"
@@ -83,6 +94,7 @@ enum GroqError: LocalizedError {
     case translationFailed(String)
     case speechFailed(String)
     case invalidResponse
+    case nothingHeard
 
     var errorDescription: String? {
         switch self {
@@ -98,6 +110,8 @@ enum GroqError: LocalizedError {
             return "Speech synthesis failed: \(message)"
         case .invalidResponse:
             return "Received invalid response from server"
+        case .nothingHeard:
+            return "Didn't catch that — try again, a little closer to the microphone."
         }
     }
 }
@@ -132,6 +146,10 @@ class GroqService {
                       resolveDirection: ((String) -> TranslationDirection)? = nil) async throws -> TranslationResult {
         // Step 1: Transcribe audio using Whisper
         let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
+        // gpt-transcribe declines rather than guesses; the proxy rejects empty text.
+        if transcription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            throw GroqError.nothingHeard
+        }
 
         // Step 2: Translate — in the detected direction if the caller asks
         let direction = resolveDirection?(transcription) ?? direction
@@ -176,6 +194,7 @@ class GroqService {
         var request = proxyRequest(url: transcriptionURL)
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(language, forHTTPHeaderField: "x-language")
+        if let engine = sttEngineOverride { request.setValue(engine, forHTTPHeaderField: "x-stt-engine") }
         request.httpBody = try Data(contentsOf: fileURL)
 
         do {
@@ -195,7 +214,7 @@ class GroqService {
             }
 
             let result = try JSONDecoder().decode(TranscriptionResponse.self, from: data)
-            return (result.text, result.provider)
+            return (result.text.trimmingCharacters(in: .whitespacesAndNewlines), result.provider)
 
         } catch let error as GroqError {
             throw error
