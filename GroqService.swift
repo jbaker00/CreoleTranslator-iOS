@@ -41,13 +41,13 @@ struct TranscriptionResponse: Codable {
     let engine: String?
 }
 
-/// TEST BUILD (branch stt-gpt-transcribe): ask the proxy to transcribe Creole
-/// with OpenAI gpt-transcribe instead of Groq Whisper. Unlike Whisper, it
-/// returns an empty transcript when it can't make out the speech, so
-/// processAudio() turns that into `GroqError.nothingHeard` rather than sending
-/// empty text to /translate. Remove the header (or set nil) to get production
-/// behaviour.
-let sttEngineOverride: String? = "gpt-transcribe"
+/// Creole speech-to-text engine requested from the proxy via `x-stt-engine`.
+/// "gpt-transcribe" = OpenAI gpt-transcribe primary, Groq Whisper as backup
+/// (proxy ignores the header for English, which stays on Whisper). Unlike
+/// Whisper, gpt-transcribe returns an empty transcript when it can't make out
+/// the speech, so processAudio() turns that into `GroqError.nothingHeard`
+/// rather than sending empty text to /translate. nil = proxy default (Whisper).
+let creoleSttEngine: String? = "gpt-transcribe"
 
 struct ProxyTranslationResponse: Codable {
     let translation: String
@@ -69,7 +69,9 @@ enum TranslationSource: String {
 private func displayProvider(_ raw: String?) -> String {
     switch raw {
     case "groq": return "Groq"
-    case "openai": return "OpenAI gpt-transcribe (test)"
+    case "openai": return "OpenAI"
+    case "openrouter": return "OpenRouter"
+    case "override": return "reviewer dictionary"
     case "groq-fallback": return "Groq (backup)"
     case "openai-fallback": return "OpenAI (backup)"
     case "openrouter-fallback": return "OpenRouter (backup)"
@@ -144,7 +146,7 @@ class GroqService {
     func processAudio(fileURL: URL,
                       direction: TranslationDirection = .creoleToEnglish,
                       resolveDirection: ((String) -> TranslationDirection)? = nil) async throws -> TranslationResult {
-        // Step 1: Transcribe audio using Whisper
+        // Step 1: Transcribe audio (gpt-transcribe for Creole, Whisper for English — see creoleSttEngine)
         let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
         // gpt-transcribe declines rather than guesses; the proxy rejects empty text.
         if transcription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -156,7 +158,8 @@ class GroqService {
         let translated = try await translateText(transcription, direction: direction, source: .voice)
 
         // If either leg used its fallback, surface that — it's the more useful signal.
-        let provider = transcribeProvider == "groq" ? translated.provider : transcribeProvider
+        // (Engine-agnostic: the proxy tags every backup engine with "-fallback".)
+        let provider = transcribeProvider?.hasSuffix("-fallback") == true ? transcribeProvider : translated.provider
         return TranslationResult(
             transcription: transcription,
             translation: translated.text,
@@ -194,7 +197,7 @@ class GroqService {
         var request = proxyRequest(url: transcriptionURL)
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(language, forHTTPHeaderField: "x-language")
-        if let engine = sttEngineOverride { request.setValue(engine, forHTTPHeaderField: "x-stt-engine") }
+        if let engine = creoleSttEngine { request.setValue(engine, forHTTPHeaderField: "x-stt-engine") }
         request.httpBody = try Data(contentsOf: fileURL)
 
         do {
