@@ -638,14 +638,21 @@ struct ContentView: View {
                 await MainActor.run {
                     transcription = "Your transcription will appear here..."
                     translation = "Your translation will appear here..."
-                    errorMessage = "Error: \(error.localizedDescription)"
-                    statusMessage = ""
+                    if case GroqError.nothingHeard = error {
+                        // Not a failure: the engine heard nothing it could transcribe.
+                        errorMessage = nil
+                        statusMessage = "🎤 \(error.localizedDescription)"
+                        Analytics.logEvent("stt_nothing_heard", parameters: nil)
+                    } else {
+                        errorMessage = "Error: \(error.localizedDescription)"
+                        statusMessage = ""
+                        logTranslationFailed(inputMode: "voice", error: error)
+                    }
                     isProcessing = false
                     currentSampleId = nil
                     sentSttRating = nil
                     resultDirection = nil
                     autoDetectedFlip = false
-                    logTranslationFailed(inputMode: "voice", error: error)
                 }
 
                 // Clean up audio file

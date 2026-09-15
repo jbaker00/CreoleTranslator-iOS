@@ -51,7 +51,7 @@ struct DataPrivacyConsentView: View {
                 .font(.title3)
                 .fontWeight(.bold)
 
-            Text("Your speech is sent to Groq AI for transcription and translation, and translated text is sent to OpenAI to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. See our Privacy Policy for details and how to request deletion.")
+            Text("Your speech is sent to Groq AI for transcription and translation, and translated text is sent to OpenAI to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. Items you flag with 👎 may be shown to reviewers right away; everything else is shown only once it is 10 days old. See our Privacy Policy for details and how to request deletion.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
