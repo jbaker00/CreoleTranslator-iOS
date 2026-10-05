@@ -15,7 +15,12 @@ class InterstitialAdManager: NSObject, ObservableObject, FullScreenContentDelega
     // session cap once and never see interstitials again.
     static let sessionResetAfterBackground: TimeInterval = 30 * 60
 
+#if DEBUG
+    // Google's test unit — clicking real ads on our own devices risks AdMob invalid-traffic flags.
+    private let adUnitID = "ca-app-pub-3940256099942544/4411468910"
+#else
     private let adUnitID = "ca-app-pub-7871017136061682/1614363987"
+#endif
 
     private var interstitial: InterstitialAd?
     private var translationCount = 0
