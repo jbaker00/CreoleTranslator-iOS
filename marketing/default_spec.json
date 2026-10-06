@@ -1,0 +1,12 @@
+[
+ {"name":"main-en-1","shot":"medical","title":"Speak English, hear Haitian Creole","sub":"Voice translation, spoken out loud in seconds"},
+ {"name":"main-en-2","shot":"family","title":"Understand Kreyòl instantly","sub":"Talk with family, neighbors and patients"},
+ {"name":"main-en-3","shot":"phrasebook-Greetings","title":"A phrasebook that works offline","sub":"Tap any phrase to hear how it sounds"},
+ {"name":"main-en-4","shot":"phrasebook-Medical","title":"Medical and emergency phrases","sub":"The words that matter when it counts"},
+ {"name":"main-en-5","shot":"phrasebook-Travel","title":"Ready for your trip to Haiti","sub":"Taxis, directions and everyday travel phrases"},
+ {"name":"main-fr-1","shot":"medical","title":"Parlez anglais, entendez le créole haïtien","sub":"Traduction vocale, à voix haute, en quelques secondes"},
+ {"name":"main-fr-2","shot":"family","title":"Comprenez le kreyòl instantanément","sub":"Avec votre famille, vos voisins, vos patients"},
+ {"name":"main-fr-3","shot":"phrasebook-Greetings","title":"Un guide de conversation hors ligne","sub":"Touchez une phrase pour l'entendre"},
+ {"name":"main-fr-4","shot":"phrasebook-Medical","title":"Phrases médicales et d'urgence","sub":"Les mots qui comptent, quand il le faut"},
+ {"name":"main-fr-5","shot":"phrasebook-Travel","title":"Prêt pour votre voyage en Haïti","sub":"Taxi, directions et phrases de voyage"}
+]
