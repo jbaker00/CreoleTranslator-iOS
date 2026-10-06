@@ -27,7 +27,7 @@ struct ContentView: View {
     @State private var recordingURL: URL?
     @State private var statusMessage = ""
     @State private var permissionGranted = false
-    @State private var availableWidth: CGFloat = 320
+    @State private var availableWidth: CGFloat = UIScreen.main.bounds.width
     @State private var showHistory = false
     @State private var showPhrasebook = false
     @State private var showSettings = false
@@ -185,10 +185,15 @@ struct ContentView: View {
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     }
 
-                    Spacer(minLength: 80) // leave room for banner
+                    // leave room for the banner (adaptive height, usually taller than 50)
+                    Spacer(minLength: BannerAdView.size(forWidth: availableWidth).size.height + 30)
                 }
             }
             .onAppear {
+                if ScreenshotMode.isActive {
+                    applyScreenshotScene()
+                    return
+                }
                 // Returning users never see the consent sheet, so ask ATT
                 // here; first-run users get it after the sheet (see below).
                 // Resolving ATT early keeps banner requests personalized.
@@ -197,17 +202,20 @@ struct ContentView: View {
                 }
             }
 
-            // Host the banner in a GeometryReader so we can pass the current width to compute an adaptive size.
+            // Host the banner in a GeometryReader so the adaptive size tracks the current width.
+            let bannerSize = BannerAdView.size(forWidth: availableWidth)
+            if !ScreenshotMode.isActive {
             GeometryReader { geo in
-                BannerAdView(width: geo.size.width)
-                    .frame(width: geo.size.width, height: 50, alignment: .center) // Reserve typical banner height; adaptive banners may adjust internally
+                BannerAdView(adSize: bannerSize)
+                    .frame(width: geo.size.width, height: bannerSize.size.height, alignment: .center)
                     .background(Color(UIColor.tertiarySystemBackground)) // Use system background color for consistent contrast
                     .overlay(alignment: .top) { Divider() } // Subtle divider to delineate content and ad area
                     .ignoresSafeArea(edges: .bottom) // Allow the banner to extend to the bottom edge safely
                     .onAppear { availableWidth = geo.size.width } // Initialize width on first layout
                     .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
-            .frame(height: 50, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
+            .frame(height: bannerSize.size.height, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
+            }
 
         }
         .sheet(isPresented: Binding(
@@ -218,6 +226,11 @@ struct ContentView: View {
         }
         .onChange(of: privacyConsent.hasConsented) { consented in
             if consented { ATTAuthorization.requestIfNeeded() }
+        }
+        .onChange(of: audioRecorder.lastError) { error in
+            guard let error else { return }
+            statusMessage = ""
+            errorMessage = error
         }
     }
     
@@ -257,6 +270,11 @@ struct ContentView: View {
                 }
                 .disabled(isProcessing || !privacyConsent.hasConsented)
                 .padding(.horizontal, 30)
+
+                if audioRecorder.isRecording {
+                    RecordingProgressView(elapsed: audioRecorder.elapsed)
+                        .padding(.horizontal, 30)
+                }
             } else {
                 // Text input
                 VStack(spacing: 12) {
@@ -453,6 +471,18 @@ struct ContentView: View {
         }
     }
     
+    private func applyScreenshotScene() {
+        if ScreenshotMode.phrasebookCategory != nil {
+            showPhrasebook = true
+        } else if let (source, translated, direction) = ScreenshotMode.sampleResult {
+            translationDirection = direction
+            resultDirection = direction
+            transcription = source
+            translation = translated
+            statusMessage = "✅ Completed"
+        }
+    }
+
     private func startRecording() {
         errorMessage = nil
         // Ask for mic access on first record tap — in context, the user
@@ -463,14 +493,23 @@ struct ContentView: View {
                 errorMessage = "Microphone access denied. Please enable it in Settings."
                 return
             }
-            statusMessage = "🔴 Recording..."
-            recordingURL = audioRecorder.startRecording()
+            audioRecorder.onAutoStop = { url in
+                Analytics.logEvent("recording_auto_stopped", parameters: nil)
+                recordingURL = url
+                statusMessage = "⏳ Time's up — processing..."
+                processAudio(url: url)
+            }
+            audioRecorder.startRecording { url in
+                recordingURL = url
+                statusMessage = url == nil ? "" : "🔴 Recording..."
+            }
         }
     }
     
     private func stopRecording() {
         guard let url = audioRecorder.stopRecording() else {
-            errorMessage = "Failed to stop recording"
+            // Nil here almost always means a too-short tap (the recorder discards those).
+            statusMessage = "🎤 Too short — tap Start, speak, then tap Stop."
             return
         }
         
@@ -659,6 +698,36 @@ struct ContentView: View {
                 audioRecorder.deleteRecording(at: url)
             }
         }
+    }
+}
+
+/// Fills toward AudioRecorder.maxDuration so people can see how long they have left.
+/// Turns orange past warnAfter, where translation accuracy starts dropping.
+struct RecordingProgressView: View {
+    let elapsed: TimeInterval
+
+    private var isLong: Bool { elapsed >= AudioRecorder.warnAfter }
+    private var remaining: Int { max(0, Int((AudioRecorder.maxDuration - elapsed).rounded(.up))) }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ProgressView(value: elapsed, total: AudioRecorder.maxDuration)
+                .tint(isLong ? .orange : .red)
+                .animation(.linear(duration: 0.1), value: elapsed)
+            HStack {
+                Text(isLong ? "Shorter phrases translate best" : "Speak one or two sentences")
+                Spacer()
+                Text("\(remaining)s left")
+                    .monospacedDigit()
+            }
+            .font(.caption)
+            .foregroundColor(isLong ? .orange : .secondary)
+        }
+        .padding(12)
+        .background(Color(UIColor.systemBackground).opacity(0.95))
+        .cornerRadius(10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Recording, \(remaining) seconds left")
     }
 }
 

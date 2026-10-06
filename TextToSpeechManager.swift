@@ -118,17 +118,30 @@ class TextToSpeechManager: NSObject, ObservableObject {
     // MARK: - Private helpers
 
     private func playAudioData(_ data: Data, rate: Float = 1.0) {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-            audioPlayer = try AVAudioPlayer(data: data)
-            audioPlayer?.delegate = self
-            audioPlayer?.enableRate = true
-            audioPlayer?.rate = rate
-            audioPlayer?.prepareToPlay()
-            audioPlayer?.play()
-        } catch {
-            isSpeaking = false
+        // Activate off the main thread (can block); see AVAudioSession.workQueue.
+        AVAudioSession.workQueue.async {
+            let session = AVAudioSession.sharedInstance()
+            do {
+                try session.setCategory(.playback, mode: .default)
+                try session.setActive(true)
+            } catch {
+                DispatchQueue.main.async { self.isSpeaking = false }
+                return
+            }
+            DispatchQueue.main.async {
+                // stop() may have been tapped while the session was activating.
+                guard self.isSpeaking else { return }
+                do {
+                    self.audioPlayer = try AVAudioPlayer(data: data)
+                    self.audioPlayer?.delegate = self
+                    self.audioPlayer?.enableRate = true
+                    self.audioPlayer?.rate = rate
+                    self.audioPlayer?.prepareToPlay()
+                    self.audioPlayer?.play()
+                } catch {
+                    self.isSpeaking = false
+                }
+            }
         }
     }
 
