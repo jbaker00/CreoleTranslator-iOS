@@ -85,7 +85,7 @@ struct ContentView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(.primary)
 
-                                Text("Powered by Groq AI")
+                                Text("AI voice translation")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
