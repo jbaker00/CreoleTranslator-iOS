@@ -11,15 +11,24 @@ import SwiftUI
 
 class DataPrivacyConsent: ObservableObject {
     private let consentKey = "userConsentForAIDataSharing"
+    private let consentVersionKey = "userConsentForAIDataSharingVersion"
+
+    /// Bump when the consent text names a new recipient of user data, so people who
+    /// agreed to the old wording see the sheet once more.
+    /// 2 = OpenAI named for Haitian Creole transcription (2026-10, app 3.4).
+    static let currentVersion = 2
 
     @Published var hasConsented: Bool {
         didSet {
             UserDefaults.standard.set(hasConsented, forKey: consentKey)
+            UserDefaults.standard.set(hasConsented ? Self.currentVersion : 0, forKey: consentVersionKey)
         }
     }
 
     init() {
-        self.hasConsented = UserDefaults.standard.bool(forKey: consentKey)
+        let defaults = UserDefaults.standard
+        self.hasConsented = ScreenshotMode.isActive
+            || (defaults.bool(forKey: consentKey) && defaults.integer(forKey: consentVersionKey) >= Self.currentVersion)
     }
 
     func grantConsent() {
@@ -58,7 +67,7 @@ struct DataPrivacyConsentView: View {
                 .padding(.horizontal, 24)
 
             HStack(spacing: 4) {
-                Text("Audio is not retained after processing.")
+                Text("Recordings are deleted from your phone once translated.")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Link("Privacy Policy", destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!)
