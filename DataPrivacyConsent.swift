@@ -11,15 +11,24 @@ import SwiftUI
 
 class DataPrivacyConsent: ObservableObject {
     private let consentKey = "userConsentForAIDataSharing"
+    private let consentVersionKey = "userConsentForAIDataSharingVersion"
+
+    /// Bump when the consent text names a new recipient of user data, so people who
+    /// agreed to the old wording see the sheet once more.
+    /// 2 = OpenAI named for Haitian Creole transcription (2026-10, app 3.4).
+    static let currentVersion = 2
 
     @Published var hasConsented: Bool {
         didSet {
             UserDefaults.standard.set(hasConsented, forKey: consentKey)
+            UserDefaults.standard.set(hasConsented ? Self.currentVersion : 0, forKey: consentVersionKey)
         }
     }
 
     init() {
-        self.hasConsented = UserDefaults.standard.bool(forKey: consentKey)
+        let defaults = UserDefaults.standard
+        self.hasConsented = ScreenshotMode.isActive
+            || (defaults.bool(forKey: consentKey) && defaults.integer(forKey: consentVersionKey) >= Self.currentVersion)
     }
 
     func grantConsent() {
@@ -51,14 +60,14 @@ struct DataPrivacyConsentView: View {
                 .font(.title3)
                 .fontWeight(.bold)
 
-            Text("Your speech is sent to Groq AI for transcription and translation, and translated text is sent to OpenAI to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. Items you flag with 👎 may be shown to reviewers right away; everything else is shown only once it is 10 days old. See our Privacy Policy for details and how to request deletion.")
+            Text("Your speech is sent to OpenAI (Haitian Creole) or Groq (English) for transcription, with the other as a backup; text is translated by Groq, and translated text is sent to OpenAI or Groq to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. Items you flag with 👎 may be shown to reviewers right away; everything else is shown only once it is 10 days old. See our Privacy Policy for details and how to request deletion.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
             HStack(spacing: 4) {
-                Text("Audio is not retained after processing.")
+                Text("Recordings are deleted from your phone once translated.")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Link("Privacy Policy", destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!)

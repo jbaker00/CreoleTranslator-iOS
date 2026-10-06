@@ -4,7 +4,7 @@
 //
 //  DEBUG-only: launch with `-shotScene <scene>` (UserDefaults argument domain) to
 //  open straight to a screen for App Store / Custom Product Page screenshots.
-//  Add `-userConsentForAIDataSharing YES` to skip the consent sheet.
+//  Screenshot mode also counts as consented, so the consent sheet never appears.
 //  Scenes: medical, travel, family (result cards), phrasebook-<Category>.
 //
 

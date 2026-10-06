@@ -3,7 +3,7 @@
 - `frame_screenshots.py cpp_spec.json` — renders the captioned 1320×2868 Custom Product Page screenshots
   (run from the repo root) from raw simulator captures in `out/shots/`.
 - Raw captures come from the DEBUG screenshot mode (`ScreenshotMode.swift`):
-  `xcrun simctl launch <iPhone Pro Max sim> com.jbaker.CreoleTranslator -shotScene medical -userConsentForAIDataSharing YES`
+  `xcrun simctl launch <iPhone Pro Max sim> com.jbaker.CreoleTranslator -shotScene medical` (screenshot mode skips the consent sheet)
   Scenes: `medical`, `travel`, `family`, `phrasebook-<Category>`.
 - `out/` is gitignored (generated PNGs).
 

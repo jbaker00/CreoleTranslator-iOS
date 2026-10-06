@@ -6,7 +6,7 @@ title: Privacy Policy — Creole Translator
 # Privacy Policy
 
 **Creole Translator**
-*Last Updated: September 12, 2026*
+*Last Updated: October 6, 2026*
 
 ## Overview
 
@@ -18,7 +18,7 @@ Creole Translator ("the App") is a free application for iOS and Android that use
 
 When you use the App's recording feature, your voice is captured by your device's microphone and sent to third-party AI services for processing. Specifically:
 
-- Your recording is sent through our translation service to **Groq AI**, which transcribes it. If Groq is unavailable, **OpenAI** is used as a fallback for transcription.
+- Your recording is sent through our translation service to an AI transcription service: **OpenAI** for Haitian Creole speech and **Groq AI** for English speech. If that service is unavailable, the other one is used as a fallback.
 - Audio is transmitted over an encrypted HTTPS connection.
 - Your recording is **kept by our translation service for up to 7 days** so that, if the translation that follows is flagged (the AI reports low confidence, or you rate it 👎), the clip can be kept for **up to 30 days** and listened to by our named Creole-speaking reviewers to check whether it was transcribed correctly. Clips are stored without any identifier, are never linked to you or your device, and are deleted automatically on those schedules. A reviewer's corrected transcript may be kept permanently as text. Clips that were not flagged are never reviewed.
 - Groq AI and OpenAI process audio temporarily to produce results. Please review [Groq's Privacy Policy](https://groq.com/privacy-policy/) and [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy/) for details on how they handle submitted data.
@@ -95,8 +95,8 @@ The App is not directed at children under 13. We do not knowingly collect person
 
 | Service | Purpose | Privacy Policy |
 |---|---|---|
-| Groq AI | Speech transcription, translation, English text-to-speech | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
-| OpenAI | Haitian Creole text-to-speech; fallback transcription | [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy/) |
+| Groq AI | English speech transcription (fallback for Haitian Creole), translation, English text-to-speech | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
+| OpenAI | Haitian Creole speech transcription (fallback for English), Haitian Creole text-to-speech | [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy/) |
 | OpenRouter | Fallback translation when Groq is unavailable | [openrouter.ai/privacy](https://openrouter.ai/privacy) |
 | Google Firebase | Analytics and crash reporting | [policies.google.com/privacy](https://policies.google.com/privacy) |
 | Google AdMob | In-app advertising | [policies.google.com/technologies/ads](https://policies.google.com/technologies/ads) |
