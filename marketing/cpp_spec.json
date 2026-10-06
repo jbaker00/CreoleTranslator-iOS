@@ -1,0 +1,18 @@
+[
+ {"name":"med-en-1","shot":"medical","title":"Talk with Creole-speaking patients","sub":"Speak English, hear Haitian Creole out loud"},
+ {"name":"med-en-2","shot":"phrasebook-Medical","title":"Medical phrases that work offline","sub":"Symptoms, pain, allergies and medicine"},
+ {"name":"med-en-3","shot":"phrasebook-Emergency","title":"Emergency words in seconds","sub":"Call for help, find a doctor, stay safe"},
+ {"name":"med-fr-1","shot":"medical","title":"Parlez avec vos patients créolophones","sub":"Parlez anglais, entendez le créole haïtien à voix haute"},
+ {"name":"med-fr-2","shot":"phrasebook-Medical","title":"Phrases médicales, même hors ligne","sub":"Symptômes, douleur, allergies et médicaments"},
+ {"name":"med-fr-3","shot":"phrasebook-Emergency","title":"Les mots d'urgence en quelques secondes","sub":"Appeler à l'aide, trouver un médecin"},
+ {"name":"trv-en-1","shot":"travel","title":"Get around Haiti with confidence","sub":"Speak and hear the answer in Haitian Creole"},
+ {"name":"trv-en-2","shot":"phrasebook-Directions","title":"Directions, even with no signal","sub":"A built-in phrasebook that works offline"},
+ {"name":"trv-en-3","shot":"phrasebook-Greetings","title":"Greet people like a local","sub":"Everyday Kreyòl with tap-to-hear audio"},
+ {"name":"trv-fr-1","shot":"travel","title":"Voyagez en Haïti en toute confiance","sub":"Parlez et entendez la réponse en créole haïtien"},
+ {"name":"trv-fr-2","shot":"phrasebook-Directions","title":"Les directions, même sans réseau","sub":"Un guide de conversation qui marche hors ligne"},
+ {"name":"trv-fr-3","shot":"phrasebook-Greetings","title":"Saluez comme un habitant","sub":"Le kreyòl de tous les jours, avec l'audio"},
+ {"name":"fam-en-1","shot":"family","title":"Talk with family in Kreyòl","sub":"Understand every word from family back home"},
+ {"name":"fam-en-2","shot":"phrasebook-Greetings","title":"Learn everyday Kreyòl","sub":"Tap any phrase to hear how it sounds"},
+ {"name":"fam-fr-1","shot":"family","title":"Parlez à votre famille en kreyòl","sub":"Comprenez chaque mot de vos proches"},
+ {"name":"fam-fr-2","shot":"phrasebook-Greetings","title":"Apprenez le kreyòl du quotidien","sub":"Touchez une phrase pour l'entendre"}
+]

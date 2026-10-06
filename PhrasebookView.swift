@@ -50,7 +50,7 @@ struct PhrasebookView: View {
 
             ScrollView {
                 LazyVStack(spacing: 20, pinnedViews: [.sectionHeaders]) {
-                    ForEach(Phrasebook.categories) { category in
+                    ForEach(ScreenshotMode.orderedPhrasebookCategories) { category in
                         Section {
                             VStack(spacing: 10) {
                                 ForEach(category.entries) { entry in

@@ -190,6 +190,10 @@ struct ContentView: View {
                 }
             }
             .onAppear {
+                if ScreenshotMode.isActive {
+                    applyScreenshotScene()
+                    return
+                }
                 // Returning users never see the consent sheet, so ask ATT
                 // here; first-run users get it after the sheet (see below).
                 // Resolving ATT early keeps banner requests personalized.
@@ -200,6 +204,7 @@ struct ContentView: View {
 
             // Host the banner in a GeometryReader so the adaptive size tracks the current width.
             let bannerSize = BannerAdView.size(forWidth: availableWidth)
+            if !ScreenshotMode.isActive {
             GeometryReader { geo in
                 BannerAdView(adSize: bannerSize)
                     .frame(width: geo.size.width, height: bannerSize.size.height, alignment: .center)
@@ -210,6 +215,7 @@ struct ContentView: View {
                     .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
             .frame(height: bannerSize.size.height, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
+            }
 
         }
         .sheet(isPresented: Binding(
@@ -465,6 +471,18 @@ struct ContentView: View {
         }
     }
     
+    private func applyScreenshotScene() {
+        if ScreenshotMode.phrasebookCategory != nil {
+            showPhrasebook = true
+        } else if let (source, translated, direction) = ScreenshotMode.sampleResult {
+            translationDirection = direction
+            resultDirection = direction
+            transcription = source
+            translation = translated
+            statusMessage = "✅ Completed"
+        }
+    }
+
     private func startRecording() {
         errorMessage = nil
         // Ask for mic access on first record tap — in context, the user
