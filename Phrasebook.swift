@@ -28,13 +28,13 @@ struct PhrasebookCategory: Identifiable {
 enum Phrasebook {
     static let categories: [PhrasebookCategory] = [
         PhrasebookCategory(name: "Greetings", icon: "hand.wave.fill", entries: [
-            PhrasebookEntry(english: "Hello / Good day", creole: "Allo bonjou"),
+            PhrasebookEntry(english: "Hello / Good day", creole: "Bonjou"),
             PhrasebookEntry(english: "Good evening", creole: "Bonswa"),
             PhrasebookEntry(english: "How are you?", creole: "Kijan ou ye?"),
             PhrasebookEntry(english: "I'm fine, thank you", creole: "Mwen byen, mèsi"),
             PhrasebookEntry(english: "Thank you", creole: "Mèsi"),
             PhrasebookEntry(english: "You're welcome", creole: "Pa dekwa"),
-            PhrasebookEntry(english: "Please", creole: "Sil vous plè"),
+            PhrasebookEntry(english: "Please", creole: "Souple"),
             PhrasebookEntry(english: "Goodbye", creole: "Orevwa"),
             PhrasebookEntry(english: "My name is...", creole: "Mwen rele..."),
             PhrasebookEntry(english: "Nice to meet you", creole: "Mwen byen kontan fè konesans ou"),
@@ -46,7 +46,7 @@ enum Phrasebook {
             PhrasebookEntry(english: "I don't understand", creole: "Mwen pa konprann"),
             PhrasebookEntry(english: "Do you speak English?", creole: "Èske ou pale angle?"),
             PhrasebookEntry(english: "How much does this cost?", creole: "Konbyen sa koute?"),
-            PhrasebookEntry(english: "Where is the bathroom?", creole: "Kote twalèt la ye sil vous plè"),
+            PhrasebookEntry(english: "Where is the bathroom?", creole: "Kote twalèt la ye, souple?"),
             PhrasebookEntry(english: "One, two, three", creole: "En, de, twa"),
         ]),
         PhrasebookCategory(name: "Directions", icon: "signpost.right.fill", entries: [
@@ -65,12 +65,12 @@ enum Phrasebook {
             PhrasebookEntry(english: "I need a doctor", creole: "Mwen bezwen yon doktè"),
             PhrasebookEntry(english: "Fire!", creole: "Dife!"),
             PhrasebookEntry(english: "It's an emergency", creole: "Se yon ijans"),
-            PhrasebookEntry(english: "Where is the hospital?", creole: "Kote lopital la?"),
+            PhrasebookEntry(english: "Where is the hospital?", creole: "Kote lopital la ye?"),
             PhrasebookEntry(english: "I am in danger", creole: "Mwen nan danje"),
         ]),
         PhrasebookCategory(name: "Medical", icon: "cross.case.fill", entries: [
             PhrasebookEntry(english: "I am sick", creole: "Mwen malad"),
-            PhrasebookEntry(english: "I have a headache", creole: "Mwen gen tèt fè mal"),
+            PhrasebookEntry(english: "I have a headache", creole: "Tèt mwen fè m mal"),
             PhrasebookEntry(english: "I have a fever", creole: "Mwen gen lafyèv"),
             PhrasebookEntry(english: "It hurts here", creole: "Li fè mal isit la"),
             PhrasebookEntry(english: "I am allergic to...", creole: "Mwen fè alèji ak..."),
@@ -79,8 +79,8 @@ enum Phrasebook {
             PhrasebookEntry(english: "I need water", creole: "Mwen bezwen dlo"),
         ]),
         PhrasebookCategory(name: "Travel", icon: "airplane", entries: [
-            PhrasebookEntry(english: "Where is the airport?", creole: "Kote ayewopò a ye sil vous plè"),
-            PhrasebookEntry(english: "I would like a taxi", creole: "Mwen bezwen yon taksi sil vous plè"),
+            PhrasebookEntry(english: "Where is the airport?", creole: "Kote ayewopò a ye, souple?"),
+            PhrasebookEntry(english: "I would like a taxi", creole: "Mwen ta renmen yon taksi, souple"),
             PhrasebookEntry(english: "How do I get to...?", creole: "Kijan pou m rive nan...?"),
             PhrasebookEntry(english: "What time is it?", creole: "Ki lè li ye?"),
             PhrasebookEntry(english: "I am a tourist", creole: "Mwen se yon touris"),

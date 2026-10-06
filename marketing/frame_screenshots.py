@@ -48,4 +48,5 @@ def make(shot, title, sub, name):
     return OUT+name+'.png'
 if __name__=='__main__':
     spec=json.load(open(sys.argv[1]))
+    if len(sys.argv)>2: OUT=sys.argv[2].rstrip('/')+'/'
     for s in spec: print(make(s['shot'],s['title'],s['sub'],s['name']))
