@@ -33,6 +33,7 @@
 		7E5AC91C20C1730E5595DCB8 /* GroqService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFFF8A76EBBF12B6FEAA3808 /* GroqService.swift */; };
 		7E785A8648A88CB317E2A192 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 1EC3D85E8E22E455B35FC01B /* FirebaseCrashlytics */; };
 		7E87D7CE13978F8BF562834B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */; };
+		B1C2D3E4F5061728394A5B6C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* PrivacyInfo.xcprivacy */; };
 		920D9D18FC423CFEA3FCE758 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DE2BADE071FE83D207B52FF0 /* FirebaseAnalytics */; };
 		AA000001000000000000AAA1 /* VoiceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001000000000000AAA2 /* VoiceSettings.swift */; };
 		AA0000010000000000LD0001 /* LanguageDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000LD0002 /* LanguageDetector.swift */; };
@@ -71,6 +72,7 @@
 		6EFB00000000000000000003 /* PhrasebookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhrasebookView.swift; sourceTree = "<group>"; };
 		83684C00265DAE85836F7BFF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA000001000000000000AAA2 /* VoiceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettings.swift; sourceTree = "<group>"; };
 		AA0000010000000000LD0002 /* LanguageDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageDetector.swift; sourceTree = "<group>"; };
 		AA000002000000000000AAA2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -113,6 +115,7 @@
 				6E92902C2F26C4CF00DF5C62 /* .gitignore */,
 				6E6AB2DD2F31B848008F4143 /* Package.resolved */,
 				897567FFE6A87C427EEB5B7C /* GoogleService-Info.plist */,
+				A1B2C3D4E5F60718293A4B5C /* PrivacyInfo.xcprivacy */,
 				F6774A539FCC2A4506632213 /* GoogleService-Info.plist.template */,
 				6E9F19612F38131C0094AF1F /* HistoryView.swift */,
 				6E9F19622F38131C0094AF1F /* TranslationHistory.swift */,
@@ -245,6 +248,7 @@
 				2C1D16ECC317DBE35CC3484B /* Assets.xcassets in Resources */,
 				6E6AB2DE2F31B848008F4143 /* Package.resolved in Resources */,
 				7E87D7CE13978F8BF562834B /* GoogleService-Info.plist in Resources */,
+				B1C2D3E4F5061728394A5B6C /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
