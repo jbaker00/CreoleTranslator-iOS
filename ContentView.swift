@@ -227,6 +227,17 @@ struct ContentView: View {
         .onChange(of: privacyConsent.hasConsented) { consented in
             if consented { ATTAuthorization.requestIfNeeded() }
         }
+        // creoletranslator://phrasebook — used by App Store In-App Events.
+        .onOpenURL { url in
+            guard url.scheme == "creoletranslator" else { return }
+            Analytics.logEvent("deep_link_open", parameters: ["target": url.host ?? ""])
+            if url.host == "phrasebook" {
+                withAnimation {
+                    showHistory = false
+                    showPhrasebook = true
+                }
+            }
+        }
         .onChange(of: audioRecorder.lastError) { error in
             guard let error else { return }
             statusMessage = ""

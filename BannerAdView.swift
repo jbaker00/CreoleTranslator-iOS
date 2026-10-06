@@ -24,17 +24,28 @@ struct BannerAdView: UIViewRepresentable {
         currentOrientationAnchoredAdaptiveBanner(width: width)
     }
 
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator {
+        /// The size we last requested. BannerView.adSize can't be used for this: right
+        /// after init it reads back 0×0 for adaptive sizes, and re-setting it then
+        /// re-loads the ad at double the size (880pt wide on a 440pt screen, clipped).
+        var requestedSize: CGSize = .zero
+    }
+
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView(adSize: adSize)
         bannerView.adUnitID = adUnitID
         bannerView.rootViewController = UIApplication.shared.firstKeyWindowRootViewController()
+        context.coordinator.requestedSize = adSize.size
         bannerView.load(Request())
         return bannerView
     }
 
     func updateUIView(_ uiView: BannerView, context: Context) {
         // Width changed (rotation, iPad split view): request an ad at the new size.
-        guard uiView.adSize.size != adSize.size else { return }
+        guard context.coordinator.requestedSize != adSize.size else { return }
+        context.coordinator.requestedSize = adSize.size
         uiView.adSize = adSize
         uiView.load(Request())
     }
