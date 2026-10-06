@@ -481,8 +481,10 @@ struct ContentView: View {
                 statusMessage = "⏳ Time's up — processing..."
                 processAudio(url: url)
             }
-            recordingURL = audioRecorder.startRecording()
-            statusMessage = recordingURL == nil ? "" : "🔴 Recording..."
+            audioRecorder.startRecording { url in
+                recordingURL = url
+                statusMessage = url == nil ? "" : "🔴 Recording..."
+            }
         }
     }
     
