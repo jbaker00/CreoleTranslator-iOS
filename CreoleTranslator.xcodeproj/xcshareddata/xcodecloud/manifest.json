@@ -1,0 +1,9 @@
+{
+  "id" : "7fce597c-3160-4ed0-8292-4ea7e6b54cf2",
+  "targets" : [
+    {
+      "id" : "40A1294F-7F75-41E3-AFD4-2D3615B1E1D6",
+      "name" : "CreoleTranslator"
+    }
+  ]
+}
