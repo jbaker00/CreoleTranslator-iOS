@@ -16,6 +16,8 @@ struct ContentView: View {
     @StateObject private var ttsManager = TextToSpeechManager()
     @StateObject private var privacyConsent = DataPrivacyConsent()
     @StateObject private var interstitialAd = InterstitialAdManager()
+    @StateObject private var rewardedAd = RewardedAdManager()
+    @ObservedObject private var hdCredits = HDVoiceCredits.shared
     @Environment(\.colorScheme) private var colorScheme
 
     // Use the centralized Secrets helper to load the API key.
@@ -46,6 +48,12 @@ struct ContentView: View {
     @State private var autoDetectedFlip = false
     /// What produced the current result, so Undo can redo it manually.
     @State private var lastInput: (text: String, source: TranslationSource)? = nil
+    /// Card tapped while out of HD plays; played after the ad (or with the basic voice).
+    @State private var pendingPlay: (card: String, text: String, language: String)? = nil
+    @State private var showOutOfHDPrompt = false
+    @State private var showHDInfo = false
+    @State private var showHDGranted = false
+    @State private var isWatchingAd = false
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
 
@@ -359,16 +367,10 @@ struct ContentView: View {
                     icon: shownDirection == .creoleToEnglish ? "🇭🇹" : "🇺🇸",
                     content: transcription,
                     isLoading: isProcessing,
-                    speakerAction: {
-                        if ttsManager.isSpeaking {
-                            ttsManager.stop()
-                            speakingCardTitle = nil
-                        } else {
-                            speakingCardTitle = "source"
-                            ttsManager.speak(text: transcription, language: sourceLanguage)
-                        }
-                    },
+                    speakerAction: { playCard("source", text: transcription, language: sourceLanguage) },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source",
+                    hdPlaysLeft: voiceSettings.usesHDVoice(isCreole: sourceLanguage.hasPrefix("ht")) ? hdCredits.playsLeft : nil,
+                    onHDChip: hdChipTapped,
                     feedbackSampleId: (isProcessing || lastInput?.source != .voice) ? nil : currentSampleId,
                     sentRating: sentSttRating,
                     onFeedback: { rating in
@@ -429,16 +431,10 @@ struct ContentView: View {
                     icon: shownDirection == .creoleToEnglish ? "🇺🇸" : "🇭🇹",
                     content: translation,
                     isLoading: isProcessing,
-                    speakerAction: {
-                        if ttsManager.isSpeaking {
-                            ttsManager.stop()
-                            speakingCardTitle = nil
-                        } else {
-                            speakingCardTitle = "target"
-                            ttsManager.speak(text: translation, language: targetLanguage)
-                        }
-                    },
+                    speakerAction: { playCard("target", text: translation, language: targetLanguage) },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target",
+                    hdPlaysLeft: voiceSettings.usesHDVoice(isCreole: targetLanguage.hasPrefix("ht")) ? hdCredits.playsLeft : nil,
+                    onHDChip: hdChipTapped,
                     feedbackSampleId: isProcessing ? nil : currentSampleId,
                     sentRating: sentRating,
                     onFeedback: { rating in
@@ -454,6 +450,27 @@ struct ContentView: View {
                 if !speaking {
                     speakingCardTitle = nil
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                hdCredits.refresh()
+            }
+            .confirmationDialog("Out of HD voice plays", isPresented: $showOutOfHDPrompt, titleVisibility: .visible) {
+                Button("Watch Video — \(HDVoiceCredits.playsPerAd) HD Plays") { watchAdForHDPlays() }
+                Button("Play Basic Voice") { playPendingWithBasicVoice() }
+                Button("Not Now", role: .cancel) { pendingPlay = nil }
+            } message: {
+                Text("Hear it in a natural AI voice: watch one short video for \(HDVoiceCredits.playsPerAd) more plays. \(HDVoiceCredits.freePlaysPerDay) free plays come back every day.\n\nGade yon ti videyo pou \(HDVoiceCredits.playsPerAd) lòt lekti ak vwa HD.")
+            }
+            .alert("HD Voice", isPresented: $showHDInfo) {
+                Button("Watch Video") { watchAdForHDPlays() }
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("\(hdCredits.playsLeft) HD plays left. You get \(HDVoiceCredits.freePlaysPerDay) free every day — watch a short video anytime for \(HDVoiceCredits.playsPerAd) more.\n\nOu gen \(hdCredits.playsLeft) lekti HD ki rete. Gade yon ti videyo pou \(HDVoiceCredits.playsPerAd) lòt.")
+            }
+            .alert("HD Plays Added", isPresented: $showHDGranted) {
+                Button("OK") {}
+            } message: {
+                Text("\(HDVoiceCredits.playsPerAd) more HD voice plays are ready.\n\n\(HDVoiceCredits.playsPerAd) lòt lekti HD pare.")
             }
             
             // TTS error message (helps diagnose Groq TTS fallback issues)
@@ -482,6 +499,92 @@ struct ContentView: View {
         }
     }
     
+    // MARK: - HD voice plays
+
+    private func playCard(_ card: String, text: String, language: String) {
+        if ttsManager.isSpeaking {
+            ttsManager.stop()
+            speakingCardTitle = nil
+            return
+        }
+        if hdCredits.playsLeft == 0 && ttsManager.usesHDPlay(text: text, language: language) {
+            guard !isWatchingAd else { return }
+            pendingPlay = (card, text, language)
+            showOutOfHDPrompt = true
+            Analytics.logEvent("hd_voice_out_prompt", parameters: ["language": language])
+            return
+        }
+        speakingCardTitle = card
+        ttsManager.speak(text: text, language: language)
+    }
+
+    private func hdChipTapped() {
+        if hdCredits.playsLeft == 0 {
+            watchAdForHDPlays()
+        } else {
+            showHDInfo = true
+        }
+    }
+
+    private func playPendingWithBasicVoice() {
+        guard let pending = pendingPlay else { return }
+        pendingPlay = nil
+        Analytics.logEvent("hd_voice_basic_chosen", parameters: ["language": pending.language])
+        speakingCardTitle = pending.card
+        ttsManager.speak(text: pending.text, language: pending.language, basicVoice: true)
+    }
+
+    /// Same wait-then-grant policy as the old voice unlock: up to 3s for the
+    /// ad to load, and a no-fill or present failure grants the plays anyway.
+    private func watchAdForHDPlays() {
+        guard !isWatchingAd else { return }
+        isWatchingAd = true
+        Task { @MainActor in
+            // Wait for the dialog's dismiss animation — presenting the ad
+            // while it is still on screen fails silently.
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            var waitedNs: UInt64 = 0
+            while !rewardedAd.isReady && waitedNs < 3_000_000_000 {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                waitedNs += 250_000_000
+            }
+            var earned = false
+            let shown = rewardedAd.show(
+                onReward: {
+                    earned = true
+                    hdCredits.grantAdReward()
+                    Analytics.logEvent("hd_plays_granted", parameters: ["via": "rewarded_ad"])
+                },
+                onDismiss: {
+                    isWatchingAd = false
+                    if earned { finishHDGrant() } else { pendingPlay = nil }
+                },
+                onPresentFailure: { grantHDPlays(via: "present_failed") }
+            )
+            if !shown {
+                grantHDPlays(via: "no_fill")
+            }
+        }
+    }
+
+    private func grantHDPlays(via: String) {
+        isWatchingAd = false
+        hdCredits.grantAdReward()
+        Analytics.logEvent("hd_plays_granted", parameters: ["via": via])
+        finishHDGrant()
+    }
+
+    /// Plays the card that triggered the ad; the audio is the confirmation.
+    private func finishHDGrant() {
+        guard let pending = pendingPlay else {
+            showHDGranted = true
+            return
+        }
+        pendingPlay = nil
+        speakingCardTitle = pending.card
+        ttsManager.speak(text: pending.text, language: pending.language)
+    }
+
     private func applyScreenshotScene() {
         if ScreenshotMode.phrasebookCategory != nil {
             showPhrasebook = true
@@ -749,6 +852,9 @@ struct ResultCard: View {
     let isLoading: Bool
     var speakerAction: (() -> Void)? = nil
     var isSpeaking: Bool = false
+    // HD voice plays left (nil = system voice selected, no chip).
+    var hdPlaysLeft: Int? = nil
+    var onHDChip: (() -> Void)? = nil
     // 👍/👎 for the translation; shown only when the proxy gave us a sampleId.
     var feedbackSampleId: String? = nil
     var sentRating: String? = nil
@@ -769,6 +875,10 @@ struct ResultCard: View {
 
                 // Show speaker button if speakerAction is provided
                 if let action = speakerAction {
+                    let playable = !(content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
+                    if playable, let left = hdPlaysLeft, let onHDChip = onHDChip {
+                        HDPlaysChip(playsLeft: left, action: onHDChip)
+                    }
                     Button(action: action) {
                         Image(systemName: isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
                             .font(.title3)
@@ -815,6 +925,35 @@ struct ResultCard: View {
         .background(Color(UIColor.tertiarySystemBackground))
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+    }
+}
+
+/// Sits beside a card's speaker button: "✨ HD 3" while plays remain, then
+/// "▶ +10 HD" — a tap that offers the rewarded video.
+struct HDPlaysChip: View {
+    let playsLeft: Int
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: playsLeft > 0 ? "sparkles" : "play.rectangle.fill")
+                    .font(.caption2.weight(.semibold))
+                Text(playsLeft > 0 ? "HD \(playsLeft)" : "+\(HDVoiceCredits.playsPerAd) HD")
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .foregroundColor(playsLeft > 0 ? .accentColor : .white)
+            .background(
+                Capsule().fill(playsLeft > 0 ? Color.accentColor.opacity(0.12) : Color.orange)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(playsLeft > 0
+            ? "\(playsLeft) HD voice plays left"
+            : "Out of HD voice plays. Watch a short video for \(HDVoiceCredits.playsPerAd) more")
     }
 }
 

@@ -68,29 +68,6 @@ class VoiceSettings: ObservableObject {
         Voice(id: "shimmer", name: "Shimmer", description: "Soft & gentle (female)"),
     ]
 
-    // MARK: - Premium voice unlock (rewarded ad)
-
-    // Default voices stay free; the rest are "premium" and unlock for 24h
-    // after watching a rewarded ad. Already-selected voices are grandfathered
-    // (the gate applies at selection time only).
-    static let freeVoiceIds: Set<String> = ["diana", "alloy"]
-    static let premiumUnlockHours: Double = 24
-
-    @AppStorage("premiumVoicesUnlockedUntil") var premiumVoicesUnlockedUntil: Double = 0
-
-    var premiumVoicesUnlocked: Bool {
-        Date().timeIntervalSince1970 < premiumVoicesUnlockedUntil
-    }
-
-    func unlockPremiumVoices() {
-        premiumVoicesUnlockedUntil = Date().timeIntervalSince1970 + Self.premiumUnlockHours * 3600
-        objectWillChange.send()
-    }
-
-    func isVoiceLocked(_ id: String) -> Bool {
-        !Self.freeVoiceIds.contains(id) && !premiumVoicesUnlocked
-    }
-
     // MARK: - Helpers
 
     /// Providers valid for English
@@ -106,12 +83,70 @@ class VoiceSettings: ObservableObject {
         }
     }
 
+    func usesHDVoice(isCreole: Bool) -> Bool {
+        (isCreole ? creoleProvider : englishProvider) != .system
+    }
+
     func description(for provider: TTSProvider, isCreole: Bool = false) -> String {
         switch provider {
         case .groq:   return "High-quality AI voices (6 options) — English only"
         case .openai: return "Natural multilingual voices (6 options)"
         case .system: return "Built-in iOS voice — works offline"
         }
+    }
+}
+
+// MARK: - HD voice plays (rewarded ad)
+
+/// AI ("HD") voice playback — Groq or OpenAI, both billed per request — is
+/// metered per device: a few free plays a day, more for each rewarded ad.
+/// Free plays reset at local midnight and are used first; ad plays carry
+/// over. The count lives on the device, so the api-proxy's per-device and
+/// global OpenAI TTS caps stay the real spend ceiling.
+final class HDVoiceCredits: ObservableObject {
+    static let shared = HDVoiceCredits()
+
+    static let freePlaysPerDay = 5
+    static let playsPerAd = 10
+
+    private let defaults = UserDefaults.standard
+    private let dayKey = "hdFreePlaysDay"
+    private let usedKey = "hdFreePlaysUsed"
+    private let bonusKey = "hdBonusPlays"
+
+    private static var today: String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        return "\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)"
+    }
+
+    private var freeUsedToday: Int {
+        defaults.string(forKey: dayKey) == Self.today ? defaults.integer(forKey: usedKey) : 0
+    }
+
+    var freePlaysLeft: Int { max(0, Self.freePlaysPerDay - freeUsedToday) }
+    var bonusPlaysLeft: Int { defaults.integer(forKey: bonusKey) }
+    var playsLeft: Int { freePlaysLeft + bonusPlaysLeft }
+
+    /// Call on the main thread after an HD clip actually arrives.
+    func consume() {
+        if freePlaysLeft > 0 {
+            let used = freeUsedToday
+            defaults.set(Self.today, forKey: dayKey)
+            defaults.set(used + 1, forKey: usedKey)
+        } else if bonusPlaysLeft > 0 {
+            defaults.set(bonusPlaysLeft - 1, forKey: bonusKey)
+        }
+        objectWillChange.send()
+    }
+
+    func grantAdReward() {
+        defaults.set(bonusPlaysLeft + Self.playsPerAd, forKey: bonusKey)
+        objectWillChange.send()
+    }
+
+    /// Re-renders observers so a new day's free plays show up.
+    func refresh() {
+        objectWillChange.send()
     }
 }
 

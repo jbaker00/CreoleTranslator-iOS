@@ -18,6 +18,16 @@ class TextToSpeechManager: NSObject, ObservableObject {
     private var audioPlayer: AVAudioPlayer?
     private var groqService: GroqService?
     private var openAITTSService: OpenAITTSService?
+    // Last HD clip, so replaying it costs neither a request nor an HD play.
+    private var lastHDAudio: (key: String, data: Data, rate: Float)?
+    private var requestID = UUID()
+
+    private struct HDRequest {
+        let provider: TTSProvider
+        let voice: String
+        let speed: Double
+        let key: String
+    }
 
     init(apiKey: String? = nil) {
         super.init()
@@ -26,7 +36,8 @@ class TextToSpeechManager: NSObject, ObservableObject {
         openAITTSService = OpenAITTSService()
     }
 
-    func speak(text: String, language: String = "en-US") {
+    /// `basicVoice` forces the on-device voice (chosen when out of HD plays).
+    func speak(text: String, language: String = "en-US", basicVoice: Bool = false) {
         guard !text.contains("Your translation"),
               !text.contains("Your transcription"),
               !text.isEmpty,
@@ -36,76 +47,67 @@ class TextToSpeechManager: NSObject, ObservableObject {
         stop()
         lastError = nil
 
-        let defaults = UserDefaults.standard
         let isCreole = language.hasPrefix("ht")
+        let speed = playbackSpeed(isCreole: isCreole)
 
-        // Read per-language provider, voice, and speed
-        let providerRaw = defaults.string(forKey: isCreole ? "creoleProvider" : "englishProvider")
-        let provider = TTSProvider(rawValue: providerRaw ?? "") ?? (isCreole ? .openai : .groq)
-
-        let rawSpeed = defaults.double(forKey: isCreole ? "creolePlaybackSpeed" : "englishPlaybackSpeed")
-        let speed = rawSpeed == 0 ? (isCreole ? 0.7 : 1.0) : rawSpeed
-
-        switch provider {
-        case .groq:
-            // Groq Orpheus — English only
-            guard let service = groqService else {
-                speakNatively(text: text, language: language, speed: speed)
-                return
-            }
-            let voice = defaults.string(forKey: "englishGroqVoice") ?? "diana"
-            isSpeaking = true
-            Task {
-                do {
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: voice, language: isCreole ? "ht" : "en")
-                    await MainActor.run { self.playAudioData(audioData, rate: Float(speed)) }
-                } catch {
-                    let msg = error.localizedDescription
-                    Analytics.logEvent("tts_fallback_to_computer", parameters: [
-                        "provider": "groq", "language": language, "reason": msg
-                    ])
-                    await MainActor.run {
-                        self.lastError = "Groq TTS failed: \(msg)"
-                        self.speakNatively(text: text, language: language, speed: speed)
-                    }
-                }
-            }
-
-        case .openai:
-            guard let service = openAITTSService else {
-                speakNatively(text: text, language: language, speed: speed)
-                return
-            }
-            let voiceKey = isCreole ? "creoleOpenAIVoice" : "englishOpenAIVoice"
-            let voice = defaults.string(forKey: voiceKey) ?? "alloy"
-            isSpeaking = true
-            Task {
-                do {
-                    // OpenAI accepts speed directly; clamp to 0.25–4.0
-                    let apiSpeed = min(max(speed, 0.25), 4.0)
-                    let audioData = try await service.synthesizeSpeech(text: text, voice: voice, speed: apiSpeed, language: isCreole ? "ht" : "en")
-                    await MainActor.run { self.playAudioData(audioData, rate: 1.0) }
-                } catch {
-                    let msg = error.localizedDescription
-                    if msg.localizedCaseInsensitiveContains("insufficient_quota") ||
-                       msg.localizedCaseInsensitiveContains("exceeded your current quota") {
-                        Analytics.logEvent("openai_tts_quota_exceeded", parameters: [
-                            "voice": voice, "text_length": text.count
-                        ])
-                    }
-                    Analytics.logEvent("tts_fallback_to_computer", parameters: [
-                        "provider": "openai", "language": language, "reason": msg
-                    ])
-                    await MainActor.run {
-                        self.lastError = "OpenAI TTS failed: \(msg)"
-                        self.speakNatively(text: text, language: language, speed: speed)
-                    }
-                }
-            }
-
-        case .system:
+        guard !basicVoice, let hd = hdRequest(text: text, language: language) else {
             speakNatively(text: text, language: language, speed: speed)
+            return
         }
+
+        // Replaying the clip just heard is free: no request, no HD play used.
+        if let cached = lastHDAudio, cached.key == hd.key {
+            isSpeaking = true
+            playAudioData(cached.data, rate: cached.rate)
+            return
+        }
+
+        // Callers that don't prompt first (History, Phrasebook) land here
+        // when the user is out of HD plays.
+        guard HDVoiceCredits.shared.playsLeft > 0 else {
+            Analytics.logEvent("hd_voice_out_basic_fallback", parameters: ["language": language])
+            speakNatively(text: text, language: language, speed: speed)
+            return
+        }
+
+        let id = UUID()
+        requestID = id
+        isSpeaking = true
+        Task {
+            do {
+                let (audioData, rate) = try await fetchAudio(hd, text: text, isCreole: isCreole)
+                await MainActor.run {
+                    // stop() or a newer speak() superseded this request.
+                    guard self.requestID == id, self.isSpeaking else { return }
+                    self.lastHDAudio = (hd.key, audioData, rate)
+                    HDVoiceCredits.shared.consume()
+                    self.playAudioData(audioData, rate: rate)
+                }
+            } catch {
+                let msg = error.localizedDescription
+                if hd.provider == .openai,
+                   msg.localizedCaseInsensitiveContains("insufficient_quota") ||
+                   msg.localizedCaseInsensitiveContains("exceeded your current quota") {
+                    Analytics.logEvent("openai_tts_quota_exceeded", parameters: [
+                        "voice": hd.voice, "text_length": text.count
+                    ])
+                }
+                Analytics.logEvent("tts_fallback_to_computer", parameters: [
+                    "provider": hd.provider.rawValue, "language": language, "reason": msg
+                ])
+                await MainActor.run {
+                    guard self.requestID == id, self.isSpeaking else { return }
+                    self.lastError = "\(hd.provider == .groq ? "Groq" : "OpenAI") TTS failed: \(msg)"
+                    self.speakNatively(text: text, language: language, speed: speed)
+                }
+            }
+        }
+    }
+
+    /// True when playing `text` now would use one of the user's HD plays.
+    func usesHDPlay(text: String, language: String) -> Bool {
+        guard let hd = hdRequest(text: text, language: language) else { return false }
+        return lastHDAudio?.key != hd.key
     }
 
     func stop() {
@@ -116,6 +118,44 @@ class TextToSpeechManager: NSObject, ObservableObject {
     }
 
     // MARK: - Private helpers
+
+    private func playbackSpeed(isCreole: Bool) -> Double {
+        let rawSpeed = UserDefaults.standard.double(forKey: isCreole ? "creolePlaybackSpeed" : "englishPlaybackSpeed")
+        return rawSpeed == 0 ? (isCreole ? 0.7 : 1.0) : rawSpeed
+    }
+
+    /// The AI voice request for `text`, or nil when the system voice is selected.
+    private func hdRequest(text: String, language: String) -> HDRequest? {
+        let defaults = UserDefaults.standard
+        let isCreole = language.hasPrefix("ht")
+        let providerRaw = defaults.string(forKey: isCreole ? "creoleProvider" : "englishProvider")
+        let provider = TTSProvider(rawValue: providerRaw ?? "") ?? (isCreole ? .openai : .groq)
+        let voice: String
+        switch provider {
+        case .groq:   voice = defaults.string(forKey: "englishGroqVoice") ?? "diana"
+        case .openai: voice = defaults.string(forKey: isCreole ? "creoleOpenAIVoice" : "englishOpenAIVoice") ?? "alloy"
+        case .system: return nil
+        }
+        let speed = playbackSpeed(isCreole: isCreole)
+        return HDRequest(provider: provider, voice: voice, speed: speed,
+                         key: "\(provider.rawValue)|\(voice)|\(speed)|\(language)|\(text)")
+    }
+
+    private func fetchAudio(_ hd: HDRequest, text: String, isCreole: Bool) async throws -> (Data, Float) {
+        switch hd.provider {
+        case .groq:
+            // Groq Orpheus — English only
+            guard let service = groqService else { throw GroqError.invalidResponse }
+            let data = try await service.synthesizeSpeech(text: text, voice: hd.voice, language: isCreole ? "ht" : "en")
+            return (data, Float(hd.speed))
+        default:
+            guard let service = openAITTSService else { throw GroqError.invalidResponse }
+            // OpenAI accepts speed directly; clamp to 0.25–4.0
+            let apiSpeed = min(max(hd.speed, 0.25), 4.0)
+            let data = try await service.synthesizeSpeech(text: text, voice: hd.voice, speed: apiSpeed, language: isCreole ? "ht" : "en")
+            return (data, 1.0)
+        }
+    }
 
     private func playAudioData(_ data: Data, rate: Float = 1.0) {
         // Activate off the main thread (can block); see AVAudioSession.workQueue.
