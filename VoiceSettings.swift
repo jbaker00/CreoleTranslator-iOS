@@ -108,11 +108,18 @@ final class HDVoiceCredits: ObservableObject {
 
     static let freePlaysPerDay = 5
     static let playsPerAd = 10
+    /// Grants allowed per day when no video can be shown (no-fill, airplane
+    /// mode, ad blocker). Keeps a genuine no-fill from punishing the user
+    /// without making "turn off Wi-Fi, tap Watch Video" an unlimited bypass.
+    static let noAdGrantsPerDay = 1
 
     private let defaults = UserDefaults.standard
     private let dayKey = "hdFreePlaysDay"
     private let usedKey = "hdFreePlaysUsed"
     private let bonusKey = "hdBonusPlays"
+    private let noAdDayKey = "hdNoAdGrantDay"
+    private let noAdUsedKey = "hdNoAdGrantsUsed"
+    private let noAdBlockedKey = "hdNoAdGrantsBlocked"
 
     private static var today: String {
         let c = Calendar.current.dateComponents([.year, .month, .day], from: Date())
@@ -126,6 +133,25 @@ final class HDVoiceCredits: ObservableObject {
     var freePlaysLeft: Int { max(0, Self.freePlaysPerDay - freeUsedToday) }
     var bonusPlaysLeft: Int { defaults.integer(forKey: bonusKey) }
     var playsLeft: Int { freePlaysLeft + bonusPlaysLeft }
+
+    private var noAdGrantsToday: Int {
+        defaults.string(forKey: noAdDayKey) == Self.today ? defaults.integer(forKey: noAdUsedKey) : 0
+    }
+
+    var canGrantWithoutAd: Bool { noAdGrantsToday < Self.noAdGrantsPerDay }
+
+    func recordGrantWithoutAd() {
+        let used = noAdGrantsToday
+        defaults.set(Self.today, forKey: noAdDayKey)
+        defaults.set(used + 1, forKey: noAdUsedKey)
+    }
+
+    /// Lifetime count of refused no-video grants, for analytics.
+    func recordBlockedGrant() -> Int {
+        let total = defaults.integer(forKey: noAdBlockedKey) + 1
+        defaults.set(total, forKey: noAdBlockedKey)
+        return total
+    }
 
     /// Call on the main thread after an HD clip actually arrives.
     func consume() {

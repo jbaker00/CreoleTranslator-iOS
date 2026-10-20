@@ -53,6 +53,7 @@ struct ContentView: View {
     @State private var showOutOfHDPrompt = false
     @State private var showHDInfo = false
     @State private var showHDGranted = false
+    @State private var showNoVideo = false
     @State private var isWatchingAd = false
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
@@ -472,6 +473,11 @@ struct ContentView: View {
             } message: {
                 Text("\(HDVoiceCredits.playsPerAd) more HD voice plays are ready.\n\n\(HDVoiceCredits.playsPerAd) lòt lekti HD pare.")
             }
+            .alert("No Video Available", isPresented: $showNoVideo) {
+                Button("OK") {}
+            } message: {
+                Text("We couldn't load a video. The basic voice works in the meantime — check your connection and try again for \(HDVoiceCredits.playsPerAd) HD plays.\n\nNou pa t ka chaje videyo a. Tcheke koneksyon ou epi eseye ankò.")
+            }
             
             // TTS error message (helps diagnose Groq TTS fallback issues)
             if let ttsError = ttsManager.lastError {
@@ -534,8 +540,8 @@ struct ContentView: View {
         ttsManager.speak(text: pending.text, language: pending.language, basicVoice: true)
     }
 
-    /// Same wait-then-grant policy as the old voice unlock: up to 3s for the
-    /// ad to load, and a no-fill or present failure grants the plays anyway.
+    /// Waits up to 3s for the ad to load. A no-fill or present failure grants
+    /// the plays anyway, but only once a day (see HDVoiceCredits.noAdGrantsPerDay).
     private func watchAdForHDPlays() {
         guard !isWatchingAd else { return }
         isWatchingAd = true
@@ -559,12 +565,31 @@ struct ContentView: View {
                     isWatchingAd = false
                     if earned { finishHDGrant() } else { pendingPlay = nil }
                 },
-                onPresentFailure: { grantHDPlays(via: "present_failed") }
+                onPresentFailure: { grantWithoutAd(via: "present_failed") }
             )
             if !shown {
-                grantHDPlays(via: "no_fill")
+                grantWithoutAd(via: "no_fill")
             }
         }
+    }
+
+    /// No video could be shown. The first time today counts as a reward;
+    /// after that the pending phrase plays with the basic voice instead.
+    private func grantWithoutAd(via: String) {
+        if hdCredits.canGrantWithoutAd {
+            hdCredits.recordGrantWithoutAd()
+            grantHDPlays(via: via)
+            return
+        }
+        isWatchingAd = false
+        let total = hdCredits.recordBlockedGrant()
+        Analytics.logEvent("hd_grant_blocked", parameters: ["via": via, "total": total])
+        if let pending = pendingPlay {
+            pendingPlay = nil
+            speakingCardTitle = pending.card
+            ttsManager.speak(text: pending.text, language: pending.language, basicVoice: true)
+        }
+        showNoVideo = true
     }
 
     private func grantHDPlays(via: String) {
