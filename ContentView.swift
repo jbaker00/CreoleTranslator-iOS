@@ -887,6 +887,10 @@ struct ResultCard: View {
     var feedbackPrompt: String = "Was this right?"
     var feedbackNoun: String = "Translation"
 
+    private var isPlaceholder: Bool {
+        content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..."
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -909,7 +913,7 @@ struct ResultCard: View {
                             .font(.title3)
                             .foregroundColor(.accentColor)
                             .padding(8)
-                            .background(Color(UIColor.secondarySystemBackground))
+                            .background(Color.accentColor.opacity(0.15))
                             .cornerRadius(8)
                     }
                     .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
@@ -918,15 +922,15 @@ struct ResultCard: View {
 
             Text(content)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundColor(isPlaceholder ? .secondary : .primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .opacity(isLoading && content == "Processing..." ? 0.6 : 1.0)
 
             if feedbackSampleId != nil, let onFeedback = onFeedback {
                 HStack(spacing: 10) {
                     Text(sentRating == nil ? feedbackPrompt : "Thanks for the feedback")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
                     Spacer()
                     ForEach(["up", "down"], id: \.self) { rating in
                         Button(action: { onFeedback(rating) }) {
@@ -935,7 +939,7 @@ struct ResultCard: View {
                                 .font(.title3)
                                 .foregroundColor(sentRating == nil || sentRating == rating ? .accentColor : .secondary)
                                 .padding(8)
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(Color.accentColor.opacity(0.15))
                                 .cornerRadius(8)
                         }
                         .disabled(sentRating != nil)
