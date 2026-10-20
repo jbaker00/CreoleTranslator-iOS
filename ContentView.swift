@@ -221,7 +221,7 @@ struct ContentView: View {
                     .overlay(alignment: .top) { Divider() } // Subtle divider to delineate content and ad area
                     .ignoresSafeArea(edges: .bottom) // Allow the banner to extend to the bottom edge safely
                     .onAppear { availableWidth = geo.size.width } // Initialize width on first layout
-                    .onChange(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
+                    .onChangeCompat(of: geo.size.width) { newWidth in availableWidth = newWidth } // Update width as the device rotates or layout changes
             }
             .frame(height: bannerSize.size.height, alignment: .bottom) // Constrain the GeometryReader's height so it doesn't take over the layout
             }
@@ -233,7 +233,7 @@ struct ContentView: View {
         )) {
             DataPrivacyConsentView(consentManager: privacyConsent)
         }
-        .onChange(of: privacyConsent.hasConsented) { consented in
+        .onChangeCompat(of: privacyConsent.hasConsented) { consented in
             if consented { ATTAuthorization.requestIfNeeded() }
         }
         // creoletranslator://phrasebook — used by App Store In-App Events.
@@ -247,7 +247,7 @@ struct ContentView: View {
                 }
             }
         }
-        .onChange(of: audioRecorder.lastError) { error in
+        .onChangeCompat(of: audioRecorder.lastError) { error in
             guard let error else { return }
             statusMessage = ""
             errorMessage = error
@@ -447,7 +447,7 @@ struct ContentView: View {
                 )
             }
             .padding(.horizontal, 20)
-            .onChange(of: ttsManager.isSpeaking) { speaking in
+            .onChangeCompat(of: ttsManager.isSpeaking) { speaking in
                 if !speaking {
                     speakingCardTitle = nil
                 }
@@ -984,4 +984,19 @@ struct HDPlaysChip: View {
 
 #Preview {
     ContentView()
+}
+
+// MARK: - onChange compatibility
+
+extension View {
+    /// `onChange` that takes the new value, without the iOS 17 deprecation
+    /// warning while the app still supports iOS 15.
+    @ViewBuilder
+    func onChangeCompat<V: Equatable>(of value: V, perform: @escaping (V) -> Void) -> some View {
+        if #available(iOS 17.0, *) {
+            onChange(of: value) { _, newValue in perform(newValue) }
+        } else {
+            onChange(of: value, perform: perform)
+        }
+    }
 }

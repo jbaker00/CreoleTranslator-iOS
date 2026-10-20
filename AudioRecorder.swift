@@ -50,10 +50,15 @@ class AudioRecorder: NSObject, ObservableObject {
     }
 
     func requestPermission(completion: @escaping (Bool) -> Void) {
-        recordingSession.requestRecordPermission { allowed in
+        let handler: (Bool) -> Void = { allowed in
             DispatchQueue.main.async {
                 completion(allowed)
             }
+        }
+        if #available(iOS 17.0, *) {
+            AVAudioApplication.requestRecordPermission(completionHandler: handler)
+        } else {
+            recordingSession.requestRecordPermission(handler)
         }
     }
 
@@ -90,7 +95,13 @@ class AudioRecorder: NSObject, ObservableObject {
 
     /// Runs on AVAudioSession.workQueue.
     private static func makeRecorder(session: AVAudioSession) -> Result<AVAudioRecorder, StartError> {
-        guard session.recordPermission == .granted else {
+        let granted: Bool
+        if #available(iOS 17.0, *) {
+            granted = AVAudioApplication.shared.recordPermission == .granted
+        } else {
+            granted = session.recordPermission == .granted
+        }
+        guard granted else {
             return .failure(StartError(message: "Microphone permission denied"))
         }
 
