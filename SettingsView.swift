@@ -63,11 +63,11 @@ struct SettingsView: View {
                                 .foregroundColor(.primary)
                             Text(voiceSettings.description(for: p))
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.secondaryText)
                         }
                         Spacer()
                         Image(systemName: provider == p ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(provider == p ? .accentColor : Color(UIColor.tertiaryLabel))
+                            .foregroundColor(provider == p ? .appAccent : Color.secondaryText)
                     }
                 }
                 .contentShape(Rectangle())
@@ -93,12 +93,12 @@ struct SettingsView: View {
                                     .foregroundColor(.primary)
                                 Text(voice.description)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.secondaryText)
                             }
                             Spacer()
                             if voice.id == selectedId {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.accentColor)
+                                    .foregroundColor(.appAccent)
                             }
                         }
                     }
@@ -122,17 +122,17 @@ struct SettingsView: View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: "tortoise.fill").foregroundColor(.secondary)
+                    Image(systemName: "tortoise.fill").foregroundColor(.secondaryText)
                     if isCreole {
                         Slider(value: $voiceSettings.creolePlaybackSpeed, in: 0.5...1.5, step: 0.05)
                     } else {
                         Slider(value: $voiceSettings.englishPlaybackSpeed, in: 0.5...1.5, step: 0.05)
                     }
-                    Image(systemName: "hare.fill").foregroundColor(.secondary)
+                    Image(systemName: "hare.fill").foregroundColor(.secondaryText)
                 }
                 Text(speedLabel(speed))
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(.vertical, 4)
@@ -143,7 +143,7 @@ struct SettingsView: View {
                     else        { voiceSettings.englishPlaybackSpeed = 1.0 }
                 }
                 .font(.subheadline)
-                .foregroundColor(.accentColor)
+                .foregroundColor(.appAccent)
             }
         } header: {
             Text("\(langName) Playback Speed")
@@ -188,15 +188,15 @@ struct SettingsView: View {
                         Text("Stop").fontWeight(.semibold)
                         Spacer()
                     }
-                    .foregroundColor(.red)
+                    .foregroundColor(.errorText)
                     .padding(.vertical, 4)
                 }
             }
 
             if let error = ttsManager.lastError {
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
-                    Text(error).font(.caption).foregroundColor(.orange)
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.warningText)
+                    Text(error).font(.caption).foregroundColor(.warningText)
                 }
             }
         } header: {
@@ -215,12 +215,12 @@ struct SettingsView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label).font(.body).foregroundColor(.primary)
-                    Text("\"\(sample)\"").font(.caption).foregroundColor(.secondary)
+                    Text("\"\(sample)\"").font(.caption).foregroundColor(.secondaryText)
                 }
                 Spacer()
                 Image(systemName: ttsManager.isSpeaking ? "speaker.wave.3.fill" : "play.circle.fill")
                     .font(.title2)
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.appAccent)
             }
             .padding(.vertical, 4)
         }

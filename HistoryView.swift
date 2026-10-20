@@ -34,7 +34,7 @@ struct HistoryView: View {
                         }) {
                             Text("Clear All")
                                 .font(.subheadline)
-                                .foregroundColor(.red)
+                                .foregroundColor(.errorText)
                         }
                     }
                 }
@@ -47,7 +47,7 @@ struct HistoryView: View {
                                 Text("Favorites only")
                             }
                             .font(.subheadline)
-                            .foregroundColor(favoritesOnly ? .yellow : .secondary)
+                            .foregroundColor(favoritesOnly ? .favoriteYellow : .secondaryText)
                         }
                         Spacer()
                     }
@@ -63,10 +63,10 @@ struct HistoryView: View {
                         .font(.system(size: 50))
                     Text("No translation history yet")
                         .font(.headline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondaryText)
                     Text("Your translations will appear here")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondaryText)
                 }
                 .frame(maxHeight: .infinity)
                 .padding()
@@ -77,10 +77,10 @@ struct HistoryView: View {
                         .font(.system(size: 50))
                     Text("No favorites yet")
                         .font(.headline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondaryText)
                     Text("Tap the star on a translation to save it here")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondaryText)
                 }
                 .frame(maxHeight: .infinity)
                 .padding()
@@ -126,7 +126,7 @@ struct HistoryEntryCard: View {
         }) {
             Image(systemName: isThisRowSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
                 .font(.caption)
-                .foregroundColor(.accentColor)
+                .foregroundColor(.appAccent)
         }
     }
 
@@ -136,20 +136,20 @@ struct HistoryEntryCard: View {
             HStack {
                 Text(entry.formattedDate)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
 
                 Spacer()
 
                 Button(action: { historyManager.toggleFavorite(entry) }) {
                     Image(systemName: entry.isFavorite ? "star.fill" : "star")
                         .font(.caption)
-                        .foregroundColor(entry.isFavorite ? .yellow : .secondary)
+                        .foregroundColor(entry.isFavorite ? .favoriteYellow : .secondaryText)
                 }
 
                 Button(action: { historyManager.deleteEntry(entry) }) {
                     Image(systemName: "trash")
                         .font(.caption)
-                        .foregroundColor(.red)
+                        .foregroundColor(.errorText)
                 }
             }
 
@@ -196,7 +196,7 @@ struct HistoryEntryCard: View {
                 }) {
                     Text(isExpanded ? "Show less" : "Show more")
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.appAccent)
                 }
             }
         }
