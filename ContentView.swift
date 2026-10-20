@@ -95,8 +95,8 @@ struct ContentView: View {
                                     .foregroundColor(.white)
 
                                 Text("AI voice translation")
-                                    .font(.subheadline)
-                                    .foregroundColor(.onGradientSecondary)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundColor(.white)
                             }
 
                             Spacer()
@@ -127,8 +127,8 @@ struct ContentView: View {
 
                                 if !historyManager.entries.isEmpty {
                                     Text("\(historyManager.entries.count)")
-                                        .font(.caption2)
-                                        .foregroundColor(.onGradientSecondary)
+                                        .font(.caption2.weight(.medium))
+                                        .foregroundColor(.white)
                                 }
 
                                 Button(action: {
@@ -1033,8 +1033,6 @@ extension Color {
     static let favoriteYellow = adaptive(light: 0x856200, dark: 0xFFD60A)
     /// Stop Recording button background; white text on it in both modes.
     static let recordingRed = adaptive(light: 0xD70015, dark: 0xD70015)
-    /// Secondary text sitting directly on the main-screen gradient.
-    static let onGradientSecondary = Color.white.opacity(0.9)
     /// Explicit rather than the AccentColor asset: iOS 26 draws its own
     /// lighter system blue for .accentColor (3.1:1 on light gray).
     static let appAccent = adaptive(light: 0x0060DF, dark: 0x64B0FF)

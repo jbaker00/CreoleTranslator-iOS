@@ -45,13 +45,12 @@ MODES = {
         accent=hx('64B0FF'), fill=hx('0A60D0'), sec=hx('AEAEB2'), err=hx('FF6961'),
         warn=hx('FFB340'), yel=hx('FFD60A'), rec=hx('D70015')),
 }
-WHITE, WHITE90, BLACK = hx('FFFFFF'), (255, 255, 255, 0.9), hx('000000')
+WHITE, BLACK = hx('FFFFFF'), hx('000000')
 
 def rows(S):
     A, card_btn = S['accent'], over(tint(S['accent'], 0.15), S['bg3'])
     return [
-        ('Header title / status (white on gradient)', WHITE, S['grad'], 3),
-        ('Header subtitle / history count', WHITE90, S['grad'], 4.5),
+        ('Header title / subtitle / status / history count (white on gradient)', WHITE, S['grad'], 4.5),
         ('Header circle icons', A, [S['bg2']], 3),
         ('Voice/Type unselected (on SegmentedBacking)', S['label'], [S['bg2']], 4.5),
         ('Record / Switch Direction / auto-detect chip', A, [S['bg2']], 4.5),
