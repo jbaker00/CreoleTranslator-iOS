@@ -6,7 +6,7 @@ title: Privacy Policy — Creole Translator
 # Privacy Policy
 
 **Creole Translator**
-*Last Updated: October 6, 2026*
+*Last Updated: October 19, 2026*
 
 ## Overview
 
@@ -50,6 +50,7 @@ When you use the "speak" feature to hear a translation read aloud:
 
 - English text is sent to **Groq AI** and Haitian Creole text is sent to **OpenAI** to generate speech audio, depending on the voice you select.
 - Text is transmitted over an encrypted HTTPS connection. The generated audio is not stored after playback.
+- If you choose the basic (built-in iOS) voice, or play with it after your HD plays run out, speech is generated on your device and no text is sent.
 - Please review [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy/) for details on how they handle submitted data.
 
 ### Analytics
@@ -64,7 +65,7 @@ Firebase Analytics does **not** collect the content of your speech or translatio
 
 ### Advertising
 
-The App displays advertisements served by **Google AdMob**: banner ads, occasional full-screen interstitial ads between translations, and optional rewarded ads you can choose to watch to unlock extra voices. AdMob may use device identifiers and other information to serve personalized or non-personalized ads, subject to your App Tracking Transparency (ATT) preference on your device. Review [Google's Advertising Privacy Policy](https://policies.google.com/technologies/ads) for more detail.
+The App displays advertisements served by **Google AdMob**: banner ads, occasional full-screen interstitial ads between translations, and optional rewarded video ads you can choose to watch for extra HD (AI) voice plays. Rewarded ads are never required: a few HD plays are free every day, and the built-in basic voice is always available. AdMob may use device identifiers and other information to serve personalized or non-personalized ads, subject to your App Tracking Transparency (ATT) preference on your device. Review [Google's Advertising Privacy Policy](https://policies.google.com/technologies/ads) for more detail.
 
 ## Microphone Permission
 

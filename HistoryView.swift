@@ -203,7 +203,7 @@ struct HistoryEntryCard: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
-        .onChange(of: ttsManager.isSpeaking) { speaking in
+        .onChangeCompat(of: ttsManager.isSpeaking) { speaking in
             if !speaking { speakingRow = nil }
         }
     }

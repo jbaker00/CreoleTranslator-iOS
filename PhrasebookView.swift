@@ -122,10 +122,10 @@ private struct PhrasebookRow: View {
         .padding(12)
         .background(Color(UIColor.tertiarySystemBackground))
         .cornerRadius(10)
-        .onChange(of: ttsManager.isSpeaking) { speaking in
+        .onChangeCompat(of: ttsManager.isSpeaking) { speaking in
             if !speaking { isSpeakingThis = false }
         }
-        .onChange(of: direction) { _ in
+        .onChangeCompat(of: direction) { _ in
             if ttsManager.isSpeaking {
                 ttsManager.stop()
             }
