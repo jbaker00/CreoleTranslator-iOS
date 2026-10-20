@@ -22,7 +22,6 @@ it to `## Done` with the version or commit.
 - [P1] [ops] [proxy] Replace OpenAI tts-1 before its 2027-01-06 shutdown — Creole voice playback (and My Words) use tts-1 pinned in api-proxy; the named replacement isn't usable on /v1/audio/speech yet. Done = proxy on a new model and Creole sounds at least as good. Tracked in api-proxy BACKLOG.md. (added 2026-10-17)
 - [P1] [security] Add Firebase App Check (App Attest on iOS, Play Integrity on Android) — lets api-proxy verify requests really come from the app instead of a script. Ship in both apps first; the proxy enforces later (api-proxy BACKLOG.md). (added 2026-10-17)
 - [P2] [android] [feature] Port HD voice plays from iOS (b85a706) — 5 free AI-voice plays/day + 10 per rewarded ad; see FEATURE_PARITY.md pending ports. (added 2026-10-17)
-- [P2] [security] [release] HD voice: allow only 1 no-fill grant per day — today, when no ad loads, the app grants 10 plays anyway, so an ad blocker or ad-blocking DNS gets unlimited HD plays. (added 2026-10-17)
 - [P2] [copy] Native Kreyòl review of the HD voice copy — "lekti HD", "Gade yon ti videyo pou 10 lòt lekti ak vwa HD", "Ou gen N lekti HD ki rete". (added 2026-10-17)
 - [P3] [ui] [ios] HD chip crowds the "Creole Translation" card title on narrow iPhones (SE / mini) — check on device; shorten to "✨ 5" if it truncates. (added 2026-10-17)
 - [P3] [feature] [proxy] Server-side HD play credits + AdMob server-side verification (SSV) — makes plays tamper-proof (today the count lives on the device; the proxy's TTS caps are the backstop). (added 2026-10-17)
@@ -30,4 +29,5 @@ it to `## Done` with the version or commit.
 
 ## Done
 
+- ~~HD voice: allow only 1 no-fill grant per day~~ — done in 3.5 (build 11), hd-voice-plays a2ec9a0; blocked attempts log `hd_grant_blocked`. (done 2026-10-19)
 - 2026-10-16 OpenAI STT daily cap set to 500 (~$0.50/day) — api-proxy d749dbe
