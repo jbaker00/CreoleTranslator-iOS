@@ -69,7 +69,7 @@ struct ContentView: View {
             // Adaptive background: branded gradient in light mode, subtle system backgrounds in dark mode
             let bgColors: [Color] = colorScheme == .dark
                 ? [Color(UIColor.systemGray6), Color(UIColor.systemBackground)]
-                : [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.8, green: 0.3, blue: 0.5)]
+                : [Color(red: 0.36, green: 0.18, blue: 0.72), Color(red: 0.70, green: 0.24, blue: 0.44)]
 
             LinearGradient(
                 colors: bgColors,
@@ -92,11 +92,11 @@ struct ContentView: View {
                                 Text(translationDirection == .creoleToEnglish ? "Creole to English" : "English to Creole")
                                     .font(.title)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
 
                                 Text("AI voice translation")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundColor(.white)
                             }
 
                             Spacer()
@@ -121,14 +121,14 @@ struct ContentView: View {
 
                                         Image(systemName: showHistory ? "xmark" : "clock.arrow.circlepath")
                                             .font(.system(size: 20))
-                                            .foregroundColor(.accentColor)
+                                            .foregroundColor(.appAccent)
                                     }
                                 }
 
                                 if !historyManager.entries.isEmpty {
                                     Text("\(historyManager.entries.count)")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
+                                        .font(.caption2.weight(.medium))
+                                        .foregroundColor(.white)
                                 }
 
                                 Button(action: {
@@ -149,7 +149,7 @@ struct ContentView: View {
 
                                         Image(systemName: showPhrasebook ? "xmark" : "book.fill")
                                             .font(.system(size: 20))
-                                            .foregroundColor(.accentColor)
+                                            .foregroundColor(.appAccent)
                                     }
                                 }
 
@@ -166,7 +166,7 @@ struct ContentView: View {
 
                                         Image(systemName: "gearshape")
                                             .font(.system(size: 20))
-                                            .foregroundColor(.accentColor)
+                                            .foregroundColor(.appAccent)
                                     }
                                 }
 
@@ -263,6 +263,8 @@ struct ContentView: View {
                 Label("Type", systemImage: "keyboard").tag(InputMode.text)
             }
             .pickerStyle(.segmented)
+            // Solid backing: on the light-mode gradient the unselected label was black on purple (3.2:1).
+            .background(SegmentedBacking())
             .padding(.horizontal, 30)
             .disabled(isProcessing || audioRecorder.isRecording)
 
@@ -283,8 +285,8 @@ struct ContentView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
-                    .background(audioRecorder.isRecording ? Color.red : Color(UIColor.secondarySystemBackground))
-                    .foregroundColor(audioRecorder.isRecording ? .white : Color.accentColor)
+                    .background(audioRecorder.isRecording ? Color.recordingRed : Color(UIColor.secondarySystemBackground))
+                    .foregroundColor(audioRecorder.isRecording ? .white : Color.appAccent)
                     .cornerRadius(15)
                     .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
                 }
@@ -311,7 +313,7 @@ struct ContentView: View {
                         .overlay(alignment: .topLeading) {
                             if typedInput.isEmpty {
                                 Text(inputLabel)
-                                    .foregroundColor(Color(UIColor.placeholderText))
+                                    .foregroundColor(.secondaryText)
                                     .padding(.top, 18)
                                     .padding(.leading, 14)
                                     .allowsHitTesting(false)
@@ -330,9 +332,9 @@ struct ContentView: View {
                         .padding(.vertical, 14)
                         .background(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented
                             ? Color(UIColor.tertiarySystemBackground)
-                            : Color.accentColor)
+                            : Color.accentFill)
                         .foregroundColor(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented
-                            ? Color(UIColor.placeholderText)
+                            ? Color.secondaryText
                             : .white)
                         .cornerRadius(15)
                         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
@@ -346,14 +348,14 @@ struct ContentView: View {
             if !statusMessage.isEmpty {
                 Text(statusMessage)
                     .font(.subheadline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.white)
                     .padding(.horizontal)
             }
             
             // Processing indicator
             if isProcessing {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .appAccent))
                     .scaleEffect(1.5)
                     .padding()
             }
@@ -390,15 +392,15 @@ struct ContentView: View {
                             .font(.system(size: 12))
                         Text("Auto-detected \(shown == .creoleToEnglish ? "Creole → English" : "English → Creole")")
                             .font(.caption)
-                        Text("·").font(.caption).foregroundColor(.secondary)
+                        Text("·").font(.caption).foregroundColor(.secondaryText)
                         Button("Undo") { undoAutoDetect() }
                             .font(.caption.bold())
                             .disabled(isProcessing)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color.accentColor.opacity(0.12))
-                    .foregroundColor(.accentColor)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .foregroundColor(.appAccent)
                     .cornerRadius(14)
                 }
 
@@ -420,7 +422,7 @@ struct ContentView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color(UIColor.secondarySystemBackground))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.appAccent)
                     .cornerRadius(20)
                 }
                 .disabled(isProcessing)
@@ -483,7 +485,7 @@ struct ContentView: View {
             if let ttsError = ttsManager.lastError {
                 Text(ttsError)
                     .font(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(.warningText)
                     .padding()
                     .background(Color(UIColor.systemBackground).opacity(0.95))
                     .cornerRadius(10)
@@ -494,7 +496,7 @@ struct ContentView: View {
             if let error = errorMessage {
                 Text(error)
                     .font(.subheadline)
-                    .foregroundColor(.red)
+                    .foregroundColor(.errorText)
                     .padding()
                     .background(Color(UIColor.systemBackground).opacity(0.95))
                     .cornerRadius(10)
@@ -851,7 +853,7 @@ struct RecordingProgressView: View {
     var body: some View {
         VStack(spacing: 6) {
             ProgressView(value: elapsed, total: AudioRecorder.maxDuration)
-                .tint(isLong ? .orange : .red)
+                .tint(isLong ? Color.warningText : Color.errorText)
                 .animation(.linear(duration: 0.1), value: elapsed)
             HStack {
                 Text(isLong ? "Shorter phrases translate best" : "Speak one or two sentences")
@@ -860,7 +862,7 @@ struct RecordingProgressView: View {
                     .monospacedDigit()
             }
             .font(.caption)
-            .foregroundColor(isLong ? .orange : .secondary)
+            .foregroundColor(isLong ? .warningText : .secondaryText)
         }
         .padding(12)
         .background(Color(UIColor.systemBackground).opacity(0.95))
@@ -887,6 +889,10 @@ struct ResultCard: View {
     var feedbackPrompt: String = "Was this right?"
     var feedbackNoun: String = "Translation"
 
+    private var isPlaceholder: Bool {
+        content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..."
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -907,9 +913,9 @@ struct ResultCard: View {
                     Button(action: action) {
                         Image(systemName: isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
                             .font(.title3)
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(.appAccent)
                             .padding(8)
-                            .background(Color(UIColor.secondarySystemBackground))
+                            .background(Color.appAccent.opacity(0.15))
                             .cornerRadius(8)
                     }
                     .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
@@ -918,24 +924,24 @@ struct ResultCard: View {
 
             Text(content)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundColor(isPlaceholder ? .secondaryText : .primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .opacity(isLoading && content == "Processing..." ? 0.6 : 1.0)
 
             if feedbackSampleId != nil, let onFeedback = onFeedback {
                 HStack(spacing: 10) {
                     Text(sentRating == nil ? feedbackPrompt : "Thanks for the feedback")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
                     Spacer()
                     ForEach(["up", "down"], id: \.self) { rating in
                         Button(action: { onFeedback(rating) }) {
                             Image(systemName: (rating == "up" ? "hand.thumbsup" : "hand.thumbsdown")
                                   + (sentRating == rating ? ".fill" : ""))
                                 .font(.title3)
-                                .foregroundColor(sentRating == nil || sentRating == rating ? .accentColor : .secondary)
+                                .foregroundColor(sentRating == nil || sentRating == rating ? .appAccent : .secondaryText)
                                 .padding(8)
-                                .background(Color(UIColor.secondarySystemBackground))
+                                .background(Color.appAccent.opacity(0.15))
                                 .cornerRadius(8)
                         }
                         .disabled(sentRating != nil)
@@ -970,9 +976,9 @@ struct HDPlaysChip: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 5)
-            .foregroundColor(playsLeft > 0 ? .accentColor : .white)
+            .foregroundColor(playsLeft > 0 ? .appAccent : .black)
             .background(
-                Capsule().fill(playsLeft > 0 ? Color.accentColor.opacity(0.12) : Color.orange)
+                Capsule().fill(playsLeft > 0 ? Color.appAccent.opacity(0.12) : Color.orange)
             )
         }
         .buttonStyle(.plain)
@@ -997,6 +1003,48 @@ extension View {
             onChange(of: value) { _, newValue in perform(newValue) }
         } else {
             onChange(of: value, perform: perform)
+        }
+    }
+}
+
+// MARK: - Palette
+
+/// Colors checked against WCAG contrast (4.5:1 text, 3:1 icons) on every
+/// background they sit on, in light and dark mode. Several iOS defaults miss
+/// that — .secondary on white is 3.4:1, systemYellow on light gray 1.4:1,
+/// white on systemOrange 2.2:1 — so views use these instead.
+extension Color {
+    private static func adaptive(light: UInt32, dark: UInt32) -> Color {
+        func ui(_ hex: UInt32) -> UIColor {
+            UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255,
+                    green: CGFloat((hex >> 8) & 0xFF) / 255,
+                    blue: CGFloat(hex & 0xFF) / 255,
+                    alpha: 1)
+        }
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? ui(dark) : ui(light) })
+    }
+
+    /// Replaces .secondary for captions, hints and placeholders.
+    static let secondaryText = adaptive(light: 0x636366, dark: 0xAEAEB2)
+    /// Background for filled buttons with white text (the dark-mode accent is too light for white).
+    static let accentFill = adaptive(light: 0x0060DF, dark: 0x0A60D0)
+    static let errorText = adaptive(light: 0xD70015, dark: 0xFF6961)
+    static let warningText = adaptive(light: 0xB34700, dark: 0xFFB340)
+    static let favoriteYellow = adaptive(light: 0x856200, dark: 0xFFD60A)
+    /// Stop Recording button background; white text on it in both modes.
+    static let recordingRed = adaptive(light: 0xD70015, dark: 0xD70015)
+    /// Explicit rather than the AccentColor asset: iOS 26 draws its own
+    /// lighter system blue for .accentColor (3.1:1 on light gray).
+    static let appAccent = adaptive(light: 0x0060DF, dark: 0x64B0FF)
+}
+
+/// Opaque backdrop matching the segmented control's shape (capsule from iOS 26).
+private struct SegmentedBacking: View {
+    var body: some View {
+        if #available(iOS 26, *) {
+            Capsule().fill(Color(UIColor.secondarySystemBackground))
+        } else {
+            RoundedRectangle(cornerRadius: 9).fill(Color(UIColor.secondarySystemBackground))
         }
     }
 }

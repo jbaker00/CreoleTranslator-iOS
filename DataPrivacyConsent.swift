@@ -54,7 +54,7 @@ struct DataPrivacyConsentView: View {
         VStack(spacing: 20) {
             Image(systemName: "waveform.and.mic")
                 .font(.system(size: 36))
-                .foregroundColor(.accentColor)
+                .foregroundColor(.appAccent)
 
             Text("Voice & Privacy")
                 .font(.title3)
@@ -62,19 +62,19 @@ struct DataPrivacyConsentView: View {
 
             Text("Your speech is sent to OpenAI (Haitian Creole) or Groq (English) for transcription, with the other as a backup; text is translated by Groq, and translated text is sent to OpenAI or Groq to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. Items you flag with 👎 may be shown to reviewers right away; everything else is shown only once it is 10 days old. See our Privacy Policy for details and how to request deletion.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
             HStack(spacing: 4) {
                 Text("Recordings are deleted from your phone once translated.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
                 Link("Privacy Policy", destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!)
                     .font(.caption)
             }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
@@ -86,7 +86,7 @@ struct DataPrivacyConsentView: View {
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.accentColor)
+                    .background(Color.accentFill)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }

@@ -22,7 +22,7 @@ struct PhrasebookView: View {
                     Spacer()
                     Text("Works offline")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondaryText)
                 }
 
                 // Same direction concept as the main translator — flips which
@@ -41,7 +41,7 @@ struct PhrasebookView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color(UIColor.tertiarySystemBackground))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.appAccent)
                     .cornerRadius(14)
                 }
             }
@@ -60,7 +60,7 @@ struct PhrasebookView: View {
                         } header: {
                             HStack(spacing: 8) {
                                 Image(systemName: category.icon)
-                                    .foregroundColor(.accentColor)
+                                    .foregroundColor(.appAccent)
                                 Text(category.name)
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
@@ -99,7 +99,7 @@ private struct PhrasebookRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(promptText)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
                 Text(primaryText)
                     .font(.body)
                     .foregroundColor(.primary)
@@ -116,7 +116,7 @@ private struct PhrasebookRow: View {
             }) {
                 Image(systemName: isSpeakingThis ? "speaker.wave.3.fill" : "speaker.wave.2")
                     .font(.subheadline)
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.appAccent)
             }
         }
         .padding(12)

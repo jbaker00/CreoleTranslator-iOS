@@ -21,6 +21,7 @@ struct CreoleTranslatorApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .tint(.appAccent) // system controls (links, toggles, sliders, sheets) use the audited accent
         }
         // ATT is requested from ContentView after the privacy consent
         // sheet is answered, so first-launch dialogs don't stack.
