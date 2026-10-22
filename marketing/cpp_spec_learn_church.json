@@ -1,0 +1,14 @@
+[
+ {"name":"lrn-en-1","shot":"learn","title":"Learning Haitian Creole?","sub":"Speak English, hear it in Kreyòl out loud"},
+ {"name":"lrn-en-2","shot":"phrasebook-Basics","title":"Start with the basics","sub":"Tap any phrase to hear how it sounds"},
+ {"name":"lrn-en-3","shot":"phrasebook-Greetings","title":"Greet people like a native","sub":"Everyday Kreyòl that works offline"},
+ {"name":"lrn-fr-1","shot":"learn","title":"Vous apprenez le créole haïtien ?","sub":"Parlez anglais, entendez-le en kreyòl"},
+ {"name":"lrn-fr-2","shot":"phrasebook-Basics","title":"Commencez par l'essentiel","sub":"Touchez une phrase pour l'entendre"},
+ {"name":"lrn-fr-3","shot":"phrasebook-Greetings","title":"Saluez comme un natif","sub":"Le kreyòl de tous les jours, hors ligne"},
+ {"name":"chu-en-1","shot":"church","title":"For churches and mission trips","sub":"Welcome, pray and serve in Kreyòl"},
+ {"name":"chu-en-2","shot":"phrasebook-Greetings","title":"Greet every family you meet","sub":"Tap to hear the right pronunciation"},
+ {"name":"chu-en-3","shot":"phrasebook-Medical","title":"Ready for medical missions","sub":"Symptoms, pain and medicine phrases offline"},
+ {"name":"chu-fr-1","shot":"church","title":"Pour les églises et les missions","sub":"Accueillez et servez en kreyòl"},
+ {"name":"chu-fr-2","shot":"phrasebook-Greetings","title":"Saluez chaque famille","sub":"Touchez pour entendre la prononciation"},
+ {"name":"chu-fr-3","shot":"phrasebook-Medical","title":"Prêt pour les missions médicales","sub":"Symptômes, douleur, médicaments, hors ligne"}
+]

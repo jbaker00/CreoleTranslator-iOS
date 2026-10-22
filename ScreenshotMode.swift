@@ -5,7 +5,7 @@
 //  DEBUG-only: launch with `-shotScene <scene>` (UserDefaults argument domain) to
 //  open straight to a screen for App Store / Custom Product Page screenshots.
 //  Screenshot mode also counts as consented, so the consent sheet never appears.
-//  Scenes: medical, travel, family (result cards), phrasebook-<Category>.
+//  Scenes: medical, travel, family, learn, church (result cards), phrasebook-<Category>.
 //
 
 import Foundation
@@ -46,6 +46,14 @@ enum ScreenshotMode {
             return ("Grann, mwen sonje w anpil. Ki lè w ap vin vizite nou?",
                     "Grandma, I miss you so much. When are you coming to visit us?",
                     .creoleToEnglish)
+        case "learn":
+            return ("I'm learning Haitian Creole. Can you speak slowly, please?",
+                    "M ap aprann kreyòl ayisyen. Èske ou ka pale dousman, souple?",
+                    .englishToCreole)
+        case "church":
+            return ("Welcome to our church. The service starts at ten o'clock.",
+                    "Byenveni nan legliz nou an. Sèvis la kòmanse a dizè.",
+                    .englishToCreole)
         default:
             return nil
         }

@@ -1,0 +1,62 @@
+[
+ {
+  "name": "ppo-en-1",
+  "shot": "family",
+  "title": "Talk with family back home",
+  "sub": "Speak English or Kreyòl, hear it out loud"
+ },
+ {
+  "name": "ppo-en-2",
+  "shot": "medical",
+  "title": "Speak English, hear Haitian Creole",
+  "sub": "Voice translation, spoken out loud in seconds"
+ },
+ {
+  "name": "ppo-en-3",
+  "shot": "phrasebook-Greetings",
+  "title": "A phrasebook that works offline",
+  "sub": "Tap any phrase to hear how it sounds"
+ },
+ {
+  "name": "ppo-en-4",
+  "shot": "phrasebook-Medical",
+  "title": "Medical and emergency phrases",
+  "sub": "The words that matter when it counts"
+ },
+ {
+  "name": "ppo-en-5",
+  "shot": "phrasebook-Travel",
+  "title": "Ready for your trip to Haiti",
+  "sub": "Taxis, directions and everyday travel phrases"
+ },
+ {
+  "name": "ppo-fr-1",
+  "shot": "family",
+  "title": "Parlez avec votre famille au pays",
+  "sub": "Parlez anglais ou kreyòl, entendez-le à voix haute"
+ },
+ {
+  "name": "ppo-fr-2",
+  "shot": "medical",
+  "title": "Parlez anglais, entendez le créole haïtien",
+  "sub": "Traduction vocale, à voix haute, en quelques secondes"
+ },
+ {
+  "name": "ppo-fr-3",
+  "shot": "phrasebook-Greetings",
+  "title": "Un guide de conversation hors ligne",
+  "sub": "Touchez une phrase pour l'entendre"
+ },
+ {
+  "name": "ppo-fr-4",
+  "shot": "phrasebook-Medical",
+  "title": "Phrases médicales et d'urgence",
+  "sub": "Les mots qui comptent, quand il le faut"
+ },
+ {
+  "name": "ppo-fr-5",
+  "shot": "phrasebook-Travel",
+  "title": "Prêt pour votre voyage en Haïti",
+  "sub": "Taxi, directions et phrases de voyage"
+ }
+]
