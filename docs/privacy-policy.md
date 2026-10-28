@@ -6,7 +6,7 @@ title: Privacy Policy — Creole Translator
 # Privacy Policy
 
 **Creole Translator**
-*Last Updated: October 19, 2026*
+*Last Updated: October 28, 2026*
 
 ## Overview
 
@@ -32,9 +32,9 @@ Text you type, and text transcribed from your recordings, is sent through our tr
 To check and improve translation quality, our translation service keeps a copy of each translation it produces:
 
 - **What is stored:** the text you submitted for translation (typed, or transcribed from your recording), the translation returned, the direction (Creole→English or English→Creole), which AI provider produced it, and a confidence score the AI assigns to its own answer.
-- **What is not stored:** your voice audio, your name, your account, and any device identifier. Stored translations are **not linked to you or your device**.
+- **What is not stored:** your voice audio (recordings are handled separately — see "Audio Data"), your name, your account, and any device identifier. Stored translations are **not linked to you or your device**.
 - **How long:** 90 days, after which they are automatically deleted.
-- **Who sees them:** a small number of named human reviewers who speak Haitian Creole and are authorised by us. They read stored translations to judge whether the AI translated correctly.
+- **Who sees them:** a small number of named human reviewers who speak Haitian Creole and are authorised by us. They may read any stored translation — including ones the AI was confident about, not only flagged ones — to judge whether the AI translated correctly. Reviewers only ever listen to recordings that were flagged.
 - **Ratings:** if you tap 👍 or 👎 on a translation (and optionally add a comment), that rating and comment are attached to the stored copy of that translation to help reviewers prioritise.
 - **Corrections dictionary:** when reviewers correct a translation, the corrected pair (original text and the corrected translation) is kept **permanently** in our dictionary so that future requests for the same text receive the corrected translation. Dictionary entries contain only the text of the phrase and its translation, never any identifier.
 
