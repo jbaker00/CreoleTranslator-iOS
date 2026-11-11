@@ -34,14 +34,16 @@ MODES = {
         # system
         bg=hx('FFFFFF'), bg2=hx('F2F2F7'), bg3=hx('FFFFFF'), cell=hx('FFFFFF'),
         label=hx('000000'), orange=hx('FF9500'),
-        grad=[(92, 46, 184, 1), (178, 61, 112, 1)],  # ContentView bgColors, light
+        grad=[(92, 46, 184, 1), (178, 61, 112, 1)],  # header strip (same in both modes)
+        body=hx('F2F2F7'), surf=hx('FFFFFF'), border=hx('6E6E73'),
         # app palette
         accent=hx('0060DF'), fill=hx('0060DF'), sec=hx('636366'), err=hx('D70015'),
         warn=hx('B34700'), yel=hx('856200'), rec=hx('D70015')),
     'dark': dict(
         bg=hx('000000'), bg2=hx('1C1C1E'), bg3=hx('2C2C2E'), cell=hx('1C1C1E'),
         label=hx('FFFFFF'), orange=hx('FF9F0A'),
-        grad=[hx('1C1C1E'), hx('000000')],
+        grad=[(92, 46, 184, 1), (178, 61, 112, 1)],
+        body=hx('000000'), surf=hx('1C1C1E'), border=hx('7C7C80'),
         accent=hx('64B0FF'), fill=hx('0A60D0'), sec=hx('AEAEB2'), err=hx('FF6961'),
         warn=hx('FFB340'), yel=hx('FFD60A'), rec=hx('D70015')),
 }
@@ -50,17 +52,22 @@ WHITE, BLACK = hx('FFFFFF'), hx('000000')
 def rows(S):
     A, card_btn = S['accent'], over(tint(S['accent'], 0.15), S['bg3'])
     return [
-        ('Header title / subtitle / status / history count (white on gradient)', WHITE, S['grad'], 4.5),
-        ('Header circle icons', A, [S['bg2']], 3),
-        ('Voice/Type unselected (on SegmentedBacking)', S['label'], [S['bg2']], 4.5),
-        ('Record / auto-detect chip', A, [S['bg2']], 4.5),
-        ('Direction bar language names', S['label'], [S['bg2']], 4.5),
-        ('Direction bar captions (You speak / Translates to)', S['sec'], [S['bg2']], 4.5),
-        ('Direction bar swap icon (white on fill circle)', WHITE, [S['fill']], 3),
-        ('Stop Recording (white on red)', WHITE, [S['rec']], 4.5),
-        ('Input placeholder', S['sec'], [S['bg2']], 4.5),
-        ('Translate enabled (white on fill)', WHITE, [S['fill']], 4.5),
-        ('Translate disabled', S['sec'], [S['bg3']], 3),
+        ('Header title + icons (white on gradient strip)', WHITE, S['grad'], 4.5),
+        ('Control border vs body and vs control surface', S['border'], [S['body'], S['surf']], 3),
+        ('Primary button fill vs body (reads as a button)', S['fill'], [S['body']], 3),
+        ('Primary button label (white on fill)', WHITE, [S['fill']], 4.5),
+        ('Stop (white on red) and red vs body', WHITE, [S['rec']], 4.5),
+        ('Recording red vs body', S['rec'], [S['body']], 3),
+        ('Disabled primary label / captions / placeholder on surface', S['sec'], [S['surf']], 4.5),
+        ('Direction bar names, toggle unselected label', S['label'], [S['surf']], 4.5),
+        ('Swap glyph / auto-detect chip', A, [S['surf'], S['bg2']], 4.5),
+        ('Toggle selected label on tint', S['label'], [over(tint(A, 0.15), S['surf'])], 4.5),
+        ('Swap glyph on tint', A, [over(tint(A, 0.15), S['surf'])], 3),
+        ('Accent border (swap, selected toggle, rescue notice) vs surface', A, [S['surf']], 3),
+        ('Status text on body', S['label'], [S['body']], 4.5),
+        ('Secondary text on body', S['sec'], [S['body']], 4.5),
+        ('Error / warning text on control surface', S['err'], [S['surf']], 4.5),
+        ('Warning text on control surface', S['warn'], [S['surf']], 4.5),
         ('Card title / result / feedback prompt', S['label'], [S['bg3']], 4.5),
         ('Card placeholder', S['sec'], [S['bg3']], 4.5),
         ('Card speaker + thumbs icons', A, [card_btn], 3),

@@ -71,121 +71,17 @@ struct ContentView: View {
     var body: some View {
         // ZStack allows us to overlay the banner at the bottom while content scrolls above
         ZStack(alignment: .bottom) {
-            // Gradient background
-            // Adaptive background: branded gradient in light mode, subtle system backgrounds in dark mode
-            let bgColors: [Color] = colorScheme == .dark
-                ? [Color(UIColor.systemGray6), Color(UIColor.systemBackground)]
-                : [Color(red: 0.36, green: 0.18, blue: 0.72), Color(red: 0.70, green: 0.24, blue: 0.44)]
+            // Flat body: one palette works in both modes, and bordered
+            // controls stay visible in dark mode. The brand gradient lives
+            // in the header strip only.
+            Color.bodyBackground
+                .ignoresSafeArea()
 
-            LinearGradient(
-                colors: bgColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            VStack(spacing: 0) {
+            headerBar
 
             ScrollView {
-                VStack(spacing: 30) {
-                    // Header
-                    VStack(spacing: 10) {
-                        HStack {
-                            Spacer()
-
-                            VStack(spacing: 10) {
-                                Text("🎤")
-                                    .font(.system(size: 60))
-
-                                Text(translationDirection == .creoleToEnglish ? "Creole to English" : "English to Creole")
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-
-                                Text("AI voice translation")
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundColor(.white)
-                            }
-
-                            Spacer()
-
-                            // History + Phrasebook + Settings buttons
-                            VStack(spacing: 8) {
-                                Button(action: {
-                                    withAnimation {
-                                        showPhrasebook = false
-                                        showHistory.toggle()
-                                    }
-                                    if showHistory {
-                                        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
-                                            AnalyticsParameterScreenName: "history",
-                                        ])
-                                    }
-                                }) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(UIColor.secondarySystemBackground))
-                                            .frame(width: 44, height: 44)
-
-                                        Image(systemName: showHistory ? "xmark" : "clock.arrow.circlepath")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.appAccent)
-                                    }
-                                }
-
-                                if !historyManager.entries.isEmpty {
-                                    Text("\(historyManager.entries.count)")
-                                        .font(.caption2.weight(.medium))
-                                        .foregroundColor(.white)
-                                }
-
-                                Button(action: {
-                                    withAnimation {
-                                        showHistory = false
-                                        showPhrasebook.toggle()
-                                    }
-                                    if showPhrasebook {
-                                        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
-                                            AnalyticsParameterScreenName: "phrasebook",
-                                        ])
-                                    }
-                                }) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(UIColor.secondarySystemBackground))
-                                            .frame(width: 44, height: 44)
-
-                                        Image(systemName: showPhrasebook ? "xmark" : "book.fill")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.appAccent)
-                                    }
-                                }
-
-                                Button(action: {
-                                    showSettings = true
-                                    Analytics.logEvent(AnalyticsEventScreenView, parameters: [
-                                        AnalyticsParameterScreenName: "settings",
-                                    ])
-                                }) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(UIColor.secondarySystemBackground))
-                                            .frame(width: 44, height: 44)
-
-                                        Image(systemName: "gearshape")
-                                            .font(.system(size: 20))
-                                            .foregroundColor(.appAccent)
-                                    }
-                                }
-
-                                Spacer()
-                            }
-                            .sheet(isPresented: $showSettings) {
-                                SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager, privacyConsent: privacyConsent)
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    .padding(.top, 40)
-
+                VStack(spacing: 20) {
                     // Show history, phrasebook, or main content
                     if showHistory {
                         HistoryView(historyManager: historyManager)
@@ -215,6 +111,8 @@ struct ContentView: View {
                 if privacyConsent.hasConsented {
                     ATTAuthorization.requestIfNeeded()
                 }
+            }
+
             }
 
             // Host the banner in a GeometryReader so the adaptive size tracks the current width.
@@ -260,26 +158,101 @@ struct ContentView: View {
         }
     }
     
+    /// Compact brand strip: app name + History / Phrasebook / Settings.
+    private var headerBar: some View {
+        HStack(spacing: 2) {
+            Text("Creole Translator")
+                .font(.title3.weight(.bold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 8)
+            headerButton(showHistory ? "xmark" : "clock.arrow.circlepath", label: showHistory ? "Close history" : "History") {
+                withAnimation {
+                    showPhrasebook = false
+                    showHistory.toggle()
+                }
+                if showHistory {
+                    Analytics.logEvent(AnalyticsEventScreenView, parameters: [AnalyticsParameterScreenName: "history"])
+                }
+            }
+            headerButton(showPhrasebook ? "xmark" : "book.fill", label: showPhrasebook ? "Close phrasebook" : "Phrasebook") {
+                withAnimation {
+                    showHistory = false
+                    showPhrasebook.toggle()
+                }
+                if showPhrasebook {
+                    Analytics.logEvent(AnalyticsEventScreenView, parameters: [AnalyticsParameterScreenName: "phrasebook"])
+                }
+            }
+            headerButton("gearshape", label: "Settings") {
+                showSettings = true
+                Analytics.logEvent(AnalyticsEventScreenView, parameters: [AnalyticsParameterScreenName: "settings"])
+            }
+        }
+        .padding(.leading, 16)
+        .padding(.trailing, 6)
+        .padding(.vertical, 4)
+        .background(
+            LinearGradient(colors: [Color(red: 0.36, green: 0.18, blue: 0.72), Color(red: 0.70, green: 0.24, blue: 0.44)],
+                           startPoint: .leading, endPoint: .trailing)
+                .ignoresSafeArea(edges: .top)
+        )
+        .sheet(isPresented: $showSettings) {
+            SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager, privacyConsent: privacyConsent)
+        }
+    }
+
+    private func headerButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 21, weight: .medium))
+                .foregroundColor(.white)
+                .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel(label)
+    }
+
+    private var canTranslate: Bool { !isProcessing && privacyConsent.hasConsented }
+
     // Main content view extracted for cleaner code
     private var mainContentView: some View {
-        VStack(spacing: 30) {
-            DirectionBar(direction: translationDirection, action: switchDirection)
-                .padding(.horizontal, 30)
+        VStack(spacing: 12) {
+            DirectionBar(direction: translationDirection, typing: inputMode == .text, action: switchDirection)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
                 .disabled(isProcessing || audioRecorder.isRecording)
 
-            // Input mode picker
-            Picker("Input Mode", selection: $inputMode) {
-                Label("Voice", systemImage: "mic.fill").tag(InputMode.voice)
-                Label("Type", systemImage: "keyboard").tag(InputMode.text)
+            // Rescue notice sits right under the bar it just changed, so the
+            // flip is seen without scrolling past the result.
+            if autoDetectedFlip, let shown = resultDirection {
+                HStack(spacing: 8) {
+                    Image(systemName: "wand.and.stars")
+                    Text("Auto-detected \(shown == .creoleToEnglish ? "Kreyòl" : "English") — switched for you")
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 4)
+                    Button("Undo") { undoAutoDetect() }
+                        .font(.subheadline.bold())
+                        .frame(minWidth: 44, minHeight: 44)
+                        .disabled(isProcessing)
+                }
+                .padding(.leading, 12)
+                .padding(.trailing, 6)
+                .foregroundColor(.appAccent)
+                .background(Color.controlSurface)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.appAccent, lineWidth: 1.5))
+                .padding(.horizontal, 16)
             }
-            .pickerStyle(.segmented)
-            // Solid backing: on the light-mode gradient the unselected label was black on purple (3.2:1).
-            .background(SegmentedBacking())
-            .padding(.horizontal, 30)
-            .disabled(isProcessing || audioRecorder.isRecording)
+
+            ModeToggle(mode: $inputMode)
+                .padding(.horizontal, 16)
+                .disabled(isProcessing || audioRecorder.isRecording)
 
             if inputMode == .voice {
-                // Recording button
+                // The primary action: the only filled shape on the screen.
                 Button(action: {
                     if audioRecorder.isRecording {
                         stopRecording()
@@ -288,24 +261,27 @@ struct ContentView: View {
                     }
                 }) {
                     HStack(spacing: 12) {
-                        Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
-                            .font(.system(size: 24))
-                        Text(audioRecorder.isRecording ? "Stop Recording" : speakLabel)
-                            .fontWeight(.semibold)
+                        if isProcessing {
+                            ProgressView().tint(.secondaryText)
+                        } else {
+                            Image(systemName: audioRecorder.isRecording ? "stop.fill" : "mic.fill")
+                                .font(.title3.weight(.semibold))
+                        }
+                        Text(isProcessing ? "Translating…" : (audioRecorder.isRecording ? "Stop" : speakLabel))
+                            .font(.title3.weight(.semibold))
+                            .multilineTextAlignment(.center)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                    .background(audioRecorder.isRecording ? Color.recordingRed : Color(UIColor.secondarySystemBackground))
-                    .foregroundColor(audioRecorder.isRecording ? .white : Color.appAccent)
-                    .cornerRadius(15)
-                    .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+                    .frame(maxWidth: .infinity, minHeight: 64)
+                    .padding(.horizontal, 12)
+                    .modifier(PrimaryButtonSurface(enabled: canTranslate,
+                                                   fill: audioRecorder.isRecording ? .recordingRed : .accentFill))
                 }
-                .disabled(isProcessing || !privacyConsent.hasConsented)
-                .padding(.horizontal, 30)
+                .disabled(!canTranslate)
+                .padding(.horizontal, 16)
 
                 if audioRecorder.isRecording {
                     RecordingProgressView(elapsed: audioRecorder.elapsed)
-                        .padding(.horizontal, 30)
+                        .padding(.horizontal, 16)
                 }
             } else {
                 // Text input
@@ -314,11 +290,11 @@ struct ContentView: View {
                     TextEditor(text: $typedInput)
                         .frame(minHeight: 100, maxHeight: 160)
                         .padding(10)
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(12)
+                        .background(Color.controlSurface)
+                        .cornerRadius(14)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(UIColor.separator), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.controlBorder, lineWidth: 1.5)
                         )
                         .overlay(alignment: .topLeading) {
                             if typedInput.isEmpty {
@@ -331,45 +307,36 @@ struct ContentView: View {
                         }
                         .disabled(isProcessing || !privacyConsent.hasConsented)
 
+                    let hasText = !typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     Button(action: { submitTypedText() }) {
                         HStack(spacing: 10) {
-                            Image(systemName: "arrow.right.circle.fill")
-                                .font(.system(size: 20))
-                            Text("Translate")
-                                .fontWeight(.semibold)
+                            if isProcessing {
+                                ProgressView().tint(.secondaryText)
+                            } else {
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.title3)
+                            }
+                            Text(isProcessing ? "Translating…" : "Translate")
+                                .font(.title3.weight(.semibold))
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented
-                            ? Color(UIColor.tertiarySystemBackground)
-                            : Color.accentFill)
-                        .foregroundColor(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented
-                            ? Color.secondaryText
-                            : .white)
-                        .cornerRadius(15)
-                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        .modifier(PrimaryButtonSurface(enabled: hasText && canTranslate, fill: .accentFill))
                     }
-                    .disabled(typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing || !privacyConsent.hasConsented)
+                    .disabled(!hasText || !canTranslate)
                 }
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 16)
             }
-            
-            // Status message
+
+            // Status message — only for things the result cards don't already
+            // show (too short, nothing heard, time's up).
             if !statusMessage.isEmpty {
                 Text(statusMessage)
                     .font(.subheadline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
             }
-            
-            // Processing indicator
-            if isProcessing {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .appAccent))
-                    .scaleEffect(1.5)
-                    .padding()
-            }
-            
+
             // Results section
             VStack(spacing: 20) {
                 // Source language card
@@ -396,24 +363,6 @@ struct ContentView: View {
                     feedbackNoun: "Transcription"
                 )
 
-                if autoDetectedFlip, let shown = resultDirection {
-                    HStack(spacing: 8) {
-                        Image(systemName: "wand.and.stars")
-                            .font(.system(size: 12))
-                        Text("Auto-detected \(shown == .creoleToEnglish ? "Creole → English" : "English → Creole")")
-                            .font(.caption)
-                        Text("·").font(.caption).foregroundColor(.secondaryText)
-                        Button("Undo") { undoAutoDetect() }
-                            .font(.caption.bold())
-                            .disabled(isProcessing)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .foregroundColor(.appAccent)
-                    .cornerRadius(14)
-                }
-
                 // Target language card
                 let targetLanguage = shownDirection == .creoleToEnglish ? "en-US" : "ht-HT"
                 ResultCard(
@@ -435,7 +384,8 @@ struct ContentView: View {
                     }
                 )
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
             .onChangeCompat(of: ttsManager.isSpeaking) { speaking in
                 if !speaking {
                     speakingCardTitle = nil
@@ -474,9 +424,11 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundColor(.warningText)
                     .padding()
-                    .background(Color(UIColor.systemBackground).opacity(0.95))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.controlSurface)
                     .cornerRadius(10)
-                    .padding(.horizontal, 30)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.controlBorder, lineWidth: 1))
+                    .padding(.horizontal, 16)
             }
 
             // Error message
@@ -485,9 +437,11 @@ struct ContentView: View {
                     .font(.subheadline)
                     .foregroundColor(.errorText)
                     .padding()
-                    .background(Color(UIColor.systemBackground).opacity(0.95))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.controlSurface)
                     .cornerRadius(10)
-                    .padding(.horizontal, 30)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.controlBorder, lineWidth: 1))
+                    .padding(.horizontal, 16)
             }
             
             Spacer(minLength: 80) // leave room for banner
@@ -607,7 +561,7 @@ struct ContentView: View {
             resultDirection = direction
             transcription = source
             translation = translated
-            statusMessage = "✅ Completed"
+            statusMessage = ""
         }
     }
 
@@ -698,6 +652,8 @@ struct ContentView: View {
         preFlipDirection = autoDetectedFlip ? manual : nil
         guard autoDetectedFlip else { return }
         translationDirection = used
+        UIAccessibility.post(notification: .announcement,
+                             argument: "Auto-detected \(used == .creoleToEnglish ? "Creole" : "English"). Direction switched.")
         Analytics.logEvent("auto_detect_flip", parameters: [
             "input_mode": inputMode,
             "by": device != manual ? "device" : "proxy",
@@ -725,7 +681,7 @@ struct ContentView: View {
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: direction, inputMode: source.rawValue)
                     lastInput = (text, source)
-                    statusMessage = "✅ Completed using \(result.provider)"
+                    statusMessage = ""
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                     logTranslationCompleted(inputMode: "text", charLength: text.count)
@@ -822,7 +778,7 @@ struct ContentView: View {
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: deviceDirection.value, inputMode: "voice")
                     lastInput = (result.transcription, .voice)
-                    statusMessage = "✅ Completed using \(result.provider)"
+                    statusMessage = ""
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
                     logTranslationCompleted(inputMode: "voice", charLength: result.transcription.count)
@@ -871,42 +827,53 @@ private final class DirectionBox: @unchecked Sendable {
 /// The whole bar is the switch. Language names are in their own language.
 struct DirectionBar: View {
     let direction: TranslationDirection
+    var typing: Bool = false
     let action: () -> Void
 
-    private func side(flag: String, name: String, caption: String) -> some View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private func side(name: String, caption: String) -> some View {
         VStack(spacing: 2) {
             Text(caption)
-                .font(.caption2.weight(.medium))
+                .font(.footnote)
                 .foregroundColor(.secondaryText)
-            HStack(spacing: 6) {
-                Text(flag)
-                Text(name)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
+            // The Haitian flag is the no-reading landmark for Creole speakers;
+            // English gets none (no single flag fits it, or Spanish later).
+            Text(name == "Kreyòl" ? "🇭🇹 Kreyòl" : name)
+                .font(.title3.weight(.semibold))
+                .foregroundColor(.primary)
         }
         .frame(maxWidth: .infinity)
     }
 
+    private var swapIcon: some View {
+        Image(systemName: typeSize.isAccessibilitySize ? "arrow.up.arrow.down" : "arrow.left.arrow.right")
+            .font(.system(size: 17, weight: .bold))
+            .foregroundColor(.appAccent)
+            .frame(width: 44, height: 44)
+            .background(Circle().fill(Color.appAccent.opacity(0.15)))
+            .overlay(Circle().stroke(Color.appAccent, lineWidth: 1.5))
+    }
+
     var body: some View {
         let creoleFirst = direction == .creoleToEnglish
+        let speak = side(name: creoleFirst ? "Kreyòl" : "English", caption: typing ? "You type" : "You speak")
+        let to = side(name: creoleFirst ? "English" : "Kreyòl", caption: "Translates to")
         Button(action: action) {
-            HStack(spacing: 8) {
-                side(flag: creoleFirst ? "🇭🇹" : "🇺🇸", name: creoleFirst ? "Kreyòl" : "English", caption: "You speak")
-                Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 38, height: 38)
-                    .background(Circle().fill(Color.accentFill))
-                side(flag: creoleFirst ? "🇺🇸" : "🇭🇹", name: creoleFirst ? "English" : "Kreyòl", caption: "Translates to")
+            Group {
+                // Large text sizes stack the bar instead of shrinking the names.
+                if typeSize.isAccessibilitySize {
+                    VStack(spacing: 6) { speak; swapIcon; to }
+                } else {
+                    HStack(spacing: 8) { speak; swapIcon; to }
+                }
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .padding(.horizontal, 12)
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(15)
-            .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+            .frame(maxWidth: .infinity, minHeight: 68)
+            .background(Color.controlSurface)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Translating \(creoleFirst ? "Creole to English" : "English to Creole")")
@@ -986,9 +953,9 @@ struct ResultCard: View {
                         Image(systemName: isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
                             .font(.title3)
                             .foregroundColor(.appAccent)
-                            .padding(8)
+                            .frame(minWidth: 44, minHeight: 44)
                             .background(Color.appAccent.opacity(0.15))
-                            .cornerRadius(8)
+                            .cornerRadius(10)
                     }
                     .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
                 }
@@ -1012,9 +979,9 @@ struct ResultCard: View {
                                   + (sentRating == rating ? ".fill" : ""))
                                 .font(.title3)
                                 .foregroundColor(sentRating == nil || sentRating == rating ? .appAccent : .secondaryText)
-                                .padding(8)
+                                .frame(minWidth: 44, minHeight: 44)
                                 .background(Color.appAccent.opacity(0.15))
-                                .cornerRadius(8)
+                                .cornerRadius(10)
                         }
                         .disabled(sentRating != nil)
                         .accessibilityLabel(rating == "up" ? "\(feedbackNoun) was good" : "\(feedbackNoun) was wrong")
@@ -1023,11 +990,11 @@ struct ResultCard: View {
                 .padding(.top, 4)
             }
         }
-        .padding(20)
+        .padding(16)
         // Use a system background for cards so they contrast correctly in both appearances
         .background(Color(UIColor.tertiarySystemBackground))
-        .cornerRadius(15)
-        .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(UIColor.separator), lineWidth: 0.5))
     }
 }
 
@@ -1108,15 +1075,56 @@ extension Color {
     /// Explicit rather than the AccentColor asset: iOS 26 draws its own
     /// lighter system blue for .accentColor (3.1:1 on light gray).
     static let appAccent = adaptive(light: 0x0060DF, dark: 0x64B0FF)
+    /// Flat screen background behind everything except the header strip.
+    static let bodyBackground = adaptive(light: 0xF2F2F7, dark: 0x000000)
+    /// Fill of bordered controls (direction bar, Voice/Type, text box).
+    static let controlSurface = adaptive(light: 0xFFFFFF, dark: 0x1C1C1E)
+    /// 1.5 pt edge that makes a control read as a control: at least 3:1
+    /// against both the body and the control surface, in both modes.
+    static let controlBorder = adaptive(light: 0x6E6E73, dark: 0x7C7C80)
+
 }
 
 /// Opaque backdrop matching the segmented control's shape (capsule from iOS 26).
-private struct SegmentedBacking: View {
-    var body: some View {
-        if #available(iOS 26, *) {
-            Capsule().fill(Color(UIColor.secondarySystemBackground))
-        } else {
-            RoundedRectangle(cornerRadius: 9).fill(Color(UIColor.secondarySystemBackground))
+/// Voice / Type switch with 44 pt targets and a visible edge in both modes.
+struct ModeToggle: View {
+    @Binding var mode: ContentView.InputMode
+
+    private func segment(_ value: ContentView.InputMode, _ title: String, _ symbol: String) -> some View {
+        let selected = mode == value
+        return Button(action: { mode = value }) {
+            Label(title, systemImage: symbol)
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.primary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: 11).fill(selected ? Color.appAccent.opacity(0.15) : Color.clear))
+                .overlay(RoundedRectangle(cornerRadius: 11).stroke(selected ? Color.appAccent : Color.clear, lineWidth: 1.5))
         }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            segment(.voice, "Voice", "mic.fill")
+            segment(.text, "Type", "keyboard")
+        }
+        .padding(3)
+        .background(Color.controlSurface)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1.5))
+    }
+}
+
+/// Filled when it can be pressed; a bordered surface with grey text when it can't.
+struct PrimaryButtonSurface: ViewModifier {
+    let enabled: Bool
+    let fill: Color
+
+    func body(content: Content) -> some View {
+        content
+            .foregroundColor(enabled ? .white : .secondaryText)
+            .background(RoundedRectangle(cornerRadius: 14).fill(enabled ? fill : Color.controlSurface))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: enabled ? 0 : 1.5))
     }
 }
