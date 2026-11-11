@@ -21,13 +21,14 @@ it to `## Done` with the version or commit.
 
 - [P1] [ops] [proxy] Replace OpenAI tts-1 before its 2027-01-06 shutdown — Creole voice playback (and My Words) use tts-1 pinned in api-proxy; the named replacement isn't usable on /v1/audio/speech yet. Done = proxy on a new model and Creole sounds at least as good. Tracked in api-proxy BACKLOG.md. (added 2026-10-17)
 - [P1] [security] Add Firebase App Check (App Attest on iOS, Play Integrity on Android) — lets api-proxy verify requests really come from the app instead of a script. Ship in both apps first; the proxy enforces later (api-proxy BACKLOG.md). (added 2026-10-17)
-- [P2] [android] [feature] Port HD voice plays from iOS (b85a706) — 5 free AI-voice plays/day + 10 per rewarded ad; see FEATURE_PARITY.md pending ports. (added 2026-10-17)
 - [P2] [copy] Native Kreyòl review of the HD voice copy — "lekti HD", "Gade yon ti videyo pou 10 lòt lekti ak vwa HD", "Ou gen N lekti HD ki rete". (added 2026-10-17)
+- [P3] [ui] [ios] [release] Keep the banner ad out of the home-indicator area — BannerAdView uses `.ignoresSafeArea(edges: .bottom)` (ContentView.swift), so the ad can sit where users swipe up to go home; a swipe starting on it can register as an accidental click (AdMob invalid-click policy). Android got the AdMob "Site Behavior: Navigation" restriction for v1.1's banner on the nav bar (Nov 2026). Done = banner sits above the bottom safe area, the strip's background still fills to the screen edge. (added 2026-11-10)
 - [P3] [ui] [ios] HD chip crowds the "Creole Translation" card title on narrow iPhones (SE / mini) — check on device; shorten to "✨ 5" if it truncates. (added 2026-10-17)
 - [P3] [feature] [proxy] Server-side HD play credits + AdMob server-side verification (SSV) — makes plays tamper-proof (today the count lives on the device; the proxy's TTS caps are the backstop). (added 2026-10-17)
 - [P3] [feature] [blocked: STT quality] "Precision Listening" — rewarded-ad gate for gpt-transcribe voice input after N free/day, with Whisper or typing as the free path. Parked: Creole speech-to-text isn't good enough yet to market as "better" (1-star risk). Also a nightly-todo standing item. (added 2026-10-17)
 
 ## Done
 
+- ~~[android] Port HD voice plays from iOS~~ — shipped in Android 1.11 (vc15), PR #6; also readable colors + banner separation. (done 2026-11-09)
 - ~~HD voice: allow only 1 no-fill grant per day~~ — done in 3.5 (build 11), hd-voice-plays a2ec9a0; blocked attempts log `hd_grant_blocked`. (done 2026-10-19)
 - 2026-10-16 OpenAI STT daily cap set to 500 (~$0.50/day) — api-proxy d749dbe
