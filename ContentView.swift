@@ -39,6 +39,10 @@ struct ContentView: View {
     @AppStorage("translationDirection") private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
+    /// Keyboard focus for the text box. Cleared on Translate: the box is
+    /// disabled while translating, and without this iOS hands focus back when
+    /// it is re-enabled — the keyboard reopened over the result.
+    @FocusState private var inputFocused: Bool
     @State private var inputMode: InputMode = .voice
     // Proxy sample id of the translation on screen (nil = nothing to rate)
     // and the rating already sent for it, so the thumbs lock after one tap.
@@ -100,6 +104,7 @@ struct ContentView: View {
                     Spacer(minLength: BannerAdView.size(forWidth: availableWidth).size.height + 30)
                 }
             }
+            .dismissKeyboardOnScroll()
             .onAppear {
                 if ScreenshotMode.isActive {
                     applyScreenshotScene()
@@ -151,6 +156,8 @@ struct ContentView: View {
                 }
             }
         }
+        // Belt and braces: whenever a translation starts or finishes, the keyboard stays down.
+        .onChangeCompat(of: isProcessing) { _ in inputFocused = false }
         .onChangeCompat(of: audioRecorder.lastError) { error in
             guard let error else { return }
             statusMessage = ""
@@ -252,31 +259,46 @@ struct ContentView: View {
                 .disabled(isProcessing || audioRecorder.isRecording)
 
             if inputMode == .voice {
-                // The primary action: the only filled shape on the screen.
-                Button(action: {
-                    if audioRecorder.isRecording {
-                        stopRecording()
-                    } else {
-                        startRecording()
-                    }
-                }) {
-                    HStack(spacing: 12) {
-                        if isProcessing {
-                            ProgressView().tint(.secondaryText)
+                // The primary action: a round mic, like every other translator,
+                // and the only filled shape on the screen. The caption under it
+                // names the language to speak — that label is what cuts
+                // wrong-language input, so it stays.
+                let micLabel = isProcessing ? "Translating…"
+                    : (audioRecorder.isRecording ? "Tap to stop" : speakLabel)
+                VStack(spacing: 10) {
+                    Button(action: {
+                        if audioRecorder.isRecording {
+                            stopRecording()
                         } else {
-                            Image(systemName: audioRecorder.isRecording ? "stop.fill" : "mic.fill")
-                                .font(.title3.weight(.semibold))
+                            startRecording()
                         }
-                        Text(isProcessing ? "Translating…" : (audioRecorder.isRecording ? "Stop" : speakLabel))
-                            .font(.title3.weight(.semibold))
-                            .multilineTextAlignment(.center)
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(canTranslate ? (audioRecorder.isRecording ? Color.recordingRed : Color.accentFill) : Color.controlSurface)
+                            Circle()
+                                .stroke(Color.controlBorder, lineWidth: canTranslate ? 0 : 1.5)
+                            if isProcessing {
+                                ProgressView().tint(.secondaryText).scaleEffect(1.4)
+                            } else {
+                                Image(systemName: audioRecorder.isRecording ? "stop.fill" : "mic.fill")
+                                    .font(.system(size: 38, weight: .semibold))
+                                    .foregroundColor(canTranslate ? .white : .secondaryText)
+                            }
+                        }
+                        .frame(width: 96, height: 96)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 64)
-                    .padding(.horizontal, 12)
-                    .modifier(PrimaryButtonSurface(enabled: canTranslate,
-                                                   fill: audioRecorder.isRecording ? .recordingRed : .accentFill))
+                    .disabled(!canTranslate)
+                    .accessibilityLabel(micLabel)
+
+                    Text(micLabel)
+                        .font(.title3.weight(.semibold))
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.center)
+                        .accessibilityHidden(true)
                 }
-                .disabled(!canTranslate)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
                 .padding(.horizontal, 16)
 
                 if audioRecorder.isRecording {
@@ -288,6 +310,7 @@ struct ContentView: View {
                 VStack(spacing: 12) {
                     let inputLabel = translationDirection == .creoleToEnglish ? "Ekri an kreyòl… (type Creole)" : "Type English…"
                     TextEditor(text: $typedInput)
+                        .focused($inputFocused)
                         .frame(minHeight: 100, maxHeight: 160)
                         .padding(10)
                         .background(Color.controlSurface)
@@ -603,6 +626,7 @@ struct ContentView: View {
     private func submitTypedText() {
         let text = typedInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        inputFocused = false
         errorMessage = nil
         statusMessage = "⏳ Translating..."
         processTextInput(text)
@@ -1034,6 +1058,11 @@ struct HDPlaysChip: View {
 // MARK: - onChange compatibility
 
 extension View {
+    /// Dragging the page down puts the keyboard away (iOS 16+).
+    @ViewBuilder func dismissKeyboardOnScroll() -> some View {
+        if #available(iOS 16.0, *) { scrollDismissesKeyboard(.interactively) } else { self }
+    }
+
     /// `onChange` that takes the new value, without the iOS 17 deprecation
     /// warning while the app still supports iOS 15.
     @ViewBuilder
