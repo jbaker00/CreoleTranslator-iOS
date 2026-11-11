@@ -185,24 +185,6 @@ struct ContentView: View {
                 .minimumScaleFactor(0.75)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            Menu {
-                ForEach([Language.english, Language.spanish], id: \.self) { partner in
-                    Button(action: { choosePartner(partner) }) {
-                        if translationDirection.partner == partner {
-                            Label("\(partner.nativeName) ↔ Kreyòl", systemImage: "checkmark")
-                        } else {
-                            Text("\(partner.nativeName) ↔ Kreyòl")
-                        }
-                    }
-                }
-            } label: {
-                Image(systemName: "globe")
-                    .font(.system(size: 21, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel(UIText.t("Languages", "Idiomas"))
-            .disabled(isProcessing || audioRecorder.isRecording)
             headerButton(showHistory ? "xmark" : "clock.arrow.circlepath", label: showHistory ? UIText.t("Close history", "Cerrar historial") : UIText.t("History", "Historial")) {
                 withAnimation {
                     showPhrasebook = false
@@ -254,7 +236,7 @@ struct ContentView: View {
     // Main content view extracted for cleaner code
     private var mainContentView: some View {
         VStack(spacing: 12) {
-            DirectionBar(direction: translationDirection, typing: inputMode == .text, action: switchDirection)
+            DirectionBar(direction: translationDirection, typing: inputMode == .text, action: switchDirection, onPickPartner: choosePartner)
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 .disabled(isProcessing || audioRecorder.isRecording)
@@ -943,59 +925,107 @@ private final class DirectionBox: @unchecked Sendable {
 struct DirectionBar: View {
     let direction: TranslationDirection
     var typing: Bool = false
+    /// Swap direction — the centre circle, and only the centre circle.
     let action: () -> Void
+    /// Choose the non-Creole language of the pair.
+    var onPickPartner: (Language) -> Void = { _ in }
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var pulse = false
 
-    private func side(name: String, caption: String) -> some View {
+    /// One behaviour per shape: the bordered language name opens the language
+    /// list (as in Google / Apple / Microsoft Translate), the circle swaps,
+    /// Kreyòl is plain text. A tap anywhere else pulses the circle to point
+    /// people who learned "tap the bar" at the swap.
+    @ViewBuilder private func name(_ language: Language, caption: String) -> some View {
+        if language == .creole {
+            // The Haitian flag is the no-reading landmark for Creole speakers.
+            Text("🇭🇹 Kreyòl")
+                .font(.title3.weight(.semibold))
+                .foregroundColor(.primary)
+                .frame(minHeight: 44)
+                .accessibilityLabel("\(caption) Kreyòl")
+        } else {
+            Menu {
+                ForEach([Language.english, Language.spanish], id: \.self) { option in
+                    Button(action: { onPickPartner(option) }) {
+                        if option == language {
+                            Label(option.nativeName, systemImage: "checkmark")
+                        } else {
+                            Text(option.nativeName)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(language.nativeName)
+                        .font(.title3.weight(.semibold))
+                        .foregroundColor(.primary)
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.bold))
+                        .foregroundColor(.appAccent)
+                }
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.controlBorder, lineWidth: 1.5))
+                .contentShape(Rectangle())
+            }
+            .accessibilityLabel("\(caption): \(language.nativeName)")
+            .accessibilityHint(UIText.t("Double-tap to change language", "Toca dos veces para cambiar de idioma"))
+        }
+    }
+
+    private func side(_ language: Language, caption: String) -> some View {
         VStack(spacing: 2) {
             Text(caption)
                 .font(.footnote)
                 .foregroundColor(.secondaryText)
-            // The Haitian flag is the no-reading landmark for Creole speakers;
-            // English gets none (no single flag fits it, or Spanish later).
-            Text(name)
-                .font(.title3.weight(.semibold))
-                .foregroundColor(.primary)
+                .accessibilityHidden(true)
+            name(language, caption: caption)
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func label(_ l: Language) -> String { l == .creole ? "🇭🇹 Kreyòl" : l.nativeName }
-
-    private var swapIcon: some View {
-        Image(systemName: typeSize.isAccessibilitySize ? "arrow.up.arrow.down" : "arrow.left.arrow.right")
-            .font(.system(size: 17, weight: .bold))
-            .foregroundColor(.appAccent)
-            .frame(width: 44, height: 44)
-            .background(Circle().fill(Color.appAccent.opacity(0.15)))
-            .overlay(Circle().stroke(Color.appAccent, lineWidth: 1.5))
+    private var swapButton: some View {
+        Button(action: action) {
+            Image(systemName: typeSize.isAccessibilitySize ? "arrow.up.arrow.down" : "arrow.left.arrow.right")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(.appAccent)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(Color.appAccent.opacity(0.15)))
+                .overlay(Circle().stroke(Color.appAccent, lineWidth: 1.5))
+                .scaleEffect(pulse ? 1.15 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(UIText.t("Swap direction", "Cambiar dirección"))
+        .accessibilityValue(UIText.t("\(direction.source.nativeName) to \(direction.target.nativeName)",
+                                     "De \(direction.source.nativeName) a \(direction.target.nativeName)"))
     }
 
     var body: some View {
-        // The Haitian flag is the no-reading landmark for Creole speakers;
-        // English and Spanish get none (no single flag fits either).
-        let speak = side(name: label(direction.source), caption: UIText.inputCaption(direction.source, typing: typing))
-        let to = side(name: label(direction.target), caption: UIText.outputCaption(input: direction.source))
-        Button(action: action) {
-            Group {
-                // Large text sizes stack the bar instead of shrinking the names.
-                if typeSize.isAccessibilitySize {
-                    VStack(spacing: 6) { speak; swapIcon; to }
-                } else {
-                    HStack(spacing: 8) { speak; swapIcon; to }
-                }
+        let speak = side(direction.source, caption: UIText.inputCaption(direction.source, typing: typing))
+        let to = side(direction.target, caption: UIText.outputCaption(input: direction.source))
+        Group {
+            // Large text sizes stack the bar instead of shrinking the names.
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 6) { speak; swapButton; to }
+            } else {
+                HStack(spacing: 8) { speak; swapButton; to }
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .frame(maxWidth: .infinity, minHeight: 68)
-            .background(Color.controlSurface)
-            .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1.5))
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(UIText.t("Translating \(direction.englishTitle)", "Traduciendo de \(direction.source.nativeName) a \(direction.target.nativeName)"))
-        .accessibilityHint(UIText.t("Switches the translation direction", "Cambia la dirección de la traducción"))
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, minHeight: 68)
+        .background(Color.controlSurface)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeOut(duration: 0.1)) { pulse = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation(.easeIn(duration: 0.1)) { pulse = false }
+            }
+        }
     }
 }
 
