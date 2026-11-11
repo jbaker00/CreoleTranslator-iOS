@@ -22,7 +22,7 @@ struct HistoryView: View {
             // Header
             VStack(spacing: 10) {
                 HStack {
-                    Text("Translation History")
+                    Text(UIText.t("Translation History", "Historial de traducciones"))
                         .font(.headline)
                         .foregroundColor(.primary)
 
@@ -32,7 +32,7 @@ struct HistoryView: View {
                         Button(action: {
                             historyManager.clearAll()
                         }) {
-                            Text("Clear All")
+                            Text(UIText.t("Clear All", "Borrar todo"))
                                 .font(.subheadline)
                                 .foregroundColor(.errorText)
                         }
@@ -44,7 +44,7 @@ struct HistoryView: View {
                         Button(action: { favoritesOnly.toggle() }) {
                             HStack(spacing: 6) {
                                 Image(systemName: favoritesOnly ? "star.fill" : "star")
-                                Text("Favorites only")
+                                Text(UIText.t("Favorites only", "Solo favoritos"))
                             }
                             .font(.subheadline)
                             .foregroundColor(favoritesOnly ? .favoriteYellow : .secondaryText)
@@ -61,10 +61,10 @@ struct HistoryView: View {
                 VStack(spacing: 15) {
                     Text("📝")
                         .font(.system(size: 50))
-                    Text("No translation history yet")
+                    Text(UIText.t("No translation history yet", "Aún no hay traducciones"))
                         .font(.headline)
                         .foregroundColor(.secondaryText)
-                    Text("Your translations will appear here")
+                    Text(UIText.t("Your translations will appear here", "Tus traducciones aparecerán aquí"))
                         .font(.subheadline)
                         .foregroundColor(.secondaryText)
                 }
@@ -75,10 +75,10 @@ struct HistoryView: View {
                 VStack(spacing: 15) {
                     Text("⭐️")
                         .font(.system(size: 50))
-                    Text("No favorites yet")
+                    Text(UIText.t("No favorites yet", "Aún no hay favoritos"))
                         .font(.headline)
                         .foregroundColor(.secondaryText)
-                    Text("Tap the star on a translation to save it here")
+                    Text(UIText.t("Tap the star on a translation to save it here", "Toca la estrella de una traducción para guardarla aquí"))
                         .font(.subheadline)
                         .foregroundColor(.secondaryText)
                 }

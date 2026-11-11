@@ -29,11 +29,11 @@ struct SettingsView: View {
                 testSection
                 privacySection
             }
-            .navigationTitle("Voice Settings")
+            .navigationTitle(UIText.t("Voice Settings", "Configuración de voz"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(UIText.t("Done", "Listo")) { dismiss() }
                 }
             }
         }
@@ -159,11 +159,12 @@ struct SettingsView: View {
 
     private var translationSection: some View {
         Section {
-            Toggle("Auto-detect language", isOn: $voiceSettings.autoDetectLanguage)
+            Toggle(UIText.t("Auto-detect language", "Detectar idioma automáticamente"), isOn: $voiceSettings.autoDetectLanguage)
         } header: {
-            Text("Translation")
+            Text(UIText.t("Translation", "Traducción"))
         } footer: {
-            Text("If you type or say English while set to Creole → English (or the other way round), the app translates in the right direction and shows an Undo button. Turn off to always use the direction you picked.")
+            Text(UIText.t("If you type or say the other language of the pair (English while set to Creole → English, for example), the app translates in the right direction and shows an Undo button. Turn off to always use the direction you picked.",
+                          "Si escribes o dices el otro idioma del par (español cuando está en kreyòl → español, por ejemplo), la app traduce en la dirección correcta y muestra un botón Deshacer. Desactívalo para usar siempre la dirección que elegiste."))
         }
     }
 
@@ -231,7 +232,7 @@ struct SettingsView: View {
     private var privacySection: some View {
         Section {
             Link(destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!) {
-                Label("Privacy Policy", systemImage: "doc.text")
+                Label(UIText.t("Privacy Policy", "Política de privacidad"), systemImage: "doc.text")
             }
             Button(role: .destructive) {
                 privacyConsent.revokeConsent()
@@ -240,7 +241,7 @@ struct SettingsView: View {
                 Label("Revoke AI Data Consent", systemImage: "hand.raised")
             }
         } header: {
-            Label("Privacy", systemImage: "lock.shield")
+            Label(UIText.t("Privacy", "Privacidad"), systemImage: "lock.shield")
         } footer: {
             Text("Revoking consent disables recording and translation until you consent again.")
                 .font(.caption)

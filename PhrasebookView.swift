@@ -16,11 +16,11 @@ struct PhrasebookView: View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
                 HStack {
-                    Text("Phrasebook")
+                    Text(UIText.t("Phrasebook", "Frases"))
                         .font(.headline)
                         .foregroundColor(.primary)
                     Spacer()
-                    Text("Works offline")
+                    Text(UIText.t("Works offline", "Funciona sin conexión"))
                         .font(.caption)
                         .foregroundColor(.secondaryText)
                 }
