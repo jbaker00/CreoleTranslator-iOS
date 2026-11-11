@@ -104,8 +104,7 @@ enum LanguageDetector {
         "todo", "todos", "mucho", "mucha", "poco", "casa", "agua", "comida", "dinero", "trabajo", "amigo",
         "familia", "baño", "médico", "medico", "ayuda", "alto", "pare", "documentos", "identificación",
         "nombre", "señor", "señora", "hombre", "mujer", "niño", "niña", "hijo", "hija", "madre", "padre",
-        "hermano", "hermana", "dolor", "herido", "calle", "policía", "policia", "soldado", "arma", "armas",
-        "manos", "peligro", "seguro", "tranquilo", "espere", "venga", "siéntese", "muéstreme", "abra",
+        "hermano", "hermana", "dolor", "herido", "calle", "policía", "policia",         "manos", "peligro", "seguro", "tranquilo", "espere", "venga", "siéntese", "muéstreme", "abra",
         "cierre", "vehículo", "carro", "habla", "hablo", "hablas", "entiendo", "entiende", "llamo", "llama",
         "vive", "vivo",
     ]
