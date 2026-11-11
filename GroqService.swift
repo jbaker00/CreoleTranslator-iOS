@@ -33,6 +33,18 @@ enum TranslationDirection: String, Codable {
         case .englishToCreole: return "en-ht"
         }
     }
+
+    init?(proxyDirection: String) {
+        switch proxyDirection {
+        case "ht-en": self = .creoleToEnglish
+        case "en-ht": self = .englishToCreole
+        default: return nil
+        }
+    }
+
+    var reversed: TranslationDirection {
+        self == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
+    }
 }
 
 struct TranscriptionResponse: Codable {
@@ -56,6 +68,10 @@ struct ProxyTranslationResponse: Codable {
     // an older proxy. sampleId is what /v1/feedback rates.
     let sampleId: String?
     let confidence: Int?
+    // Direction the proxy actually translated in. Differs from the request
+    // only when we sent `autoDirection` and the text turned out to be in the
+    // target language already. Absent on an older proxy.
+    let direction: String?
 }
 
 /// Whether the text sent to /v1/translate was spoken or typed. The proxy
@@ -128,13 +144,16 @@ class GroqService {
     // apiKey retained for call-site compatibility; the proxy needs no key
     init(apiKey: String? = nil) {}
 
-    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish, source: TranslationSource = .typed) async throws -> TranslationResult {
-        let translated = try await translateText(text, direction: direction, source: source)
+    /// `autoDirection` lets the proxy translate the other way when the text is
+    /// already in the target language; `result.direction` says which way it went.
+    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish, source: TranslationSource = .typed,
+                     autoDirection: Bool = false) async throws -> TranslationResult {
+        let translated = try await translateText(text, direction: direction, source: source, autoDirection: autoDirection)
         return TranslationResult(
             transcription: text,
             translation: translated.text,
             provider: displayProvider(translated.provider),
-            direction: direction,
+            direction: translated.direction,
             sampleId: translated.sampleId
         )
     }
@@ -145,6 +164,7 @@ class GroqService {
     /// language hint — that's the only signal available before any text exists.
     func processAudio(fileURL: URL,
                       direction: TranslationDirection = .creoleToEnglish,
+                      autoDirection: Bool = false,
                       resolveDirection: ((String) -> TranslationDirection)? = nil) async throws -> TranslationResult {
         // Step 1: Transcribe audio (gpt-transcribe for Creole, Whisper for English — see creoleSttEngine)
         let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
@@ -155,7 +175,7 @@ class GroqService {
 
         // Step 2: Translate — in the detected direction if the caller asks
         let direction = resolveDirection?(transcription) ?? direction
-        let translated = try await translateText(transcription, direction: direction, source: .voice)
+        let translated = try await translateText(transcription, direction: direction, source: .voice, autoDirection: autoDirection)
 
         // If either leg used its fallback, surface that — it's the more useful signal.
         // (Engine-agnostic: the proxy tags every backup engine with "-fallback".)
@@ -164,7 +184,7 @@ class GroqService {
             transcription: transcription,
             translation: translated.text,
             provider: displayProvider(provider),
-            direction: direction,
+            direction: translated.direction,
             sampleId: translated.sampleId
         )
     }
@@ -226,13 +246,15 @@ class GroqService {
         }
     }
 
-    private func translateText(_ text: String, direction: TranslationDirection, source: TranslationSource) async throws -> (text: String, provider: String?, sampleId: String?) {
+    private func translateText(_ text: String, direction: TranslationDirection, source: TranslationSource,
+                               autoDirection: Bool) async throws -> (text: String, provider: String?, sampleId: String?, direction: TranslationDirection) {
         var request = proxyRequest(url: translateURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "text": text,
             "direction": direction.proxyDirection,
-            "source": source.rawValue
+            "source": source.rawValue,
+            "autoDirection": autoDirection
         ])
 
         do {
@@ -252,7 +274,8 @@ class GroqService {
             }
 
             let result = try JSONDecoder().decode(ProxyTranslationResponse.self, from: data)
-            return (result.translation, result.provider, result.sampleId)
+            let used = result.direction.flatMap(TranslationDirection.init(proxyDirection:)) ?? direction
+            return (result.translation, result.provider, result.sampleId, used)
 
         } catch let error as GroqError {
             throw error

@@ -19,6 +19,11 @@ it to `## Done` with the version or commit.
 
 ## Open
 
+- [P1] [feature] Spanish ↔ Creole — Haitians live and work alongside Spanish speakers in the Dominican Republic, the United States, Mexico and Chile, so this pair has a real audience. Proxy: `es-ht` / `ht-es` directions + prompts, Spanish STT and voice. Apps: language-pair picker instead of the two-way direction bar; detection becomes three-way, so lean on the proxy's `autoDirection` rather than the offline word lists. Own App Store keywords / custom page so uptake can be measured. (added 2026-11-10)
+- [P2] [feature] Conversation mode (one phone, two people) — split screen with a mic per language, translation spoken automatically after each turn. Reuses today's pipeline. First step toward live translation. (added 2026-11-10)
+- [P3] [feature] [blocked: STT quality + cost] Live multi-phone translation (Microsoft/Google Translate style) — listeners join with a code and hear their own language. Needs a realtime room backend and streaming speech-to-text; Creole streaming STT isn't good enough yet and continuous audio costs far more than ad revenue covers. Revisit after conversation mode. (added 2026-11-10)
+- [P2] [android] [feature] Port the direction fix from iOS (branch `direction-fix`) — saved direction, direction bar above the input, proxy `autoDirection`, wider LanguageDetector lists; see FEATURE_PARITY.md pending ports. (added 2026-11-10)
+- [P3] [marketing] [ios] Re-shoot App Store / custom-page screenshots after the direction bar ships — the main screen layout changed (`-shotScene`). (added 2026-11-10)
 - [P1] [ops] [proxy] Replace OpenAI tts-1 before its 2027-01-06 shutdown — Creole voice playback (and My Words) use tts-1 pinned in api-proxy; the named replacement isn't usable on /v1/audio/speech yet. Done = proxy on a new model and Creole sounds at least as good. Tracked in api-proxy BACKLOG.md. (added 2026-10-17)
 - [P1] [security] Add Firebase App Check (App Attest on iOS, Play Integrity on Android) — lets api-proxy verify requests really come from the app instead of a script. Ship in both apps first; the proxy enforces later (api-proxy BACKLOG.md). (added 2026-10-17)
 - [P2] [android] [feature] Port HD voice plays from iOS (b85a706) — 5 free AI-voice plays/day + 10 per rewarded ad; see FEATURE_PARITY.md pending ports. (added 2026-10-17)

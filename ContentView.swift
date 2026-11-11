@@ -33,7 +33,10 @@ struct ContentView: View {
     @State private var showHistory = false
     @State private var showPhrasebook = false
     @State private var showSettings = false
-    @State private var translationDirection: TranslationDirection = .creoleToEnglish
+    // Remembered between launches: most people only ever translate one way,
+    // and resetting to Creole → English each launch was the top cause of
+    // wrong-direction input.
+    @AppStorage("translationDirection") private var translationDirection: TranslationDirection = .creoleToEnglish
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
@@ -46,6 +49,9 @@ struct ContentView: View {
     /// from translationDirection after an auto-detect flip). nil = no result.
     @State private var resultDirection: TranslationDirection? = nil
     @State private var autoDetectedFlip = false
+    /// Direction the user had selected before an auto-detect flip adopted
+    /// the detected one; Undo goes back to it.
+    @State private var preFlipDirection: TranslationDirection? = nil
     /// What produced the current result, so Undo can redo it manually.
     @State private var lastInput: (text: String, source: TranslationSource)? = nil
     /// Card tapped while out of HD plays; played after the ad (or with the basic voice).
@@ -257,6 +263,10 @@ struct ContentView: View {
     // Main content view extracted for cleaner code
     private var mainContentView: some View {
         VStack(spacing: 30) {
+            DirectionBar(direction: translationDirection, action: switchDirection)
+                .padding(.horizontal, 30)
+                .disabled(isProcessing || audioRecorder.isRecording)
+
             // Input mode picker
             Picker("Input Mode", selection: $inputMode) {
                 Label("Voice", systemImage: "mic.fill").tag(InputMode.voice)
@@ -280,7 +290,7 @@ struct ContentView: View {
                     HStack(spacing: 12) {
                         Text(audioRecorder.isRecording ? "⏹️" : "🎙️")
                             .font(.system(size: 24))
-                        Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
+                        Text(audioRecorder.isRecording ? "Stop Recording" : speakLabel)
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
@@ -300,7 +310,7 @@ struct ContentView: View {
             } else {
                 // Text input
                 VStack(spacing: 12) {
-                    let inputLabel = translationDirection == .creoleToEnglish ? "Enter Haitian Creole text..." : "Enter English text..."
+                    let inputLabel = translationDirection == .creoleToEnglish ? "Ekri an kreyòl… (type Creole)" : "Type English…"
                     TextEditor(text: $typedInput)
                         .frame(minHeight: 100, maxHeight: 160)
                         .padding(10)
@@ -403,29 +413,6 @@ struct ContentView: View {
                     .foregroundColor(.appAccent)
                     .cornerRadius(14)
                 }
-
-                // Switch Direction button between the two cards
-                Button(action: {
-                    withAnimation {
-                        translationDirection = translationDirection == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
-                        // A manual switch re-labels the cards; the result no longer belongs to a detected direction.
-                        resultDirection = nil
-                        autoDetectedFlip = false
-                    }
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .font(.system(size: 14))
-                        Text("Switch Direction")
-                            .font(.subheadline)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .foregroundColor(.appAccent)
-                    .cornerRadius(20)
-                }
-                .disabled(isProcessing)
 
                 // Target language card
                 let targetLanguage = shownDirection == .creoleToEnglish ? "en-US" : "ht-HT"
@@ -650,7 +637,7 @@ struct ContentView: View {
     private func stopRecording() {
         guard let url = audioRecorder.stopRecording() else {
             // Nil here almost always means a too-short tap (the recorder discards those).
-            statusMessage = "🎤 Too short — tap Start, speak, then tap Stop."
+            statusMessage = "🎤 Too short — tap the mic button, speak, then tap Stop."
             return
         }
         
@@ -680,22 +667,55 @@ struct ContentView: View {
 
     private func undoAutoDetect() {
         guard let input = lastInput else { return }
+        if let previous = preFlipDirection { translationDirection = previous }
         Analytics.logEvent("auto_detect_undo", parameters: ["direction": directionCode])
         processTextInput(input.text, source: input.source, allowAutoDetect: false)
+    }
+
+    private func switchDirection() {
+        withAnimation {
+            translationDirection = translationDirection.reversed
+            // A manual switch re-labels the cards; the result no longer belongs to a detected direction.
+            resultDirection = nil
+            autoDetectedFlip = false
+            preFlipDirection = nil
+        }
+        Analytics.logEvent("direction_switched", parameters: ["direction": directionCode])
+    }
+
+    /// Mic button label: names the language to speak, in that language too
+    /// for Creole speakers.
+    private var speakLabel: String {
+        translationDirection == .creoleToEnglish ? "Pale kreyòl · Speak Creole" : "Speak English"
+    }
+
+    /// An auto-detect flip (on-device or by the proxy) adopts the detected
+    /// direction, so the bar, the cards and the next recording's language
+    /// hint all agree. Undo restores `manual`.
+    private func applyResultDirection(_ used: TranslationDirection, manual: TranslationDirection, device: TranslationDirection, inputMode: String) {
+        resultDirection = used
+        autoDetectedFlip = used != manual
+        preFlipDirection = autoDetectedFlip ? manual : nil
+        guard autoDetectedFlip else { return }
+        translationDirection = used
+        Analytics.logEvent("auto_detect_flip", parameters: [
+            "input_mode": inputMode,
+            "by": device != manual ? "device" : "proxy",
+        ])
     }
 
     private func processTextInput(_ text: String, source: TranslationSource = .typed, allowAutoDetect: Bool = true) {
         isProcessing = true
         transcription = "Processing..."
         translation = "Waiting..."
-        let direction = Self.detectedDirection(for: text, manual: translationDirection,
-                                               autoDetectEnabled: allowAutoDetect && voiceSettings.autoDetectLanguage)
-        let flipped = direction != translationDirection
+        let manual = translationDirection
+        let autoDetect = allowAutoDetect && voiceSettings.autoDetectLanguage
+        let direction = Self.detectedDirection(for: text, manual: manual, autoDetectEnabled: autoDetect)
 
         Task {
             do {
                 let groqService = GroqService()
-                let result = try await groqService.processText(text, direction: direction, source: source)
+                let result = try await groqService.processText(text, direction: direction, source: source, autoDirection: autoDetect)
 
                 await MainActor.run {
                     transcription = result.transcription
@@ -703,10 +723,8 @@ struct ContentView: View {
                     currentSampleId = result.sampleId
                     sentRating = nil
                     sentSttRating = nil
-                    resultDirection = result.direction
-                    autoDetectedFlip = flipped
+                    applyResultDirection(result.direction, manual: manual, device: direction, inputMode: source.rawValue)
                     lastInput = (text, source)
-                    if flipped { Analytics.logEvent("auto_detect_flip", parameters: ["input_mode": source.rawValue]) }
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -788,10 +806,13 @@ struct ContentView: View {
                 let groqService = GroqService()
                 let manual = translationDirection
                 let autoDetect = voiceSettings.autoDetectLanguage   // read on the main actor, used off it
-                let result = try await groqService.processAudio(fileURL: url, direction: manual) { transcript in
-                    Self.detectedDirection(for: transcript, manual: manual, autoDetectEnabled: autoDetect)
+                // Captured so analytics can tell an on-device flip from a proxy one.
+                let deviceDirection = DirectionBox(manual)
+                let result = try await groqService.processAudio(fileURL: url, direction: manual, autoDirection: autoDetect) { transcript in
+                    let detected = Self.detectedDirection(for: transcript, manual: manual, autoDetectEnabled: autoDetect)
+                    deviceDirection.value = detected
+                    return detected
                 }
-                let flipped = result.direction != manual
 
                 await MainActor.run {
                     transcription = result.transcription
@@ -799,10 +820,8 @@ struct ContentView: View {
                     currentSampleId = result.sampleId
                     sentRating = nil
                     sentSttRating = nil
-                    resultDirection = result.direction
-                    autoDetectedFlip = flipped
+                    applyResultDirection(result.direction, manual: manual, device: deviceDirection.value, inputMode: "voice")
                     lastInput = (result.transcription, .voice)
-                    if flipped { Analytics.logEvent("auto_detect_flip", parameters: ["input_mode": "voice"]) }
                     statusMessage = "✅ Completed using \(result.provider)"
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -839,6 +858,59 @@ struct ContentView: View {
                 audioRecorder.deleteRecording(at: url)
             }
         }
+    }
+}
+
+private final class DirectionBox: @unchecked Sendable {
+    var value: TranslationDirection
+    init(_ value: TranslationDirection) { self.value = value }
+}
+
+/// "You speak X ⇄ Translates to Y" — the one direction control, above the
+/// mic and the text box so the language to use is visible before any input.
+/// The whole bar is the switch. Language names are in their own language.
+struct DirectionBar: View {
+    let direction: TranslationDirection
+    let action: () -> Void
+
+    private func side(flag: String, name: String, caption: String) -> some View {
+        VStack(spacing: 2) {
+            Text(caption)
+                .font(.caption2.weight(.medium))
+                .foregroundColor(.secondaryText)
+            HStack(spacing: 6) {
+                Text(flag)
+                Text(name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    var body: some View {
+        let creoleFirst = direction == .creoleToEnglish
+        Button(action: action) {
+            HStack(spacing: 8) {
+                side(flag: creoleFirst ? "🇭🇹" : "🇺🇸", name: creoleFirst ? "Kreyòl" : "English", caption: "You speak")
+                Image(systemName: "arrow.left.arrow.right")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 38, height: 38)
+                    .background(Circle().fill(Color.accentFill))
+                side(flag: creoleFirst ? "🇺🇸" : "🇭🇹", name: creoleFirst ? "English" : "Kreyòl", caption: "Translates to")
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(15)
+            .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Translating \(creoleFirst ? "Creole to English" : "English to Creole")")
+        .accessibilityHint("Switches the translation direction")
     }
 }
 
