@@ -34,6 +34,11 @@ enum ScreenshotMode {
     /// Sample result for the result-card scenes: (source, translation, direction).
     static var sampleResult: (String, String, TranslationDirection)? {
         switch scene {
+        case "spanish":
+            // Same Creole as the medical scene, reached from Spanish.
+            return ("¿Dónde le duele? Muéstreme con el dedo.",
+                    "Ki kote ou santi doulè a? Montre m ak dwèt ou.",
+                    .spanishToCreole)
         case "medical":
             return ("Where does it hurt? Show me with your finger.",
                     "Ki kote ou santi doulè a? Montre m ak dwèt ou.",

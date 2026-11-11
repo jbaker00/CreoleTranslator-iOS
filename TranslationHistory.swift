@@ -17,11 +17,11 @@ struct TranslationEntry: Identifiable, Codable, Equatable {
 
     // Legacy support for old entries
     var creoleText: String {
-        direction == .creoleToEnglish ? sourceText : translatedText
+        direction.source == .creole ? sourceText : translatedText
     }
 
     var englishText: String {
-        direction == .creoleToEnglish ? translatedText : sourceText
+        direction.source == .creole ? translatedText : sourceText
     }
 
     init(id: UUID = UUID(), timestamp: Date = Date(), sourceText: String, translatedText: String, direction: TranslationDirection, isFavorite: Bool = false) {

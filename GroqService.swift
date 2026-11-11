@@ -8,43 +8,157 @@
 
 import Foundation
 
+/// Interface text. Spanish when the phone's first language is Spanish,
+/// English otherwise — done in code because the project has no string
+/// catalog yet. Strings a Creole speaker must read are written Kreyòl-first
+/// at the call site (iOS has no Haitian Creole system language to follow).
+/// All Spanish and Kreyòl copy here still needs a native-speaker review.
+enum UIText {
+    static let isSpanish: Bool = (Locale.preferredLanguages.first ?? "en").lowercased().hasPrefix("es")
+
+    static func t(_ english: String, _ spanish: String) -> String { isSpanish ? spanish : english }
+
+    /// "Speak English" / "Habla en español" / "Pale kreyòl · Speak Creole".
+    static func speak(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Pale kreyòl · " + t("Speak Creole", "Habla en kreyòl")
+        case .english: return t("Speak English", "Habla en inglés")
+        case .spanish: return t("Speak Spanish · Habla en español", "Habla en español")
+        }
+    }
+
+    static func typeHere(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Ekri an kreyòl… " + t("(type Creole)", "(escribe en kreyòl)")
+        case .english: return t("Type English…", "Escribe en inglés…")
+        case .spanish: return t("Type Spanish… · Escribe en español…", "Escribe en español…")
+        }
+    }
+
+    /// Caption over the input side of the direction bar.
+    static func inputCaption(_ language: Language, typing: Bool) -> String {
+        if language == .creole { return typing ? "Ou ekri" : "Ou pale" }
+        return typing ? t("You type", "Escribes") : t("You speak", "Hablas")
+    }
+
+    static func outputCaption(input: Language) -> String {
+        input == .creole ? "Tradui an" : t("Translates to", "Se traduce a")
+    }
+}
+
+/// A language the app translates. Haitian Creole is always one side of a pair.
+enum Language: String, Codable, CaseIterable {
+    case creole = "ht"
+    case english = "en"
+    case spanish = "es"
+
+    /// Code the proxy uses (`x-language`, direction strings, TTS `language`).
+    var code: String { rawValue }
+
+    /// The language's own name for itself — what its speakers look for.
+    var nativeName: String {
+        switch self {
+        case .creole: return "Kreyòl"
+        case .english: return "English"
+        case .spanish: return "Español"
+        }
+    }
+
+    var englishName: String {
+        switch self {
+        case .creole: return "Creole"
+        case .english: return "English"
+        case .spanish: return "Spanish"
+        }
+    }
+
+    var flag: String {
+        switch self {
+        case .creole: return "🇭🇹"
+        case .english: return "🇺🇸"
+        case .spanish: return "🇲🇽"
+        }
+    }
+
+    /// Locale for the on-device voice and for labelling speech requests.
+    /// Spanish is Latin American.
+    var speechLocale: String {
+        switch self {
+        case .creole: return "ht-HT"
+        case .english: return "en-US"
+        case .spanish: return "es-MX"
+        }
+    }
+
+    init(speechLocale: String) {
+        if speechLocale.hasPrefix("ht") { self = .creole }
+        else if speechLocale.hasPrefix("es") { self = .spanish }
+        else { self = .english }
+    }
+}
+
 enum TranslationDirection: String, Codable {
     case creoleToEnglish
     case englishToCreole
+    case creoleToSpanish
+    case spanishToCreole
 
-    var sourceLanguage: String {
+    var source: Language {
         switch self {
-        case .creoleToEnglish: return "ht" // Haitian Creole
-        case .englishToCreole: return "en" // English
+        case .creoleToEnglish, .creoleToSpanish: return .creole
+        case .englishToCreole: return .english
+        case .spanishToCreole: return .spanish
         }
     }
 
-    var targetLanguage: String {
+    var target: Language {
         switch self {
-        case .creoleToEnglish: return "English"
-        case .englishToCreole: return "Haitian Creole"
+        case .englishToCreole, .spanishToCreole: return .creole
+        case .creoleToEnglish: return .english
+        case .creoleToSpanish: return .spanish
         }
     }
+
+    /// The non-Creole language of the pair.
+    var partner: Language { source == .creole ? target : source }
+
+    var sourceLanguage: String { source.code }
 
     // Proxy direction code — the system prompt lives server-side
-    var proxyDirection: String {
-        switch self {
-        case .creoleToEnglish: return "ht-en"
-        case .englishToCreole: return "en-ht"
-        }
-    }
+    var proxyDirection: String { "\(source.code)-\(target.code)" }
 
-    init?(proxyDirection: String) {
-        switch proxyDirection {
-        case "ht-en": self = .creoleToEnglish
-        case "en-ht": self = .englishToCreole
+    init?(source: Language, target: Language) {
+        switch (source, target) {
+        case (.creole, .english): self = .creoleToEnglish
+        case (.english, .creole): self = .englishToCreole
+        case (.creole, .spanish): self = .creoleToSpanish
+        case (.spanish, .creole): self = .spanishToCreole
         default: return nil
         }
     }
 
-    var reversed: TranslationDirection {
-        self == .creoleToEnglish ? .englishToCreole : .creoleToEnglish
+    init?(proxyDirection: String) {
+        let parts = proxyDirection.split(separator: "-").map(String.init)
+        guard parts.count == 2, let s = Language(rawValue: parts[0]), let t = Language(rawValue: parts[1]),
+              let direction = TranslationDirection(source: s, target: t) else { return nil }
+        self = direction
     }
+
+    var reversed: TranslationDirection {
+        TranslationDirection(source: target, target: source) ?? self
+    }
+
+    /// Same side of the conversation, other partner language
+    /// (English → Creole becomes Spanish → Creole).
+    func with(partner: Language) -> TranslationDirection {
+        guard partner != .creole else { return self }
+        return (source == .creole
+            ? TranslationDirection(source: .creole, target: partner)
+            : TranslationDirection(source: partner, target: .creole)) ?? self
+    }
+
+    /// "English to Creole" — analytics-safe, English.
+    var englishTitle: String { "\(source.englishName) to \(target.englishName)" }
 }
 
 struct TranscriptionResponse: Codable {

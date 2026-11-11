@@ -155,7 +155,7 @@ struct HistoryEntryCard: View {
 
             // Source text row with speaker
             HStack(alignment: .top, spacing: 8) {
-                Text(entry.direction == .creoleToEnglish ? "🇭🇹" : "🇺🇸")
+                Text(entry.direction.source.flag)
                     .font(.title3)
                 Text(entry.sourceText)
                     .font(.body)
@@ -165,7 +165,7 @@ struct HistoryEntryCard: View {
                 speakerButton(
                     row: "source",
                     text: entry.sourceText,
-                    language: entry.direction == .creoleToEnglish ? "ht-HT" : "en-US"
+                    language: entry.direction.source.speechLocale
                 )
             }
 
@@ -173,7 +173,7 @@ struct HistoryEntryCard: View {
 
             // Translated text row with speaker
             HStack(alignment: .top, spacing: 8) {
-                Text(entry.direction == .creoleToEnglish ? "🇺🇸" : "🇭🇹")
+                Text(entry.direction.target.flag)
                     .font(.title3)
                 Text(entry.translatedText)
                     .font(.body)
@@ -183,7 +183,7 @@ struct HistoryEntryCard: View {
                 speakerButton(
                     row: "translated",
                     text: entry.translatedText,
-                    language: entry.direction == .creoleToEnglish ? "en-US" : "ht-HT"
+                    language: entry.direction.target.speechLocale
                 )
             }
 

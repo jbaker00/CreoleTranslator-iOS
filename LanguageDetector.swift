@@ -11,7 +11,7 @@
 import Foundation
 
 enum DetectedLanguage: Equatable {
-    case creole, english, unknown
+    case creole, english, spanish, unknown
 }
 
 enum LanguageDetector {
@@ -88,6 +88,37 @@ enum LanguageDetector {
         "ten", "first", "last", "next",
     ]
 
+    // Latin American Spanish, for the Spanish ↔ Creole pair. Words that are also
+    // Creole ("la", "se", "te", "y", "mal", "yo" = they, "al", "le") are left out.
+    private static let spanishWords: Set<String> = [
+        "el", "los", "las", "un", "una", "unos", "es", "está", "están", "estoy", "eres", "soy", "somos",
+        "son", "que", "qué", "por", "para", "con", "sin", "pero", "porque", "como", "cómo", "cuando",
+        "cuándo", "donde", "dónde", "quien", "quién", "cuál", "cuánto", "cuanto", "este", "esta", "esto",
+        "ese", "esa", "eso", "mi", "mis", "tu", "tus", "su", "sus", "nuestro", "usted", "ustedes", "ellos",
+        "ellas", "nosotros", "él", "ella", "me", "lo", "les", "nos", "del", "muy", "más", "mas", "también",
+        "tambien", "ya", "hay", "tengo", "tiene", "tienes", "tienen", "quiero", "quiere", "quieres",
+        "necesito", "necesita", "puedo", "puede", "puedes", "voy", "va", "vamos", "van", "hacer", "hago",
+        "hace", "decir", "digo", "dice", "sé", "sabe", "ver", "veo", "hola", "gracias", "favor", "buenos",
+        "buenas", "días", "dias", "tardes", "noches", "adiós", "adios", "sí", "bien", "bueno", "malo",
+        "aquí", "aqui", "allí", "ahora", "hoy", "mañana", "ayer", "siempre", "nunca", "nada", "algo",
+        "todo", "todos", "mucho", "mucha", "poco", "casa", "agua", "comida", "dinero", "trabajo", "amigo",
+        "familia", "baño", "médico", "medico", "ayuda", "alto", "pare", "documentos", "identificación",
+        "nombre", "señor", "señora", "hombre", "mujer", "niño", "niña", "hijo", "hija", "madre", "padre",
+        "hermano", "hermana", "dolor", "herido", "calle", "policía", "policia", "soldado", "arma", "armas",
+        "manos", "peligro", "seguro", "tranquilo", "espere", "venga", "siéntese", "muéstreme", "abra",
+        "cierre", "vehículo", "carro", "habla", "hablo", "hablas", "entiendo", "entiende", "llamo", "llama",
+        "vive", "vivo",
+    ]
+    private static let strongSpanish: Set<String> = ["hola", "gracias", "sí", "adiós", "adios", "alto", "ayuda", "dónde", "donde",
+                                                     "cuánto", "qué", "bueno", "buenos", "buenas", "perdón", "perdon", "disculpe"]
+    // Creole-list words that are everyday Spanish too; they don't vote for
+    // Creole when the pair is Spanish ↔ Creole ("se te ve bien").
+    private static let creoleSharedWithSpanish: Set<String> = ["la", "se", "te", "y", "mal", "yo", "al", "le", "ta", "si", "pa", "sa", "di", "ki", "li",
+                                                               "tout", "ale", "vini", "bon", "papa", "pi", "m", "n", "l", "t", "k", "w", "fe", "sou", "jan", "ti"]
+    private static let weakSpanish: Set<String> = ["me", "mi", "tu", "su", "lo", "es", "un", "va", "ya", "son", "mas", "ver"]
+    // Acute accents and ñ: Spanish uses them, Creole (grave accents only) does not.
+    private static let spanishLetters: Set<Character> = ["á", "é", "í", "ó", "ú", "ñ", "ü"]
+
     // Single words that decide on their own (a one-word input has no context).
     private static let strongCreole: Set<String> = ["bonjou", "bonswa", "mèsi", "mesi", "tanpri", "souple", "wi", "mwen", "kijan", "kote", "anpil"]
     private static let strongEnglish: Set<String> = [
@@ -106,42 +137,55 @@ enum LanguageDetector {
     // Letters that essentially never appear in English but are common in Creole.
     private static let creoleLetters: Set<Character> = ["è", "ò", "à", "ù", "ì"]
 
-    static func detect(_ text: String) -> DetectedLanguage {
+    /// Creole vs the other language of the selected pair. `partner` is the
+    /// non-Creole side (English or Spanish); the answer is never the third
+    /// language, because the app can't translate out of the pair anyway.
+    static func detect(_ text: String, partner: Language = .english) -> DetectedLanguage {
         let tokens = tokenize(text)
         guard !tokens.isEmpty else { return .unknown }
+
+        let spanish = partner == .spanish
+        let otherWords = spanish ? spanishWords : englishWords
+        let otherStrong = spanish ? strongSpanish : strongEnglish
+        let otherWeak = spanish ? weakSpanish : weakEnglish
+        let other: DetectedLanguage = spanish ? .spanish : .english
+        func hasCreoleLetter(_ w: String) -> Bool { w.contains(where: { creoleLetters.contains($0) }) }
+        func hasOtherLetter(_ w: String) -> Bool { spanish && w.contains(where: { spanishLetters.contains($0) }) }
 
         if tokens.count == 1 {
             let w = tokens[0]
             if strongCreole.contains(w) { return .creole }
-            if strongEnglish.contains(w) { return .english }
-            if w.contains(where: { creoleLetters.contains($0) }) { return .creole }
+            if otherStrong.contains(w) { return other }
+            if hasCreoleLetter(w) { return .creole }
+            if hasOtherLetter(w) { return other }
             return .unknown
         }
 
         var creole = 0.0
-        var english = 0.0
+        var otherScore = 0.0
         var weakOnly = true
         for w in tokens {
-            if creoleWords.contains(w) { creole += 1; weakOnly = false }
-            if englishWords.contains(w) {
-                english += 1
-                if !weakEnglish.contains(w) { weakOnly = false }
+            if creoleWords.contains(w), !(spanish && creoleSharedWithSpanish.contains(w)) { creole += 1; weakOnly = false }
+            if otherWords.contains(w) {
+                otherScore += 1
+                if !otherWeak.contains(w) { weakOnly = false }
             }
-            if w.contains(where: { creoleLetters.contains($0) }) { creole += 1.5; weakOnly = false }
+            if hasCreoleLetter(w) { creole += 1.5; weakOnly = false }
+            if hasOtherLetter(w) { otherScore += 1.5; weakOnly = false }
         }
 
-        let total = creole + english
+        let total = creole + otherScore
         // Two known words normally; phrases of 2–3 words ("Go home", "Pou
         // dimanch") can decide on one, as long as it isn't an ambiguous one.
         let needed: Double = tokens.count <= 3 && !weakOnly ? 1 : 2
         guard total >= needed else { return .unknown }
-        let winner = max(creole, english)
-        let loser = min(creole, english)
+        let winner = max(creole, otherScore)
+        let loser = min(creole, otherScore)
         // Clear margin and a clear majority; otherwise leave the choice to the user.
         // Strictly more than 60%, so a 3–2 split (code-switching: "Jodia fem 4
         // jou back to the gym") stays with the user's direction.
         guard winner >= loser + 1, winner / total > 0.6 else { return .unknown }
-        return creole > english ? .creole : .english
+        return creole > otherScore ? .creole : other
     }
 
     private static func tokenize(_ text: String) -> [String] {

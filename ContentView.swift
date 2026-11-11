@@ -36,7 +36,7 @@ struct ContentView: View {
     // Remembered between launches: most people only ever translate one way,
     // and resetting to Creole → English each launch was the top cause of
     // wrong-direction input.
-    @AppStorage("translationDirection") private var translationDirection: TranslationDirection = .creoleToEnglish
+    @AppStorage("translationDirection") private var translationDirection: TranslationDirection = ContentView.firstLaunchDirection
     @State private var speakingCardTitle: String? = nil
     @State private var typedInput = ""
     @State private var inputMode: InputMode = .voice
@@ -63,6 +63,16 @@ struct ContentView: View {
     @State private var isWatchingAd = false
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
+
+    /// A phone set to Spanish opens on Español → Kreyòl; everyone else keeps
+    /// the long-standing default. Only used until the user's choice is saved.
+    static var firstLaunchDirection: TranslationDirection {
+        UIText.isSpanish ? .spanishToCreole : .creoleToEnglish
+    }
+
+    /// Other language the last input looked like (English typed into the
+    /// Spanish pair, or the reverse). Offered as a chip; never applied silently.
+    @State private var suggestedPartner: Language? = nil
 
     enum InputMode {
         case voice, text
@@ -168,7 +178,25 @@ struct ContentView: View {
                 .minimumScaleFactor(0.75)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            headerButton(showHistory ? "xmark" : "clock.arrow.circlepath", label: showHistory ? "Close history" : "History") {
+            Menu {
+                ForEach([Language.english, Language.spanish], id: \.self) { partner in
+                    Button(action: { choosePartner(partner) }) {
+                        if translationDirection.partner == partner {
+                            Label("\(partner.nativeName) ↔ Kreyòl", systemImage: "checkmark")
+                        } else {
+                            Text("\(partner.nativeName) ↔ Kreyòl")
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: "globe")
+                    .font(.system(size: 21, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel(UIText.t("Languages", "Idiomas"))
+            .disabled(isProcessing || audioRecorder.isRecording)
+            headerButton(showHistory ? "xmark" : "clock.arrow.circlepath", label: showHistory ? UIText.t("Close history", "Cerrar historial") : UIText.t("History", "Historial")) {
                 withAnimation {
                     showPhrasebook = false
                     showHistory.toggle()
@@ -177,7 +205,7 @@ struct ContentView: View {
                     Analytics.logEvent(AnalyticsEventScreenView, parameters: [AnalyticsParameterScreenName: "history"])
                 }
             }
-            headerButton(showPhrasebook ? "xmark" : "book.fill", label: showPhrasebook ? "Close phrasebook" : "Phrasebook") {
+            headerButton(showPhrasebook ? "xmark" : "book.fill", label: showPhrasebook ? UIText.t("Close phrasebook", "Cerrar frases") : UIText.t("Phrasebook", "Frases")) {
                 withAnimation {
                     showHistory = false
                     showPhrasebook.toggle()
@@ -186,7 +214,7 @@ struct ContentView: View {
                     Analytics.logEvent(AnalyticsEventScreenView, parameters: [AnalyticsParameterScreenName: "phrasebook"])
                 }
             }
-            headerButton("gearshape", label: "Settings") {
+            headerButton("gearshape", label: UIText.t("Settings", "Configuración")) {
                 showSettings = true
                 Analytics.logEvent(AnalyticsEventScreenView, parameters: [AnalyticsParameterScreenName: "settings"])
             }
@@ -229,17 +257,39 @@ struct ContentView: View {
             if autoDetectedFlip, let shown = resultDirection {
                 HStack(spacing: 8) {
                     Image(systemName: "wand.and.stars")
-                    Text("Auto-detected \(shown == .creoleToEnglish ? "Kreyòl" : "English") — switched for you")
+                    Text(UIText.t("Auto-detected \(shown.source.nativeName) — switched for you",
+                                  "Detectado: \(shown.source.nativeName). Cambiamos el idioma"))
                         .font(.subheadline)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 4)
-                    Button("Undo") { undoAutoDetect() }
+                    Button(UIText.t("Undo", "Deshacer")) { undoAutoDetect() }
                         .font(.subheadline.bold())
                         .frame(minWidth: 44, minHeight: 44)
                         .disabled(isProcessing)
                 }
                 .padding(.leading, 12)
                 .padding(.trailing, 6)
+                .foregroundColor(.appAccent)
+                .background(Color.controlSurface)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.appAccent, lineWidth: 1.5))
+                .padding(.horizontal, 16)
+            }
+
+            // Wrong pair, not just wrong direction: offer it, don't assume it.
+            if let partner = suggestedPartner, !isProcessing {
+                HStack(spacing: 8) {
+                    Image(systemName: "globe")
+                    Text(UIText.t("That looked like \(partner.nativeName).", "Eso parecía \(partner.nativeName)."))
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 4)
+                    Button(UIText.t("Switch to \(partner.nativeName)", "Cambiar a \(partner.nativeName)")) { acceptSuggestedPartner() }
+                        .font(.subheadline.bold())
+                        .frame(minHeight: 44)
+                }
+                .padding(.leading, 12)
+                .padding(.trailing, 10)
                 .foregroundColor(.appAccent)
                 .background(Color.controlSurface)
                 .cornerRadius(14)
@@ -267,7 +317,7 @@ struct ContentView: View {
                             Image(systemName: audioRecorder.isRecording ? "stop.fill" : "mic.fill")
                                 .font(.title3.weight(.semibold))
                         }
-                        Text(isProcessing ? "Translating…" : (audioRecorder.isRecording ? "Stop" : speakLabel))
+                        Text(isProcessing ? UIText.t("Translating…", "Traduciendo…") : (audioRecorder.isRecording ? UIText.t("Stop", "Detener") : speakLabel))
                             .font(.title3.weight(.semibold))
                             .multilineTextAlignment(.center)
                     }
@@ -286,7 +336,7 @@ struct ContentView: View {
             } else {
                 // Text input
                 VStack(spacing: 12) {
-                    let inputLabel = translationDirection == .creoleToEnglish ? "Ekri an kreyòl… (type Creole)" : "Type English…"
+                    let inputLabel = UIText.typeHere(translationDirection.source)
                     TextEditor(text: $typedInput)
                         .frame(minHeight: 100, maxHeight: 160)
                         .padding(10)
@@ -316,7 +366,7 @@ struct ContentView: View {
                                 Image(systemName: "arrow.right.circle.fill")
                                     .font(.title3)
                             }
-                            Text(isProcessing ? "Translating…" : "Translate")
+                            Text(isProcessing ? UIText.t("Translating…", "Traduciendo…") : UIText.t("Translate", "Traducir"))
                                 .font(.title3.weight(.semibold))
                         }
                         .frame(maxWidth: .infinity, minHeight: 56)
@@ -341,15 +391,15 @@ struct ContentView: View {
             VStack(spacing: 20) {
                 // Source language card
                 let shownDirection = resultDirection ?? translationDirection
-                let sourceLanguage = shownDirection == .creoleToEnglish ? "ht-HT" : "en-US"
+                let sourceLanguage = shownDirection.source.speechLocale
                 ResultCard(
-                    title: shownDirection == .creoleToEnglish ? "Haitian Creole" : "English",
-                    icon: shownDirection == .creoleToEnglish ? "🇭🇹" : "🇺🇸",
+                    title: shownDirection.source.nativeName,
+                    icon: shownDirection.source == .creole ? "🇭🇹" : "",
                     content: transcription,
                     isLoading: isProcessing,
                     speakerAction: { playCard("source", text: transcription, language: sourceLanguage) },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "source",
-                    hdPlaysLeft: voiceSettings.usesHDVoice(isCreole: sourceLanguage.hasPrefix("ht")) ? hdCredits.playsLeft : nil,
+                    hdPlaysLeft: voiceSettings.usesHDVoice(shownDirection.source) ? hdCredits.playsLeft : nil,
                     onHDChip: hdChipTapped,
                     feedbackSampleId: (isProcessing || lastInput?.source != .voice) ? nil : currentSampleId,
                     sentRating: sentSttRating,
@@ -359,20 +409,20 @@ struct ContentView: View {
                         Analytics.logEvent("stt_feedback", parameters: ["rating": rating])
                         Task { await GroqService().sendFeedback(sampleId: id, rating: rating, target: "stt") }
                     },
-                    feedbackPrompt: "Heard right?",
+                    feedbackPrompt: UIText.t("Heard right?", "¿Te entendió bien?"),
                     feedbackNoun: "Transcription"
                 )
 
                 // Target language card
-                let targetLanguage = shownDirection == .creoleToEnglish ? "en-US" : "ht-HT"
+                let targetLanguage = shownDirection.target.speechLocale
                 ResultCard(
-                    title: shownDirection == .creoleToEnglish ? "English Translation" : "Creole Translation",
-                    icon: shownDirection == .creoleToEnglish ? "🇺🇸" : "🇭🇹",
+                    title: shownDirection.target.nativeName,
+                    icon: shownDirection.target == .creole ? "🇭🇹" : "",
                     content: translation,
                     isLoading: isProcessing,
                     speakerAction: { playCard("target", text: translation, language: targetLanguage) },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target",
-                    hdPlaysLeft: voiceSettings.usesHDVoice(isCreole: targetLanguage.hasPrefix("ht")) ? hdCredits.playsLeft : nil,
+                    hdPlaysLeft: voiceSettings.usesHDVoice(shownDirection.target) ? hdCredits.playsLeft : nil,
                     onHDChip: hdChipTapped,
                     feedbackSampleId: isProcessing ? nil : currentSampleId,
                     sentRating: sentRating,
@@ -604,7 +654,7 @@ struct ContentView: View {
         let text = typedInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         errorMessage = nil
-        statusMessage = "⏳ Translating..."
+        statusMessage = ""
         processTextInput(text)
     }
 
@@ -612,11 +662,45 @@ struct ContentView: View {
     /// `text` in, given the user's chosen direction.
     private static func detectedDirection(for text: String, manual: TranslationDirection, autoDetectEnabled: Bool) -> TranslationDirection {
         guard autoDetectEnabled else { return manual }
-        switch LanguageDetector.detect(text) {
-        case .creole:  return .creoleToEnglish
-        case .english: return .englishToCreole
+        let partner = manual.partner
+        switch LanguageDetector.detect(text, partner: partner) {
+        case .creole:  return TranslationDirection(source: .creole, target: partner) ?? manual
+        case .english, .spanish: return TranslationDirection(source: partner, target: .creole) ?? manual
         case .unknown: return manual
         }
+    }
+
+    /// The other non-Creole language, when the text clearly reads as that one
+    /// and not as anything in the selected pair.
+    private static func otherPartner(for text: String, selected: TranslationDirection) -> Language? {
+        let other: Language = selected.partner == .english ? .spanish : .english
+        guard LanguageDetector.detect(text, partner: selected.partner) == .unknown else { return nil }
+        let guess = LanguageDetector.detect(text, partner: other)
+        return (guess == .english || guess == .spanish) ? other : nil
+    }
+
+    private func choosePartner(_ partner: Language) {
+        guard partner != translationDirection.partner else { return }
+        withAnimation {
+            translationDirection = translationDirection.with(partner: partner)
+            resultDirection = nil
+            autoDetectedFlip = false
+            preFlipDirection = nil
+            suggestedPartner = nil
+        }
+        Analytics.logEvent("pair_selected", parameters: ["pair": pairCode])
+    }
+
+    private func acceptSuggestedPartner() {
+        guard let partner = suggestedPartner, let input = lastInput else { return }
+        suggestedPartner = nil
+        translationDirection = TranslationDirection(source: partner, target: .creole) ?? translationDirection
+        Analytics.logEvent("pair_suggestion_accepted", parameters: ["pair": pairCode])
+        processTextInput(input.text, source: input.source)
+    }
+
+    /// "en-ht" or "es-ht", whichever way the user is facing.
+    private var pairCode: String { "\(translationDirection.partner.code)-ht"
     }
 
     private func undoAutoDetect() {
@@ -633,14 +717,15 @@ struct ContentView: View {
             resultDirection = nil
             autoDetectedFlip = false
             preFlipDirection = nil
+            suggestedPartner = nil
         }
-        Analytics.logEvent("direction_switched", parameters: ["direction": directionCode])
+        Analytics.logEvent("direction_switched", parameters: ["direction": directionCode, "pair": pairCode])
     }
 
     /// Mic button label: names the language to speak, in that language too
     /// for Creole speakers.
     private var speakLabel: String {
-        translationDirection == .creoleToEnglish ? "Pale kreyòl · Speak Creole" : "Speak English"
+        UIText.speak(translationDirection.source)
     }
 
     /// An auto-detect flip (on-device or by the proxy) adopts the detected
@@ -653,9 +738,11 @@ struct ContentView: View {
         guard autoDetectedFlip else { return }
         translationDirection = used
         UIAccessibility.post(notification: .announcement,
-                             argument: "Auto-detected \(used == .creoleToEnglish ? "Creole" : "English"). Direction switched.")
+                             argument: UIText.t("Auto-detected \(used.source.englishName). Direction switched.",
+                                                 "Detectado: \(used.source.nativeName). Dirección cambiada."))
         Analytics.logEvent("auto_detect_flip", parameters: [
             "input_mode": inputMode,
+            "pair": pairCode,
             "by": device != manual ? "device" : "proxy",
         ])
     }
@@ -681,6 +768,7 @@ struct ContentView: View {
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: direction, inputMode: source.rawValue)
                     lastInput = (text, source)
+                    suggestedPartner = Self.otherPartner(for: text, selected: result.direction)
                     statusMessage = ""
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -732,12 +820,14 @@ struct ContentView: View {
     /// folds creole_to_english and ht-en onto one row, and changing it here
     /// would orphan every event logged before this release.
     private var directionCode: String {
-        translationDirection == .creoleToEnglish ? "creole_to_english" : "english_to_creole"
+        // English pair keeps its historical spellings (see note above).
+        "\(translationDirection.source.englishName.lowercased())_to_\(translationDirection.target.englishName.lowercased())"
     }
 
     private func logTranslationCompleted(inputMode: String, charLength: Int) {
         Analytics.logEvent("translation_completed", parameters: [
             "direction": directionCode,
+            "pair": pairCode,
             "input_mode": inputMode,
             "char_length": charLength,
             "result": "success",
@@ -778,6 +868,7 @@ struct ContentView: View {
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: deviceDirection.value, inputMode: "voice")
                     lastInput = (result.transcription, .voice)
+                    suggestedPartner = Self.otherPartner(for: result.transcription, selected: result.direction)
                     statusMessage = ""
                     isProcessing = false
                     historyManager.addEntry(source: result.transcription, translated: result.translation, direction: result.direction)
@@ -839,12 +930,14 @@ struct DirectionBar: View {
                 .foregroundColor(.secondaryText)
             // The Haitian flag is the no-reading landmark for Creole speakers;
             // English gets none (no single flag fits it, or Spanish later).
-            Text(name == "Kreyòl" ? "🇭🇹 Kreyòl" : name)
+            Text(name)
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.primary)
         }
         .frame(maxWidth: .infinity)
     }
+
+    private func label(_ l: Language) -> String { l == .creole ? "🇭🇹 Kreyòl" : l.nativeName }
 
     private var swapIcon: some View {
         Image(systemName: typeSize.isAccessibilitySize ? "arrow.up.arrow.down" : "arrow.left.arrow.right")
@@ -856,9 +949,10 @@ struct DirectionBar: View {
     }
 
     var body: some View {
-        let creoleFirst = direction == .creoleToEnglish
-        let speak = side(name: creoleFirst ? "Kreyòl" : "English", caption: typing ? "You type" : "You speak")
-        let to = side(name: creoleFirst ? "English" : "Kreyòl", caption: "Translates to")
+        // The Haitian flag is the no-reading landmark for Creole speakers;
+        // English and Spanish get none (no single flag fits either).
+        let speak = side(name: label(direction.source), caption: UIText.inputCaption(direction.source, typing: typing))
+        let to = side(name: label(direction.target), caption: UIText.outputCaption(input: direction.source))
         Button(action: action) {
             Group {
                 // Large text sizes stack the bar instead of shrinking the names.
@@ -876,8 +970,8 @@ struct DirectionBar: View {
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Translating \(creoleFirst ? "Creole to English" : "English to Creole")")
-        .accessibilityHint("Switches the translation direction")
+        .accessibilityLabel(UIText.t("Translating \(direction.englishTitle)", "Traduciendo de \(direction.source.nativeName) a \(direction.target.nativeName)"))
+        .accessibilityHint(UIText.t("Switches the translation direction", "Cambia la dirección de la traducción"))
     }
 }
 
@@ -925,7 +1019,7 @@ struct ResultCard: View {
     var feedbackSampleId: String? = nil
     var sentRating: String? = nil
     var onFeedback: ((String) -> Void)? = nil
-    var feedbackPrompt: String = "Was this right?"
+    var feedbackPrompt: String = UIText.t("Was this right?", "¿Es correcto?")
     var feedbackNoun: String = "Translation"
 
     private var isPlaceholder: Bool {
@@ -935,8 +1029,10 @@ struct ResultCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(icon)
-                    .font(.title2)
+                if !icon.isEmpty {
+                    Text(icon)
+                        .font(.title2)
+                }
                 Text(title)
                     .font(.headline)
                     .foregroundColor(.primary)
@@ -969,7 +1065,7 @@ struct ResultCard: View {
 
             if feedbackSampleId != nil, let onFeedback = onFeedback {
                 HStack(spacing: 10) {
-                    Text(sentRating == nil ? feedbackPrompt : "Thanks for the feedback")
+                    Text(sentRating == nil ? feedbackPrompt : UIText.t("Thanks for the feedback", "Gracias por tu opinión"))
                         .font(.subheadline)
                         .foregroundColor(.primary)
                     Spacer()
@@ -1106,8 +1202,8 @@ struct ModeToggle: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            segment(.voice, "Voice", "mic.fill")
-            segment(.text, "Type", "keyboard")
+            segment(.voice, UIText.t("Voice", "Voz"), "mic.fill")
+            segment(.text, UIText.t("Type", "Escribir"), "keyboard")
         }
         .padding(3)
         .background(Color.controlSurface)

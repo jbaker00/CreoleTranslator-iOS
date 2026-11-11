@@ -47,8 +47,8 @@ class TextToSpeechManager: NSObject, ObservableObject {
         stop()
         lastError = nil
 
-        let isCreole = language.hasPrefix("ht")
-        let speed = playbackSpeed(isCreole: isCreole)
+        let lang = Language(speechLocale: language)
+        let speed = playbackSpeed(lang)
 
         guard !basicVoice, let hd = hdRequest(text: text, language: language) else {
             speakNatively(text: text, language: language, speed: speed)
@@ -75,7 +75,7 @@ class TextToSpeechManager: NSObject, ObservableObject {
         isSpeaking = true
         Task {
             do {
-                let (audioData, rate) = try await fetchAudio(hd, text: text, isCreole: isCreole)
+                let (audioData, rate) = try await fetchAudio(hd, text: text, language: lang)
                 await MainActor.run {
                     // stop() or a newer speak() superseded this request.
                     guard self.requestID == id, self.isSpeaking else { return }
@@ -119,40 +119,59 @@ class TextToSpeechManager: NSObject, ObservableObject {
 
     // MARK: - Private helpers
 
-    private func playbackSpeed(isCreole: Bool) -> Double {
-        let rawSpeed = UserDefaults.standard.double(forKey: isCreole ? "creolePlaybackSpeed" : "englishPlaybackSpeed")
-        return rawSpeed == 0 ? (isCreole ? 0.7 : 1.0) : rawSpeed
+    private func playbackSpeed(_ language: Language) -> Double {
+        switch language {
+        case .creole:
+            let raw = UserDefaults.standard.double(forKey: "creolePlaybackSpeed")
+            return raw == 0 ? 0.7 : raw
+        case .english:
+            let raw = UserDefaults.standard.double(forKey: "englishPlaybackSpeed")
+            return raw == 0 ? 1.0 : raw
+        case .spanish:
+            let raw = UserDefaults.standard.double(forKey: "spanishPlaybackSpeed")
+            return raw == 0 ? 1.0 : raw
+        }
     }
 
     /// The AI voice request for `text`, or nil when the system voice is selected.
+    /// Spanish has two choices only — OpenAI or the system voice — because
+    /// Groq Orpheus speaks English only.
     private func hdRequest(text: String, language: String) -> HDRequest? {
         let defaults = UserDefaults.standard
-        let isCreole = language.hasPrefix("ht")
-        let providerRaw = defaults.string(forKey: isCreole ? "creoleProvider" : "englishProvider")
-        let provider = TTSProvider(rawValue: providerRaw ?? "") ?? (isCreole ? .openai : .groq)
+        let lang = Language(speechLocale: language)
+        let provider: TTSProvider
+        switch lang {
+        case .creole:  provider = TTSProvider(rawValue: defaults.string(forKey: "creoleProvider") ?? "") ?? .openai
+        case .english: provider = TTSProvider(rawValue: defaults.string(forKey: "englishProvider") ?? "") ?? .groq
+        case .spanish:
+            let chosen = TTSProvider(rawValue: defaults.string(forKey: "spanishProvider") ?? "") ?? .openai
+            provider = chosen == .system ? .system : .openai
+        }
         let voice: String
         switch provider {
         case .groq:   voice = defaults.string(forKey: "englishGroqVoice") ?? "diana"
-        case .openai: voice = defaults.string(forKey: isCreole ? "creoleOpenAIVoice" : "englishOpenAIVoice") ?? "alloy"
+        case .openai:
+            let key = lang == .creole ? "creoleOpenAIVoice" : (lang == .spanish ? "spanishOpenAIVoice" : "englishOpenAIVoice")
+            voice = defaults.string(forKey: key) ?? (lang == .spanish ? "nova" : "alloy")
         case .system: return nil
         }
-        let speed = playbackSpeed(isCreole: isCreole)
+        let speed = playbackSpeed(lang)
         return HDRequest(provider: provider, voice: voice, speed: speed,
                          key: "\(provider.rawValue)|\(voice)|\(speed)|\(language)|\(text)")
     }
 
-    private func fetchAudio(_ hd: HDRequest, text: String, isCreole: Bool) async throws -> (Data, Float) {
+    private func fetchAudio(_ hd: HDRequest, text: String, language: Language) async throws -> (Data, Float) {
         switch hd.provider {
         case .groq:
             // Groq Orpheus — English only
             guard let service = groqService else { throw GroqError.invalidResponse }
-            let data = try await service.synthesizeSpeech(text: text, voice: hd.voice, language: isCreole ? "ht" : "en")
+            let data = try await service.synthesizeSpeech(text: text, voice: hd.voice, language: language.code)
             return (data, Float(hd.speed))
         default:
             guard let service = openAITTSService else { throw GroqError.invalidResponse }
             // OpenAI accepts speed directly; clamp to 0.25–4.0
             let apiSpeed = min(max(hd.speed, 0.25), 4.0)
-            let data = try await service.synthesizeSpeech(text: text, voice: hd.voice, speed: apiSpeed, language: isCreole ? "ht" : "en")
+            let data = try await service.synthesizeSpeech(text: text, voice: hd.voice, speed: apiSpeed, language: language.code)
             return (data, 1.0)
         }
     }
