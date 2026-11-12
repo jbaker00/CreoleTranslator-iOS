@@ -12,6 +12,7 @@ struct SettingsView: View {
     @ObservedObject var ttsManager: TextToSpeechManager
     @ObservedObject var privacyConsent: DataPrivacyConsent
     @ObservedObject private var hdCredits = HDVoiceCredits.shared
+    @AppStorage("translationDirection") private var translationDirection: TranslationDirection = ContentView.firstLaunchDirection
     @Environment(\.dismiss) private var dismiss
 
     init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager, privacyConsent: DataPrivacyConsent) {
@@ -159,6 +160,17 @@ struct SettingsView: View {
 
     private var translationSection: some View {
         Section {
+            // People look here first to change language, so the same choice
+            // as the main screen's is offered here too.
+            Picker(UIText.t("Other language", "Otro idioma") + " · Lòt lang", selection: Binding(
+                get: { translationDirection.partner },
+                set: { translationDirection = translationDirection.with(partner: $0) }
+            )) {
+                ForEach([Language.english, .spanish], id: \.self) { language in
+                    Text("\(language.nativeName) · \(UIText.kreyolName(language))").tag(language)
+                }
+            }
+            .pickerStyle(.segmented)
             Toggle(UIText.t("Auto-detect language", "Detectar idioma automáticamente"), isOn: $voiceSettings.autoDetectLanguage)
         } header: {
             Text(UIText.t("Translation", "Traducción"))

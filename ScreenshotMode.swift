@@ -20,6 +20,16 @@ enum ScreenshotMode {
 
     static var isActive: Bool { scene != nil }
 
+    /// `-shotRecording YES`: draw the source language's mic card as if it were
+    /// recording, so that state can be reviewed without a microphone.
+    static var showsRecording: Bool {
+#if DEBUG
+        UserDefaults.standard.bool(forKey: "shotRecording")
+#else
+        false
+#endif
+    }
+
     /// Category name to scroll the phrasebook to, e.g. "Medical".
     static var phrasebookCategory: String? {
         guard let scene, scene.hasPrefix("phrasebook-") else { return nil }

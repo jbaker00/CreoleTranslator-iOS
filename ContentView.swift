@@ -274,23 +274,21 @@ struct ContentView: View {
 
     /// Kreyòl is always one side, so the only choice is the other language.
     private var pairRow: some View {
-        // No words to read: the flag and a plus sign. Each choice carries its
-        // Kreyòl name too — a Creole speaker looks for "Panyòl", not "Español".
-        let label = Text("🇭🇹 Kreyòl +")
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(.primary)
-            .accessibilityLabel(UIText.t("Kreyòl with", "Kreyòl con"))
-        let picker = SegmentedChoice(options: [Language.english, .spanish].map { ($0, "\($0.flag) \($0.nativeName)\n\(UIText.kreyolName($0))", nil) },
-                                     selection: translationDirection.partner,
-                                     onSelect: choosePartner)
-        return Group {
-            if typeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 6) { label; picker }
-            } else {
-                HStack(spacing: 10) { label; picker }
-            }
+        // The caption says what the control decides; without it people read
+        // the row as a title. No flags here: with flags it looked like a
+        // second pair of mic cards, and people tapped a mic to change pair.
+        let partner = translationDirection.partner
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(UIText.pair(partner, "Other language", "Otro idioma") + " · Lòt lang")
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(.secondaryText)
+                .accessibilityHidden(true)
+            SegmentedChoice(options: [Language.english, .spanish].map { ($0, "\($0.nativeName) · \(UIText.kreyolName($0))", nil) },
+                            selection: partner,
+                            onSelect: choosePartner)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel(UIText.pair(partner, "Other language", "Otro idioma"))
         }
-        .accessibilityElement(children: .contain)
     }
 
     /// No direction setting: each person taps the mic with their own language
@@ -298,24 +296,14 @@ struct ContentView: View {
     private var voiceInput: some View {
         let partner = translationDirection.partner
         return VStack(spacing: 10) {
-            VStack(spacing: 2) {
-                Text(UIText.pair(partner, "Tap your language to talk", "Toca tu idioma para hablar"))
-                Text("Peze lang ou pou pale")
-            }
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(.primary)
-            .multilineTextAlignment(.center)
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isHeader)
-
             if typeSize.isAccessibilitySize {
                 VStack(spacing: 10) { ForEach(pairLanguages, id: \.self) { micCard($0, stacked: true) } }
             } else {
                 HStack(spacing: 10) { ForEach(pairLanguages, id: \.self) { micCard($0, stacked: false) } }
             }
 
-            if audioRecorder.isRecording {
-                RecordingProgressView(elapsed: audioRecorder.elapsed)
+            if audioRecorder.isRecording || ScreenshotMode.showsRecording {
+                RecordingProgressView(elapsed: ScreenshotMode.showsRecording ? 4 : audioRecorder.elapsed)
             }
 
             Button(action: { inputMode = .text }) {
@@ -334,12 +322,12 @@ struct ContentView: View {
 
     private func micCard(_ language: Language, stacked: Bool) -> some View {
         let mine = translationDirection.source == language
-        let recording = audioRecorder.isRecording && mine
+        let recording = (audioRecorder.isRecording || ScreenshotMode.showsRecording) && mine
         let translating = isProcessing && mine
         // The card not in use steps back while the other one listens or translates.
-        let waiting = (audioRecorder.isRecording || isProcessing) && !mine
+        let waiting = (audioRecorder.isRecording || ScreenshotMode.showsRecording || isProcessing) && !mine
         let enabled = canTranslate && !waiting
-        let replyHere = replyLanguage == language && !audioRecorder.isRecording && !isProcessing
+        let replyHere = replyLanguage == language && !audioRecorder.isRecording && !ScreenshotMode.showsRecording && !isProcessing
         let hint = translating ? UIText.translating(language)
             : (recording ? UIText.tapToStop(language)
                : (replyHere ? UIText.tapToReply(language) : UIText.tapToSpeak(language)))
@@ -411,13 +399,17 @@ struct ContentView: View {
         case .english, .spanish: detected = partner
         case .unknown: return
         }
+        // Locked from here: a sentence that mixes languages must not make
+        // the choice flicker while it is being typed. A tap still changes it.
         typingLanguageKnown = true
+        typingLanguagePinned = true
         let chosen = direction(speaking: detected)
         if chosen != translationDirection {
             translationDirection = chosen
             autoDetectedFlip = false
             preFlipDirection = nil
         }
+        UIAccessibility.post(notification: .announcement, argument: UIText.typeIn(detected))
     }
 
     private func micTapped(_ language: Language) {
@@ -447,8 +439,9 @@ struct ContentView: View {
     private var textInput: some View {
         let partner = translationDirection.partner
         return VStack(spacing: 12) {
-            SegmentedChoice(options: pairLanguages.map { ($0, UIText.typeIn($0), nil) },
-                            selection: typingLanguageKnown ? translationDirection.source : nil,
+            let typingIn: Language? = typingLanguageKnown ? translationDirection.source : nil
+            SegmentedChoice(options: pairLanguages.map { ($0, UIText.typeIn($0), $0 == typingIn ? "checkmark.circle.fill" : nil) },
+                            selection: typingIn,
                             onSelect: { language in
                                 typingLanguageKnown = true
                                 typingLanguagePinned = true
@@ -817,6 +810,7 @@ struct ContentView: View {
 
     private func applyScreenshotScene() {
         if UserDefaults.standard.string(forKey: "shotInput") == "text" { inputMode = .text }
+        if UserDefaults.standard.string(forKey: "shotInput") == "settings" { showSettings = true }
         if ScreenshotMode.phrasebookCategory != nil {
             showPhrasebook = true
         } else if let (source, translated, direction) = ScreenshotMode.sampleResult {
@@ -1069,6 +1063,8 @@ struct ContentView: View {
                     applyResultDirection(result.direction, manual: manual, device: deviceDirection.value, inputMode: "voice")
                     lastInput = (result.transcription, .voice)
                     replyLanguage = result.direction.target
+                    UIAccessibility.post(notification: .announcement,
+                                         argument: "\(result.translation). \(result.direction.target.nativeName): \(UIText.tapToReply(result.direction.target))")
                     suggestedPartner = Self.otherPartner(for: result.transcription, selected: result.direction)
                     statusMessage = ""
                     isProcessing = false
