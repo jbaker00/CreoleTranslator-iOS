@@ -122,8 +122,8 @@ enum Language: String, Codable, CaseIterable {
     var flag: String {
         switch self {
         case .creole: return "🇭🇹"
-        case .english: return Self.regionFlag(among: Self.englishRegions) ?? "🇺🇸"
-        case .spanish: return Self.regionFlag(among: Self.spanishRegions) ?? "🇲🇽"
+        case .english: return Self.regionFlag("en", among: Self.englishRegions) ?? "🇺🇸"
+        case .spanish: return Self.regionFlag("es", among: Self.spanishRegions) ?? "🇲🇽"
         }
     }
 
@@ -134,8 +134,16 @@ enum Language: String, Codable, CaseIterable {
     private static let englishRegions: Set<String> = ["US", "CA", "GB", "AU", "NZ", "IE", "JM", "BS", "BB", "TT", "BZ", "GY", "ZA", "NG", "GH", "KE", "LR"]
     private static let spanishRegions: Set<String> = ["MX", "DO", "CL", "CO", "AR", "PE", "VE", "EC", "GT", "CU", "BO", "HN", "PY", "SV", "NI", "CR", "PA", "UY", "PR", "ES"]
 
-    private static func regionFlag(among regions: Set<String>) -> String? {
-        guard let region = Locale.current.regionCode?.uppercased(), regions.contains(region) else { return nil }
+    /// The country named in the phone's language setting wins ("Español
+    /// (El Salvador)" → 🇸🇻 even on a phone whose region is the US); failing
+    /// that, the phone's region.
+    private static func regionFlag(_ code: String, among regions: Set<String>) -> String? {
+        let fromLanguages = Locale.preferredLanguages.lazy
+            .filter { $0.lowercased().hasPrefix(code + "-") }
+            .compactMap { Locale(identifier: $0).regionCode?.uppercased() }
+            .first { regions.contains($0) }
+        let deviceRegion = Locale.current.regionCode?.uppercased()
+        guard let region = fromLanguages ?? deviceRegion.flatMap({ regions.contains($0) ? $0 : nil }) else { return nil }
         return String(String.UnicodeScalarView(region.unicodeScalars.compactMap { UnicodeScalar(127397 + $0.value) }))
     }
 
