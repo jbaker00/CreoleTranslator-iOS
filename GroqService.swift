@@ -18,12 +18,37 @@ enum UIText {
 
     static func t(_ english: String, _ spanish: String) -> String { isSpanish ? spanish : english }
 
-    /// "Speak English" / "Habla en español" / "Pale kreyòl · Speak Creole".
-    static func speak(_ language: Language) -> String {
+    // Mic-card and typing labels are written in the language they name, so
+    // each person finds their own button without reading the other's language.
+    static func tapToSpeak(_ language: Language) -> String {
         switch language {
-        case .creole:  return "Pale kreyòl · " + t("Speak Creole", "Habla en kreyòl")
-        case .english: return t("Speak English", "Habla en inglés")
-        case .spanish: return t("Speak Spanish · Habla en español", "Habla en español")
+        case .creole:  return "Peze pou pale"
+        case .english: return "Tap to speak"
+        case .spanish: return "Toca para hablar"
+        }
+    }
+
+    static func tapToStop(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Peze pou sispann"
+        case .english: return "Tap to stop"
+        case .spanish: return "Toca para detener"
+        }
+    }
+
+    static func translating(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "N ap tradui…"
+        case .english: return "Translating…"
+        case .spanish: return "Traduciendo…"
+        }
+    }
+
+    static func typeIn(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Ekri an kreyòl"
+        case .english: return "Type in English"
+        case .spanish: return "Escribe en español"
         }
     }
 
@@ -33,16 +58,6 @@ enum UIText {
         case .english: return t("Type English…", "Escribe en inglés…")
         case .spanish: return t("Type Spanish… · Escribe en español…", "Escribe en español…")
         }
-    }
-
-    /// Caption over the input side of the direction bar.
-    static func inputCaption(_ language: Language, typing: Bool) -> String {
-        if language == .creole { return typing ? "Ou ekri" : "Ou pale" }
-        return typing ? t("You type", "Escribes") : t("You speak", "Hablas")
-    }
-
-    static func outputCaption(input: Language) -> String {
-        input == .creole ? "Tradui an" : t("Translates to", "Se traduce a")
     }
 }
 

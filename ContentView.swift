@@ -19,6 +19,7 @@ struct ContentView: View {
     @StateObject private var rewardedAd = RewardedAdManager()
     @ObservedObject private var hdCredits = HDVoiceCredits.shared
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     // Use the centralized Secrets helper to load the API key.
 
@@ -175,12 +176,12 @@ struct ContentView: View {
         }
     }
     
-    /// Compact brand strip: app name + History / Phrasebook / Settings.
+    /// Plain bar: app name + History / Phrasebook / Settings.
     private var headerBar: some View {
         HStack(spacing: 2) {
             Text("Creole Translator")
                 .font(.title3.weight(.bold))
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .accessibilityAddTraits(.isHeader)
@@ -211,11 +212,7 @@ struct ContentView: View {
         .padding(.leading, 16)
         .padding(.trailing, 6)
         .padding(.vertical, 4)
-        .background(
-            LinearGradient(colors: [Color(red: 0.36, green: 0.18, blue: 0.72), Color(red: 0.70, green: 0.24, blue: 0.44)],
-                           startPoint: .leading, endPoint: .trailing)
-                .ignoresSafeArea(edges: .top)
-        )
+        .background(Color.bodyBackground.ignoresSafeArea(edges: .top))
         .sheet(isPresented: $showSettings) {
             SettingsView(voiceSettings: voiceSettings, ttsManager: ttsManager, privacyConsent: privacyConsent)
         }
@@ -225,10 +222,223 @@ struct ContentView: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 21, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
                 .frame(width: 44, height: 44)
         }
         .accessibilityLabel(label)
+    }
+
+    /// The two languages on screen: the chosen partner on the left, Kreyòl
+    /// always on the right so its button never moves.
+    private var pairLanguages: [Language] { [translationDirection.partner, .creole] }
+
+    private func direction(speaking language: Language) -> TranslationDirection {
+        let partner = translationDirection.partner
+        let made = language == .creole ? TranslationDirection(source: .creole, target: partner)
+                                       : TranslationDirection(source: partner, target: .creole)
+        return made ?? translationDirection
+    }
+
+    /// Kreyòl is always one side, so the only choice is the other language.
+    private var pairRow: some View {
+        let label = Text(UIText.t("Kreyòl with:", "Kreyòl con:"))
+            .font(.subheadline)
+            .foregroundColor(.secondaryText)
+        let picker = SegmentedChoice(options: [Language.english, .spanish].map { ($0, $0.nativeName, nil) },
+                                     selection: translationDirection.partner,
+                                     onSelect: choosePartner)
+        return Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 6) { label; picker }
+            } else {
+                HStack(spacing: 10) { label; picker }
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// No direction setting: each person taps the mic with their own language
+    /// on it, and that tap both picks the direction and starts listening.
+    private var voiceInput: some View {
+        VStack(spacing: 10) {
+            Text(UIText.t("Tap your language to talk", "Toca tu idioma para hablar"))
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
+
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 10) { ForEach(pairLanguages, id: \.self) { micCard($0, stacked: true) } }
+            } else {
+                HStack(spacing: 10) { ForEach(pairLanguages, id: \.self) { micCard($0, stacked: false) } }
+            }
+
+            if audioRecorder.isRecording {
+                RecordingProgressView(elapsed: audioRecorder.elapsed)
+            }
+
+            Button(action: { inputMode = .text }) {
+                Label(UIText.t("Type instead", "Escribir"), systemImage: "keyboard")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.appAccent)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.controlSurface))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1.5))
+            }
+            .buttonStyle(.plain)
+            .disabled(isProcessing || audioRecorder.isRecording)
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func micCard(_ language: Language, stacked: Bool) -> some View {
+        let mine = translationDirection.source == language
+        let recording = audioRecorder.isRecording && mine
+        let translating = isProcessing && mine
+        // The card not in use steps back while the other one listens or translates.
+        let waiting = (audioRecorder.isRecording || isProcessing) && !mine
+        let enabled = canTranslate && !waiting
+        let hint = translating ? UIText.translating(language)
+            : (recording ? UIText.tapToStop(language) : UIText.tapToSpeak(language))
+        let name = (language == .creole ? "🇭🇹 " : "") + language.nativeName
+
+        let circle = ZStack {
+            Circle().fill(enabled ? (recording ? Color.recordingRed : Color.accentFill) : Color.controlSurface)
+            Circle().stroke(Color.controlBorder, lineWidth: enabled ? 0 : 1.5)
+            if translating {
+                ProgressView().tint(.secondaryText).scaleEffect(1.2)
+            } else {
+                Image(systemName: recording ? "stop.fill" : "mic.fill")
+                    .font(.system(size: 27, weight: .semibold))
+                    .foregroundColor(enabled ? .white : .secondaryText)
+            }
+        }
+        .frame(width: 64, height: 64)
+
+        let labels = VStack(alignment: stacked ? .leading : .center, spacing: 2) {
+            Text(name)
+                .font(.title3.weight(.bold))
+                .foregroundColor(.primary)
+            Text(hint)
+                .font(.subheadline)
+                .foregroundColor(recording ? .errorText : .secondaryText)
+        }
+        .multilineTextAlignment(stacked ? .leading : .center)
+
+        return Button(action: { micTapped(language) }) {
+            Group {
+                if stacked {
+                    HStack(spacing: 14) { circle; labels; Spacer(minLength: 0) }
+                        .padding(.horizontal, 14)
+                        .frame(maxWidth: .infinity, minHeight: 84)
+                } else {
+                    VStack(spacing: 6) { circle; labels }
+                        .padding(.horizontal, 6)
+                        .frame(maxWidth: .infinity, minHeight: 132)
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.controlSurface))
+            .overlay(RoundedRectangle(cornerRadius: 16)
+                .stroke(recording ? Color.recordingRed : Color.controlBorder, lineWidth: recording ? 3 : 1.5))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(waiting ? 0.45 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(language.nativeName), \(hint)")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private func micTapped(_ language: Language) {
+        if audioRecorder.isRecording {
+            stopRecording()
+            return
+        }
+        let chosen = direction(speaking: language)
+        Analytics.logEvent("mic_tapped", parameters: [
+            "language": language.code,
+            "pair": pairCode,
+            "changed_direction": chosen != translationDirection ? "yes" : "no",
+        ])
+        if chosen != translationDirection {
+            // The old result keeps its own labels through resultDirection.
+            translationDirection = chosen
+            autoDetectedFlip = false
+            preFlipDirection = nil
+            suggestedPartner = nil
+        }
+        startRecording()
+    }
+
+    /// Typing keeps the same two-way choice as the mics, so there is one
+    /// model to learn: pick your language, then give the app your words.
+    private var textInput: some View {
+        VStack(spacing: 12) {
+            SegmentedChoice(options: pairLanguages.map { ($0, UIText.typeIn($0), nil) },
+                            selection: translationDirection.source,
+                            onSelect: { language in
+                                let chosen = direction(speaking: language)
+                                guard chosen != translationDirection else { return }
+                                translationDirection = chosen
+                                autoDetectedFlip = false
+                                preFlipDirection = nil
+                                suggestedPartner = nil
+                                Analytics.logEvent("direction_switched", parameters: ["direction": directionCode, "pair": pairCode])
+                            })
+                .disabled(isProcessing)
+
+            let inputLabel = UIText.typeHere(translationDirection.source)
+            TextEditor(text: $typedInput)
+                .focused($inputFocused)
+                .frame(minHeight: 100, maxHeight: 160)
+                .padding(10)
+                .background(Color.controlSurface)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.controlBorder, lineWidth: 1.5)
+                )
+                .overlay(alignment: .topLeading) {
+                    if typedInput.isEmpty {
+                        Text(inputLabel)
+                            .foregroundColor(.secondaryText)
+                            .padding(.top, 18)
+                            .padding(.leading, 14)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .disabled(isProcessing || !privacyConsent.hasConsented)
+
+            let hasText = !typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            Button(action: { submitTypedText() }) {
+                HStack(spacing: 10) {
+                    if isProcessing {
+                        ProgressView().tint(.secondaryText)
+                    } else {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.title3)
+                    }
+                    Text(isProcessing ? UIText.t("Translating…", "Traduciendo…") : UIText.t("Translate", "Traducir"))
+                        .font(.title3.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .modifier(PrimaryButtonSurface(enabled: hasText && canTranslate, fill: .accentFill))
+            }
+            .disabled(!hasText || !canTranslate)
+
+            Button(action: { inputFocused = false; inputMode = .voice }) {
+                Label(UIText.t("Speak instead", "Hablar"), systemImage: "mic.fill")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.appAccent)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.controlSurface))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1.5))
+            }
+            .buttonStyle(.plain)
+            .disabled(isProcessing)
+        }
+        .padding(.horizontal, 16)
     }
 
     private var canTranslate: Bool { !isProcessing && privacyConsent.hasConsented }
@@ -236,13 +446,13 @@ struct ContentView: View {
     // Main content view extracted for cleaner code
     private var mainContentView: some View {
         VStack(spacing: 12) {
-            DirectionBar(direction: translationDirection, typing: inputMode == .text, action: switchDirection, onPickPartner: choosePartner)
+            pairRow
                 .padding(.horizontal, 16)
-                .padding(.top, 16)
+                .padding(.top, 8)
                 .disabled(isProcessing || audioRecorder.isRecording)
 
-            // Rescue notice sits right under the bar it just changed, so the
-            // flip is seen without scrolling past the result.
+            // Rescue notice sits above the input, so it is seen without
+            // scrolling past the result.
             if autoDetectedFlip, let shown = resultDirection {
                 HStack(spacing: 8) {
                     Image(systemName: "wand.and.stars")
@@ -286,100 +496,10 @@ struct ContentView: View {
                 .padding(.horizontal, 16)
             }
 
-            ModeToggle(mode: $inputMode)
-                .padding(.horizontal, 16)
-                .disabled(isProcessing || audioRecorder.isRecording)
-
             if inputMode == .voice {
-                // The primary action: a round mic, like every other translator,
-                // and the only filled shape on the screen. The caption under it
-                // names the language to speak — that label is what cuts
-                // wrong-language input, so it stays.
-                let micLabel = isProcessing ? UIText.t("Translating…", "Traduciendo…")
-                    : (audioRecorder.isRecording ? UIText.t("Tap to stop", "Toca para detener") : speakLabel)
-                VStack(spacing: 10) {
-                    Button(action: {
-                        if audioRecorder.isRecording {
-                            stopRecording()
-                        } else {
-                            startRecording()
-                        }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(canTranslate ? (audioRecorder.isRecording ? Color.recordingRed : Color.accentFill) : Color.controlSurface)
-                            Circle()
-                                .stroke(Color.controlBorder, lineWidth: canTranslate ? 0 : 1.5)
-                            if isProcessing {
-                                ProgressView().tint(.secondaryText).scaleEffect(1.4)
-                            } else {
-                                Image(systemName: audioRecorder.isRecording ? "stop.fill" : "mic.fill")
-                                    .font(.system(size: 38, weight: .semibold))
-                                    .foregroundColor(canTranslate ? .white : .secondaryText)
-                            }
-                        }
-                        .frame(width: 96, height: 96)
-                    }
-                    .disabled(!canTranslate)
-                    .accessibilityLabel(micLabel)
-
-                    Text(micLabel)
-                        .font(.title3.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.center)
-                        .accessibilityHidden(true)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 8)
-                .padding(.horizontal, 16)
-
-                if audioRecorder.isRecording {
-                    RecordingProgressView(elapsed: audioRecorder.elapsed)
-                        .padding(.horizontal, 16)
-                }
+                voiceInput
             } else {
-                // Text input
-                VStack(spacing: 12) {
-                    let inputLabel = UIText.typeHere(translationDirection.source)
-                    TextEditor(text: $typedInput)
-                        .focused($inputFocused)
-                        .frame(minHeight: 100, maxHeight: 160)
-                        .padding(10)
-                        .background(Color.controlSurface)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.controlBorder, lineWidth: 1.5)
-                        )
-                        .overlay(alignment: .topLeading) {
-                            if typedInput.isEmpty {
-                                Text(inputLabel)
-                                    .foregroundColor(.secondaryText)
-                                    .padding(.top, 18)
-                                    .padding(.leading, 14)
-                                    .allowsHitTesting(false)
-                            }
-                        }
-                        .disabled(isProcessing || !privacyConsent.hasConsented)
-
-                    let hasText = !typedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    Button(action: { submitTypedText() }) {
-                        HStack(spacing: 10) {
-                            if isProcessing {
-                                ProgressView().tint(.secondaryText)
-                            } else {
-                                Image(systemName: "arrow.right.circle.fill")
-                                    .font(.title3)
-                            }
-                            Text(isProcessing ? UIText.t("Translating…", "Traduciendo…") : UIText.t("Translate", "Traducir"))
-                                .font(.title3.weight(.semibold))
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                        .modifier(PrimaryButtonSurface(enabled: hasText && canTranslate, fill: .accentFill))
-                    }
-                    .disabled(!hasText || !canTranslate)
-                }
-                .padding(.horizontal, 16)
+                textInput
             }
 
             // Status message — only for things the result cards don't already
@@ -609,6 +729,7 @@ struct ContentView: View {
     }
 
     private func applyScreenshotScene() {
+        if UserDefaults.standard.string(forKey: "shotInput") == "text" { inputMode = .text }
         if ScreenshotMode.phrasebookCategory != nil {
             showPhrasebook = true
         } else if let (source, translated, direction) = ScreenshotMode.sampleResult {
@@ -716,27 +837,8 @@ struct ContentView: View {
         processTextInput(input.text, source: input.source, allowAutoDetect: false)
     }
 
-    private func switchDirection() {
-        withAnimation {
-            translationDirection = translationDirection.reversed
-            // A manual switch re-labels the cards; the result no longer belongs to a detected direction.
-            resultDirection = nil
-            autoDetectedFlip = false
-            preFlipDirection = nil
-            suggestedPartner = nil
-        }
-        Analytics.logEvent("direction_switched", parameters: ["direction": directionCode, "pair": pairCode])
-    }
-
-    /// Mic button label: names the language to speak, in that language too
-    /// for Creole speakers.
-    private var speakLabel: String {
-        UIText.speak(translationDirection.source)
-    }
-
     /// An auto-detect flip (on-device or by the proxy) adopts the detected
-    /// direction, so the bar, the cards and the next recording's language
-    /// hint all agree. Undo restores `manual`.
+    /// direction, so the cards and the typing choice agree. Undo restores `manual`.
     private func applyResultDirection(_ used: TranslationDirection, manual: TranslationDirection, device: TranslationDirection, inputMode: String) {
         resultDirection = used
         autoDetectedFlip = used != manual
@@ -917,116 +1019,6 @@ struct ContentView: View {
 private final class DirectionBox: @unchecked Sendable {
     var value: TranslationDirection
     init(_ value: TranslationDirection) { self.value = value }
-}
-
-/// "You speak X ⇄ Translates to Y" — the one direction control, above the
-/// mic and the text box so the language to use is visible before any input.
-/// The whole bar is the switch. Language names are in their own language.
-struct DirectionBar: View {
-    let direction: TranslationDirection
-    var typing: Bool = false
-    /// Swap direction — the centre circle, and only the centre circle.
-    let action: () -> Void
-    /// Choose the non-Creole language of the pair.
-    var onPickPartner: (Language) -> Void = { _ in }
-
-    @Environment(\.dynamicTypeSize) private var typeSize
-    @State private var pulse = false
-
-    /// One behaviour per shape: the bordered language name opens the language
-    /// list (as in Google / Apple / Microsoft Translate), the circle swaps,
-    /// Kreyòl is plain text. A tap anywhere else pulses the circle to point
-    /// people who learned "tap the bar" at the swap.
-    @ViewBuilder private func name(_ language: Language, caption: String) -> some View {
-        if language == .creole {
-            // The Haitian flag is the no-reading landmark for Creole speakers.
-            Text("🇭🇹 Kreyòl")
-                .font(.title3.weight(.semibold))
-                .foregroundColor(.primary)
-                .frame(minHeight: 44)
-                .accessibilityLabel("\(caption) Kreyòl")
-        } else {
-            Menu {
-                ForEach([Language.english, Language.spanish], id: \.self) { option in
-                    Button(action: { onPickPartner(option) }) {
-                        if option == language {
-                            Label(option.nativeName, systemImage: "checkmark")
-                        } else {
-                            Text(option.nativeName)
-                        }
-                    }
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Text(language.nativeName)
-                        .font(.title3.weight(.semibold))
-                        .foregroundColor(.primary)
-                    Image(systemName: "chevron.down")
-                        .font(.footnote.weight(.bold))
-                        .foregroundColor(.appAccent)
-                }
-                .padding(.horizontal, 12)
-                .frame(minHeight: 44)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.controlBorder, lineWidth: 1.5))
-                .contentShape(Rectangle())
-            }
-            .accessibilityLabel("\(caption): \(language.nativeName)")
-            .accessibilityHint(UIText.t("Double-tap to change language", "Toca dos veces para cambiar de idioma"))
-        }
-    }
-
-    private func side(_ language: Language, caption: String) -> some View {
-        VStack(spacing: 2) {
-            Text(caption)
-                .font(.footnote)
-                .foregroundColor(.secondaryText)
-                .accessibilityHidden(true)
-            name(language, caption: caption)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var swapButton: some View {
-        Button(action: action) {
-            Image(systemName: typeSize.isAccessibilitySize ? "arrow.up.arrow.down" : "arrow.left.arrow.right")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.appAccent)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(Color.appAccent.opacity(0.15)))
-                .overlay(Circle().stroke(Color.appAccent, lineWidth: 1.5))
-                .scaleEffect(pulse ? 1.15 : 1.0)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(UIText.t("Swap direction", "Cambiar dirección"))
-        .accessibilityValue(UIText.t("\(direction.source.nativeName) to \(direction.target.nativeName)",
-                                     "De \(direction.source.nativeName) a \(direction.target.nativeName)"))
-    }
-
-    var body: some View {
-        let speak = side(direction.source, caption: UIText.inputCaption(direction.source, typing: typing))
-        let to = side(direction.target, caption: UIText.outputCaption(input: direction.source))
-        Group {
-            // Large text sizes stack the bar instead of shrinking the names.
-            if typeSize.isAccessibilitySize {
-                VStack(spacing: 6) { speak; swapButton; to }
-            } else {
-                HStack(spacing: 8) { speak; swapButton; to }
-            }
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, minHeight: 68)
-        .background(Color.controlSurface)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.controlBorder, lineWidth: 1))
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.easeOut(duration: 0.1)) { pulse = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                withAnimation(.easeIn(duration: 0.1)) { pulse = false }
-            }
-        }
-    }
 }
 
 /// Fills toward AudioRecorder.maxDuration so people can see how long they have left.
@@ -1240,20 +1232,29 @@ extension Color {
 
 }
 
-/// Opaque backdrop matching the segmented control's shape (capsule from iOS 26).
-/// Voice / Type switch with 44 pt targets and a visible edge in both modes.
-struct ModeToggle: View {
-    @Binding var mode: ContentView.InputMode
+/// Two-or-more-way choice with 44 pt targets and a visible edge in both modes.
+struct SegmentedChoice<Value: Hashable>: View {
+    let options: [(value: Value, title: String, symbol: String?)]
+    let selection: Value
+    let onSelect: (Value) -> Void
 
-    private func segment(_ value: ContentView.InputMode, _ title: String, _ symbol: String) -> some View {
-        let selected = mode == value
-        return Button(action: { mode = value }) {
-            Label(title, systemImage: symbol)
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: 11).fill(selected ? Color.appAccent.opacity(0.15) : Color.clear))
-                .overlay(RoundedRectangle(cornerRadius: 11).stroke(selected ? Color.appAccent : Color.clear, lineWidth: 1.5))
+    private func segment(_ option: (value: Value, title: String, symbol: String?)) -> some View {
+        let selected = option.value == selection
+        return Button(action: { onSelect(option.value) }) {
+            HStack(spacing: 6) {
+                if let symbol = option.symbol { Image(systemName: symbol) }
+                Text(option.title)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .multilineTextAlignment(.center)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(.primary)
+            .padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: 11).fill(selected ? Color.appAccent.opacity(0.15) : Color.clear))
+            .overlay(RoundedRectangle(cornerRadius: 11).stroke(selected ? Color.appAccent : Color.clear, lineWidth: 1.5))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -1261,8 +1262,7 @@ struct ModeToggle: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            segment(.voice, UIText.t("Voice", "Voz"), "mic.fill")
-            segment(.text, UIText.t("Type", "Escribir"), "keyboard")
+            ForEach(options.indices, id: \.self) { segment(options[$0]) }
         }
         .padding(3)
         .background(Color.controlSurface)

@@ -5,6 +5,7 @@
 //  DEBUG-only: launch with `-shotScene <scene>` (UserDefaults argument domain) to
 //  open straight to a screen for App Store / Custom Product Page screenshots.
 //  Screenshot mode also counts as consented, so the consent sheet never appears.
+//  Add `-shotInput text` to open in typing mode.
 //  Scenes: medical, travel, family, learn, church (result cards), phrasebook-<Category>.
 //
 
