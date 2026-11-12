@@ -78,6 +78,10 @@ struct ContentView: View {
     /// Other language the last input looked like (English typed into the
     /// Spanish pair, or the reverse). Offered as a chip; never applied silently.
     @State private var suggestedPartner: Language? = nil
+    /// After a result, the language the other person answers in. Its mic card
+    /// is marked "Tap to reply" so the phone can change hands without anyone
+    /// working out whose card is whose.
+    @State private var replyLanguage: Language? = nil
 
     enum InputMode {
         case voice, text
@@ -241,10 +245,13 @@ struct ContentView: View {
 
     /// Kreyòl is always one side, so the only choice is the other language.
     private var pairRow: some View {
-        let label = Text(UIText.t("Kreyòl with:", "Kreyòl con:"))
-            .font(.subheadline)
-            .foregroundColor(.secondaryText)
-        let picker = SegmentedChoice(options: [Language.english, .spanish].map { ($0, $0.nativeName, nil) },
+        // No words to read: the flag and a plus sign. Each choice carries its
+        // Kreyòl name too — a Creole speaker looks for "Panyòl", not "Español".
+        let label = Text("🇭🇹 Kreyòl +")
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(.primary)
+            .accessibilityLabel(UIText.t("Kreyòl with", "Kreyòl con"))
+        let picker = SegmentedChoice(options: [Language.english, .spanish].map { ($0, "\($0.nativeName) · \(UIText.kreyolName($0))", nil) },
                                      selection: translationDirection.partner,
                                      onSelect: choosePartner)
         return Group {
@@ -260,12 +267,17 @@ struct ContentView: View {
     /// No direction setting: each person taps the mic with their own language
     /// on it, and that tap both picks the direction and starts listening.
     private var voiceInput: some View {
-        VStack(spacing: 10) {
-            Text(UIText.t("Tap your language to talk", "Toca tu idioma para hablar"))
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
+        let partner = translationDirection.partner
+        return VStack(spacing: 10) {
+            VStack(spacing: 2) {
+                Text(UIText.pair(partner, "Tap your language to talk", "Toca tu idioma para hablar"))
+                Text("Peze lang ou pou pale")
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(.primary)
+            .multilineTextAlignment(.center)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
 
             if typeSize.isAccessibilitySize {
                 VStack(spacing: 10) { ForEach(pairLanguages, id: \.self) { micCard($0, stacked: true) } }
@@ -278,7 +290,7 @@ struct ContentView: View {
             }
 
             Button(action: { inputMode = .text }) {
-                Label(UIText.t("Type instead", "Escribir"), systemImage: "keyboard")
+                Label(UIText.pair(partner, "Type instead", "Escribir") + " · Ekri", systemImage: "keyboard")
                     .font(.body.weight(.semibold))
                     .foregroundColor(.appAccent)
                     .frame(maxWidth: .infinity, minHeight: 50)
@@ -298,8 +310,10 @@ struct ContentView: View {
         // The card not in use steps back while the other one listens or translates.
         let waiting = (audioRecorder.isRecording || isProcessing) && !mine
         let enabled = canTranslate && !waiting
+        let replyHere = replyLanguage == language && !audioRecorder.isRecording && !isProcessing
         let hint = translating ? UIText.translating(language)
-            : (recording ? UIText.tapToStop(language) : UIText.tapToSpeak(language))
+            : (recording ? UIText.tapToStop(language)
+               : (replyHere ? UIText.tapToReply(language) : UIText.tapToSpeak(language)))
         let name = (language == .creole ? "🇭🇹 " : "") + language.nativeName
 
         let circle = ZStack {
@@ -321,7 +335,7 @@ struct ContentView: View {
                 .foregroundColor(.primary)
             Text(hint)
                 .font(.subheadline)
-                .foregroundColor(recording ? .errorText : .secondaryText)
+                .foregroundColor(recording ? .errorText : (replyHere ? .appAccent : .secondaryText))
         }
         .multilineTextAlignment(stacked ? .leading : .center)
 
@@ -339,7 +353,8 @@ struct ContentView: View {
             }
             .background(RoundedRectangle(cornerRadius: 16).fill(Color.controlSurface))
             .overlay(RoundedRectangle(cornerRadius: 16)
-                .stroke(recording ? Color.recordingRed : Color.controlBorder, lineWidth: recording ? 3 : 1.5))
+                .stroke(recording ? Color.recordingRed : (replyHere ? Color.appAccent : Color.controlBorder),
+                        lineWidth: recording || replyHere ? 3 : 1.5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -361,6 +376,7 @@ struct ContentView: View {
             "pair": pairCode,
             "changed_direction": chosen != translationDirection ? "yes" : "no",
         ])
+        replyLanguage = nil
         if chosen != translationDirection {
             // The old result keeps its own labels through resultDirection.
             translationDirection = chosen
@@ -374,7 +390,8 @@ struct ContentView: View {
     /// Typing keeps the same two-way choice as the mics, so there is one
     /// model to learn: pick your language, then give the app your words.
     private var textInput: some View {
-        VStack(spacing: 12) {
+        let partner = translationDirection.partner
+        return VStack(spacing: 12) {
             SegmentedChoice(options: pairLanguages.map { ($0, UIText.typeIn($0), nil) },
                             selection: translationDirection.source,
                             onSelect: { language in
@@ -419,7 +436,9 @@ struct ContentView: View {
                         Image(systemName: "arrow.right.circle.fill")
                             .font(.title3)
                     }
-                    Text(isProcessing ? UIText.t("Translating…", "Traduciendo…") : UIText.t("Translate", "Traducir"))
+                    Text(isProcessing ? UIText.pair(partner, "Translating…", "Traduciendo…") + " · N ap tradui…"
+                                      : UIText.pair(partner, "Translate", "Traducir") + " · Tradui")
+                        .multilineTextAlignment(.center)
                         .font(.title3.weight(.semibold))
                 }
                 .frame(maxWidth: .infinity, minHeight: 56)
@@ -428,7 +447,7 @@ struct ContentView: View {
             .disabled(!hasText || !canTranslate)
 
             Button(action: { inputFocused = false; inputMode = .voice }) {
-                Label(UIText.t("Speak instead", "Hablar"), systemImage: "mic.fill")
+                Label(UIText.pair(partner, "Speak instead", "Hablar") + " · Pale", systemImage: "mic.fill")
                     .font(.body.weight(.semibold))
                     .foregroundColor(.appAccent)
                     .frame(maxWidth: .infinity, minHeight: 50)
@@ -456,12 +475,15 @@ struct ContentView: View {
             if autoDetectedFlip, let shown = resultDirection {
                 HStack(spacing: 8) {
                     Image(systemName: "wand.and.stars")
-                    Text(UIText.t("Auto-detected \(shown.source.nativeName) — switched for you",
-                                  "Detectado: \(shown.source.nativeName). Cambiamos el idioma"))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(UIText.pair(shown.partner, "Heard \(shown.source.nativeName) — switched for you",
+                                         "Se oyó \(shown.source.nativeName). Cambiamos el idioma"))
+                        Text("Nou tande \(UIText.kreyolName(shown.source)). Nou chanje l pou ou")
+                    }
                         .font(.subheadline)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 4)
-                    Button(UIText.t("Undo", "Deshacer")) { undoAutoDetect() }
+                    Button(UIText.pair(shown.partner, "Undo", "Deshacer") + " · Anile") { undoAutoDetect() }
                         .font(.subheadline.bold())
                         .frame(minWidth: 44, minHeight: 44)
                         .disabled(isProcessing)
@@ -547,6 +569,7 @@ struct ContentView: View {
                     isLoading: isProcessing,
                     speakerAction: { playCard("target", text: translation, language: targetLanguage) },
                     isSpeaking: ttsManager.isSpeaking && speakingCardTitle == "target",
+                    speakerLabel: UIText.listen(shownDirection.target),
                     hdPlaysLeft: voiceSettings.usesHDVoice(shownDirection.target) ? hdCredits.playsLeft : nil,
                     onHDChip: hdChipTapped,
                     feedbackSampleId: isProcessing ? nil : currentSampleId,
@@ -735,6 +758,7 @@ struct ContentView: View {
         } else if let (source, translated, direction) = ScreenshotMode.sampleResult {
             translationDirection = direction
             resultDirection = direction
+            replyLanguage = direction.target
             transcription = source
             translation = translated
             statusMessage = ""
@@ -810,6 +834,7 @@ struct ContentView: View {
         guard partner != translationDirection.partner else { return }
         withAnimation {
             translationDirection = translationDirection.with(partner: partner)
+            replyLanguage = nil
             resultDirection = nil
             autoDetectedFlip = false
             preFlipDirection = nil
@@ -876,6 +901,7 @@ struct ContentView: View {
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: direction, inputMode: source.rawValue)
                     lastInput = (text, source)
+                    replyLanguage = result.direction.target
                     suggestedPartner = Self.otherPartner(for: text, selected: result.direction)
                     statusMessage = ""
                     isProcessing = false
@@ -976,6 +1002,7 @@ struct ContentView: View {
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: deviceDirection.value, inputMode: "voice")
                     lastInput = (result.transcription, .voice)
+                    replyLanguage = result.direction.target
                     suggestedPartner = Self.otherPartner(for: result.transcription, selected: result.direction)
                     statusMessage = ""
                     isProcessing = false
@@ -1058,6 +1085,10 @@ struct ResultCard: View {
     let isLoading: Bool
     var speakerAction: (() -> Void)? = nil
     var isSpeaking: Bool = false
+    /// Set on the translation card only: its speaker becomes the one big,
+    /// worded play button. The source card keeps a small icon, so "play what
+    /// the other person needs to hear" is not a coin flip between two twins.
+    var speakerLabel: String? = nil
     // HD voice plays left (nil = system voice selected, no chip).
     var hdPlaysLeft: Int? = nil
     var onHDChip: (() -> Void)? = nil
@@ -1092,13 +1123,25 @@ struct ResultCard: View {
                         HDPlaysChip(playsLeft: left, action: onHDChip)
                     }
                     Button(action: action) {
-                        Image(systemName: isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
-                            .font(.title3)
-                            .foregroundColor(.appAccent)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .background(Color.appAccent.opacity(0.15))
+                        if let speakerLabel {
+                            HStack(spacing: 6) {
+                                Image(systemName: isSpeaking ? "stop.fill" : "speaker.wave.2.fill")
+                                Text(speakerLabel)
+                            }
+                            .font(.body.weight(.semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 44)
+                            .background(Color.accentFill)
                             .cornerRadius(10)
+                        } else {
+                            Image(systemName: isSpeaking ? "speaker.wave.3.fill" : "speaker.wave.2")
+                                .font(.title3)
+                                .foregroundColor(.appAccent)
+                                .frame(minWidth: 44, minHeight: 44)
+                        }
                     }
+                    .accessibilityLabel("\(speakerLabel ?? UIText.t("Listen", "Escuchar")), \(title)")
                     .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
                 }
             }

@@ -52,6 +52,38 @@ enum UIText {
         }
     }
 
+    static func tapToReply(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Peze pou reponn"
+        case .english: return "Tap to reply"
+        case .spanish: return "Toca para responder"
+        }
+    }
+
+    static func listen(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Koute"
+        case .english: return "Listen"
+        case .spanish: return "Escuchar"
+        }
+    }
+
+    /// What a Kreyòl speaker calls the other language ("Panyòl", not "Español").
+    static func kreyolName(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Kreyòl"
+        case .english: return "Anglè"
+        case .spanish: return "Panyòl"
+        }
+    }
+
+    /// Signpost text for the main screen, in the pair's other language. Shown
+    /// next to its Kreyòl twin: there is no Kreyòl phone setting to key off,
+    /// so Creole speakers would otherwise get every instruction in English.
+    static func pair(_ partner: Language, _ english: String, _ spanish: String) -> String {
+        partner == .spanish ? spanish : english
+    }
+
     static func typeHere(_ language: Language) -> String {
         switch language {
         case .creole:  return "Ekri an kreyòl… " + t("(type Creole)", "(escribe en kreyòl)")
