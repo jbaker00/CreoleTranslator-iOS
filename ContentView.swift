@@ -69,8 +69,10 @@ struct ContentView: View {
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
 
-    /// A phone set to Spanish opens on Español → Kreyòl; everyone else keeps
-    /// the long-standing default. Only used until the user's choice is saved.
+    /// A phone set to Spanish opens on Español → Kreyòl; everyone else opens
+    /// on Kreyòl → English, which is what English- and French-language phones
+    /// mostly use (65% and 62% of translations, GA4 Sept–Nov 2026). With two
+    /// mics this only decides the pair. Used until the user's choice is saved.
     static var firstLaunchDirection: TranslationDirection {
         UIText.isSpanish ? .spanishToCreole : .creoleToEnglish
     }
@@ -82,6 +84,11 @@ struct ContentView: View {
     /// is marked "Tap to reply" so the phone can change hands without anyone
     /// working out whose card is whose.
     @State private var replyLanguage: Language? = nil
+    /// Typing starts with no language selected: the app picks it from the
+    /// words as they are typed. A tap on either choice pins it until the box
+    /// is cleared.
+    @State private var typingLanguageKnown = false
+    @State private var typingLanguagePinned = false
 
     enum InputMode {
         case voice, text
@@ -100,6 +107,7 @@ struct ContentView: View {
             headerBar
 
             ScrollView {
+                ScrollViewReader { scroller in
                 VStack(spacing: 20) {
                     // Show history, phrasebook, or main content
                     if showHistory {
@@ -117,6 +125,27 @@ struct ContentView: View {
 
                     // leave room for the banner (adaptive height, usually taller than 50)
                     Spacer(minLength: BannerAdView.size(forWidth: availableWidth).size.height + 30)
+                }
+                // A finished translation is brought into view (at large text
+                // sizes it lands below the fold); so is the Translate button
+                // when the keyboard opens.
+                .onChangeCompat(of: isProcessing) { processing in
+                    guard !processing, resultDirection != nil else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        withAnimation { scroller.scrollTo("resultEnd", anchor: .bottom) }
+                    }
+                }
+                .onAppear {
+                    // Screenshot scenes set their result without translating.
+                    guard ScreenshotMode.isActive, typeSize.isAccessibilitySize else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { scroller.scrollTo("resultEnd", anchor: .bottom) }
+                }
+                .onChangeCompat(of: inputFocused) { focused in
+                    guard focused else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                        withAnimation { scroller.scrollTo("translateButton", anchor: .bottom) }
+                    }
+                }
                 }
             }
             .dismissKeyboardOnScroll()
@@ -251,7 +280,7 @@ struct ContentView: View {
             .font(.subheadline.weight(.semibold))
             .foregroundColor(.primary)
             .accessibilityLabel(UIText.t("Kreyòl with", "Kreyòl con"))
-        let picker = SegmentedChoice(options: [Language.english, .spanish].map { ($0, "\($0.nativeName) · \(UIText.kreyolName($0))", nil) },
+        let picker = SegmentedChoice(options: [Language.english, .spanish].map { ($0, "\($0.flag) \($0.nativeName)\n\(UIText.kreyolName($0))", nil) },
                                      selection: translationDirection.partner,
                                      onSelect: choosePartner)
         return Group {
@@ -314,7 +343,7 @@ struct ContentView: View {
         let hint = translating ? UIText.translating(language)
             : (recording ? UIText.tapToStop(language)
                : (replyHere ? UIText.tapToReply(language) : UIText.tapToSpeak(language)))
-        let name = (language == .creole ? "🇭🇹 " : "") + language.nativeName
+        let name = "\(language.flag) \(language.nativeName)"
 
         let circle = ZStack {
             Circle().fill(enabled ? (recording ? Color.recordingRed : Color.accentFill) : Color.controlSurface)
@@ -365,6 +394,32 @@ struct ContentView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    /// Moves the typing choice to the language the words are in. Mixed text
+    /// goes with the majority; anything unclear leaves the choice alone, and
+    /// the proxy's check still runs when Translate is pressed.
+    private func followTypedLanguage(_ text: String) {
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            typingLanguagePinned = false
+            typingLanguageKnown = false
+            return
+        }
+        guard !typingLanguagePinned, voiceSettings.autoDetectLanguage, !isProcessing else { return }
+        let partner = translationDirection.partner
+        let detected: Language
+        switch LanguageDetector.detect(text, partner: partner) {
+        case .creole: detected = .creole
+        case .english, .spanish: detected = partner
+        case .unknown: return
+        }
+        typingLanguageKnown = true
+        let chosen = direction(speaking: detected)
+        if chosen != translationDirection {
+            translationDirection = chosen
+            autoDetectedFlip = false
+            preFlipDirection = nil
+        }
+    }
+
     private func micTapped(_ language: Language) {
         if audioRecorder.isRecording {
             stopRecording()
@@ -393,8 +448,10 @@ struct ContentView: View {
         let partner = translationDirection.partner
         return VStack(spacing: 12) {
             SegmentedChoice(options: pairLanguages.map { ($0, UIText.typeIn($0), nil) },
-                            selection: translationDirection.source,
+                            selection: typingLanguageKnown ? translationDirection.source : nil,
                             onSelect: { language in
+                                typingLanguageKnown = true
+                                typingLanguagePinned = true
                                 let chosen = direction(speaking: language)
                                 guard chosen != translationDirection else { return }
                                 translationDirection = chosen
@@ -405,8 +462,11 @@ struct ContentView: View {
                             })
                 .disabled(isProcessing)
 
-            let inputLabel = UIText.typeHere(translationDirection.source)
+            let inputLabel = typingLanguageKnown ? UIText.typeHere(translationDirection.source)
+                : UIText.pair(partner, "Type in English or Kreyòl…", "Escribe en español o kreyòl…")
+                  + "\nEkri an kreyòl oswa \(UIText.kreyolName(partner).lowercased())…"
             TextEditor(text: $typedInput)
+                .onChangeCompat(of: typedInput) { followTypedLanguage($0) }
                 .focused($inputFocused)
                 .frame(minHeight: 100, maxHeight: 160)
                 .padding(10)
@@ -445,6 +505,7 @@ struct ContentView: View {
                 .modifier(PrimaryButtonSurface(enabled: hasText && canTranslate, fill: .accentFill))
             }
             .disabled(!hasText || !canTranslate)
+            .id("translateButton")
 
             Button(action: { inputFocused = false; inputMode = .voice }) {
                 Label(UIText.pair(partner, "Speak instead", "Hablar") + " · Pale", systemImage: "mic.fill")
@@ -541,7 +602,7 @@ struct ContentView: View {
                 let sourceLanguage = shownDirection.source.speechLocale
                 ResultCard(
                     title: shownDirection.source.nativeName,
-                    icon: shownDirection.source == .creole ? "🇭🇹" : "",
+                    icon: shownDirection.source.flag,
                     content: transcription,
                     isLoading: isProcessing,
                     speakerAction: { playCard("source", text: transcription, language: sourceLanguage) },
@@ -564,7 +625,7 @@ struct ContentView: View {
                 let targetLanguage = shownDirection.target.speechLocale
                 ResultCard(
                     title: shownDirection.target.nativeName,
-                    icon: shownDirection.target == .creole ? "🇭🇹" : "",
+                    icon: shownDirection.target.flag,
                     content: translation,
                     isLoading: isProcessing,
                     speakerAction: { playCard("target", text: translation, language: targetLanguage) },
@@ -642,7 +703,10 @@ struct ContentView: View {
                     .padding(.horizontal, 16)
             }
             
-            Spacer(minLength: 80) // leave room for banner
+            // Scroll target: the end of the results, clear of the banner.
+            Color.clear
+                .frame(height: BannerAdView.size(forWidth: availableWidth).size.height + 8)
+                .id("resultEnd")
         }
     }
     
@@ -763,6 +827,7 @@ struct ContentView: View {
             translation = translated
             statusMessage = ""
         }
+        if let typed = UserDefaults.standard.string(forKey: "shotTyped") { typedInput = typed; followTypedLanguage(typed) }
     }
 
     private func startRecording() {
@@ -900,6 +965,7 @@ struct ContentView: View {
                     sentRating = nil
                     sentSttRating = nil
                     applyResultDirection(result.direction, manual: manual, device: direction, inputMode: source.rawValue)
+                    typingLanguageKnown = true
                     lastInput = (text, source)
                     replyLanguage = result.direction.target
                     suggestedPartner = Self.otherPartner(for: text, selected: result.direction)
@@ -1099,13 +1165,9 @@ struct ResultCard: View {
     var feedbackPrompt: String = UIText.t("Was this right?", "¿Es correcto?")
     var feedbackNoun: String = "Translation"
 
-    private var isPlaceholder: Bool {
-        content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..."
-    }
+    @Environment(\.dynamicTypeSize) private var typeSize
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+    @ViewBuilder private var titleView: some View {
                 if !icon.isEmpty {
                     Text(icon)
                         .font(.title2)
@@ -1113,9 +1175,9 @@ struct ResultCard: View {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(.primary)
+    }
 
-                Spacer()
-
+    @ViewBuilder private var controls: some View {
                 // Show speaker button if speakerAction is provided
                 if let action = speakerAction {
                     let playable = !(content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
@@ -1143,6 +1205,27 @@ struct ResultCard: View {
                     }
                     .accessibilityLabel("\(speakerLabel ?? UIText.t("Listen", "Escuchar")), \(title)")
                     .disabled(content.contains("Your translation") || content == "Waiting..." || content == "Processing..." || content.isEmpty)
+                }
+    }
+
+    private var isPlaceholder: Bool {
+        content.contains("Your translation") || content.contains("Your transcription") || content == "Waiting..." || content == "Processing..."
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Large text sizes put the buttons on their own row instead of
+            // squeezing the language name against them.
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack { titleView }
+                    HStack(spacing: 10) { controls }
+                }
+            } else {
+                HStack {
+                    titleView
+                    Spacer()
+                    controls
                 }
             }
 
@@ -1278,7 +1361,8 @@ extension Color {
 /// Two-or-more-way choice with 44 pt targets and a visible edge in both modes.
 struct SegmentedChoice<Value: Hashable>: View {
     let options: [(value: Value, title: String, symbol: String?)]
-    let selection: Value
+    /// nil = nothing chosen yet.
+    let selection: Value?
     let onSelect: (Value) -> Void
 
     private func segment(_ option: (value: Value, title: String, symbol: String?)) -> some View {

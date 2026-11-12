@@ -122,9 +122,21 @@ enum Language: String, Codable, CaseIterable {
     var flag: String {
         switch self {
         case .creole: return "🇭🇹"
-        case .english: return "🇺🇸"
-        case .spanish: return "🇲🇽"
+        case .english: return Self.regionFlag(among: Self.englishRegions) ?? "🇺🇸"
+        case .spanish: return Self.regionFlag(among: Self.spanishRegions) ?? "🇲🇽"
         }
+    }
+
+    // No one flag stands for English or Spanish, so the card shows the flag
+    // of the country the phone is set to when that country speaks the
+    // language, and a fallback otherwise (US for English; Mexico for Spanish,
+    // matching the es-MX voice and store page).
+    private static let englishRegions: Set<String> = ["US", "CA", "GB", "AU", "NZ", "IE", "JM", "BS", "BB", "TT", "BZ", "GY", "ZA", "NG", "GH", "KE", "LR"]
+    private static let spanishRegions: Set<String> = ["MX", "DO", "CL", "CO", "AR", "PE", "VE", "EC", "GT", "CU", "BO", "HN", "PY", "SV", "NI", "CR", "PA", "UY", "PR", "ES"]
+
+    private static func regionFlag(among regions: Set<String>) -> String? {
+        guard let region = Locale.current.regionCode?.uppercased(), regions.contains(region) else { return nil }
+        return String(String.UnicodeScalarView(region.unicodeScalars.compactMap { UnicodeScalar(127397 + $0.value) }))
     }
 
     /// Locale for the on-device voice and for labelling speech requests.
