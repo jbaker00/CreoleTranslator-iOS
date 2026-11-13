@@ -340,7 +340,7 @@ struct ContentView: View {
                         .padding(.top, 8)
                     notices
                         .padding(.top, 12)
-                    if whatsNewSeenVersion != Self.whatsNewVersion, !isRecording, !isProcessing {
+                    if whatsNewSeenVersion != Self.whatsNewVersion, !isRecording, !isProcessing, !ScreenshotMode.isActive {
                         whatsNewCard
                             .padding(.top, 12)
                     }
@@ -873,6 +873,14 @@ struct ContentView: View {
                                  direction: .englishToCreole, sampleId: nil, input: .voice),
             ]
             translationDirection = .englishToCreole
+        } else if ScreenshotMode.scene == "talk-es" {
+            turns = [
+                ConversationTurn(source: "Kote lopital la ye?", translation: "¿Dónde está el hospital?",
+                                 direction: .creoleToSpanish, sampleId: nil, input: .voice),
+                ConversationTurn(source: "Doble a la izquierda en la esquina.", translation: "Vire agoch nan kwen an.",
+                                 direction: .spanishToCreole, sampleId: nil, input: .voice),
+            ]
+            translationDirection = .spanishToCreole
         } else if let (source, translated, direction) = ScreenshotMode.sampleResult {
             translationDirection = direction
             turns = [ConversationTurn(source: source, translation: translated, direction: direction, sampleId: nil, input: .voice)]

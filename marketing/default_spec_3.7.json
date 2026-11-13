@@ -1,0 +1,92 @@
+[
+ {
+  "name": "v37-en-1",
+  "shot": "v37-talk",
+  "title": "Just talk. It translates both ways",
+  "sub": "Speak Haitian Creole or English, nothing to set"
+ },
+ {
+  "name": "v37-en-2",
+  "shot": "v37-hero",
+  "title": "One button for both languages",
+  "sub": "The app works out which language it heard"
+ },
+ {
+  "name": "v37-en-3",
+  "shot": "v37-spanish",
+  "title": "New: Spanish and Kreyòl",
+  "sub": "Translate between Spanish and Haitian Creole"
+ },
+ {
+  "name": "v37-en-4",
+  "shot": "v37-pb-Greetings",
+  "title": "A phrasebook that works offline",
+  "sub": "Tap any phrase to hear how it sounds"
+ },
+ {
+  "name": "v37-en-5",
+  "shot": "v37-pb-Medical",
+  "title": "Medical and emergency phrases",
+  "sub": "The words that matter when it counts"
+ },
+ {
+  "name": "v37-en-6",
+  "shot": "v37-pb-Travel",
+  "title": "Ready for your trip to Haiti",
+  "sub": "Taxis, directions and everyday travel phrases"
+ },
+ {
+  "name": "v37-fr-1",
+  "shot": "v37-talk",
+  "title": "Parlez, il traduit dans les deux sens",
+  "sub": "En créole haïtien ou en anglais, sans réglage"
+ },
+ {
+  "name": "v37-fr-2",
+  "shot": "v37-hero",
+  "title": "Un seul bouton pour les deux langues",
+  "sub": "L'application reconnaît la langue entendue"
+ },
+ {
+  "name": "v37-fr-3",
+  "shot": "v37-spanish",
+  "title": "Nouveau : espagnol et kreyòl",
+  "sub": "Traduisez entre l'espagnol et le créole haïtien"
+ },
+ {
+  "name": "v37-fr-4",
+  "shot": "v37-pb-Greetings",
+  "title": "Un guide de conversation hors ligne",
+  "sub": "Touchez une phrase pour l'entendre"
+ },
+ {
+  "name": "v37-fr-5",
+  "shot": "v37-pb-Medical",
+  "title": "Phrases médicales et d'urgence",
+  "sub": "Les mots qui comptent, quand il le faut"
+ },
+ {
+  "name": "v37-fr-6",
+  "shot": "v37-pb-Travel",
+  "title": "Prêt pour votre voyage en Haïti",
+  "sub": "Taxi, directions et phrases de voyage"
+ },
+ {
+  "name": "v37-es-1",
+  "shot": "v37es-talk",
+  "title": "Solo habla. Traduce en los dos sentidos",
+  "sub": "Habla en español o en kreyòl, sin ajustar nada"
+ },
+ {
+  "name": "v37-es-2",
+  "shot": "v37es-hero",
+  "title": "Un solo botón para los dos idiomas",
+  "sub": "La app reconoce el idioma que escuchó"
+ },
+ {
+  "name": "v37-es-3",
+  "shot": "v37es-result",
+  "title": "Escucha la traducción en voz alta",
+  "sub": "Con voces naturales en kreyòl y en español"
+ }
+]
