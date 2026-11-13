@@ -134,6 +134,16 @@ enum Language: String, Codable, CaseIterable {
     private static let englishRegions: Set<String> = ["US", "CA", "GB", "AU", "NZ", "IE", "JM", "BS", "BB", "TT", "BZ", "GY", "ZA", "NG", "GH", "KE", "LR"]
     private static let spanishRegions: Set<String> = ["MX", "DO", "CL", "CO", "AR", "PE", "VE", "EC", "GT", "CU", "BO", "HN", "PY", "SV", "NI", "CR", "PA", "UY", "PR", "ES"]
 
+    /// Whether a fresh install opens on Kreyòl + Español instead of Kreyòl +
+    /// English: Spanish is the phone's first language, or the phone's region
+    /// is a Spanish-speaking country (El Salvador, the Dominican Republic…)
+    /// whatever its language.
+    static var phoneSuggestsSpanish: Bool {
+        if UIText.isSpanish { return true }
+        guard let region = Locale.current.regionCode?.uppercased() else { return false }
+        return spanishRegions.contains(region)
+    }
+
     /// The country named in the phone's language setting wins ("Español
     /// (El Salvador)" → 🇸🇻 even on a phone whose region is the US); failing
     /// that, the phone's region.

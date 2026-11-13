@@ -6,11 +6,11 @@ title: Privacy Policy — Creole Translator
 # Privacy Policy
 
 **Creole Translator**
-*Last Updated: November 11, 2026*
+*Last Updated: November 13, 2026*
 
 ## Overview
 
-Creole Translator ("the App") is a free application for iOS and Android that uses AI services to transcribe and translate speech and text between Haitian Creole and English. Both versions of the App send requests through the same server ("our translation service"), so this Privacy Policy applies to both. It explains what data the App collects, how it is used, and what choices you have.
+Creole Translator ("the App") is a free application for iOS and Android that uses AI services to transcribe and translate speech and text between Haitian Creole and English or Spanish. Both versions of the App send requests through the same server ("our translation service"), so this Privacy Policy applies to both. It explains what data the App collects, how it is used, and what choices you have.
 
 ## Information We Collect
 
@@ -18,7 +18,7 @@ Creole Translator ("the App") is a free application for iOS and Android that use
 
 When you use the App's recording feature, your voice is captured by your device's microphone and sent to third-party AI services for processing. Specifically:
 
-- Your recording is sent through our translation service to an AI transcription service: **OpenAI** for Haitian Creole speech and **Groq AI** for English and Spanish speech. If that service is unavailable, the other one is used as a fallback.
+- Your recording is sent through our translation service to an AI transcription service. In current versions of the iOS App that is **OpenAI** for every language, with **Groq AI** as a fallback if OpenAI is unavailable. Earlier iOS versions and the Android App send Haitian Creole speech to OpenAI and English or Spanish speech to Groq AI, each with the other as a fallback.
 - Audio is transmitted over an encrypted HTTPS connection.
 - Your recording is **kept by our translation service for up to 7 days** so that, if the translation that follows is flagged (the AI reports low confidence, or you rate it 👎), the clip can be kept for **up to 30 days** and listened to by our named Creole-speaking reviewers to check whether it was transcribed correctly. Clips are stored without any identifier, are never linked to you or your device, and are deleted automatically on those schedules. A reviewer's corrected transcript may be kept permanently as text. Clips that were not flagged are never reviewed.
 - Groq AI and OpenAI process audio temporarily to produce results. Please review [Groq's Privacy Policy](https://groq.com/privacy-policy/) and [OpenAI's Privacy Policy](https://openai.com/policies/privacy-policy/) for details on how they handle submitted data.
@@ -31,7 +31,7 @@ Text you type, and text transcribed from your recordings, is sent through our tr
 
 To check and improve translation quality, our translation service keeps a copy of each translation it produces:
 
-- **What is stored:** the text you submitted for translation (typed, or transcribed from your recording), the translation returned, the direction (Creole→English or English→Creole), which AI provider produced it, and a confidence score the AI assigns to its own answer.
+- **What is stored:** the text you submitted for translation (typed, or transcribed from your recording), the translation returned, the direction (for example Creole→English or Spanish→Creole), which AI provider produced it, and a confidence score the AI assigns to its own answer.
 - **What is not stored:** your voice audio (recordings are handled separately — see "Audio Data"), your name, your account, and any device identifier. Stored translations are **not linked to you or your device**.
 - **How long:** 90 days, after which they are automatically deleted.
 - **Who sees them:** a small number of named human reviewers who speak Haitian Creole and are authorised by us. They may read any stored translation — including ones the AI was confident about, not only flagged ones — to judge whether the AI translated correctly. Reviewers only ever listen to recordings that were flagged.
@@ -96,8 +96,8 @@ The App is not directed at children under 13. We do not knowingly collect person
 
 | Service | Purpose | Privacy Policy |
 |---|---|---|
-| Groq AI | English and Spanish speech transcription (fallback for Haitian Creole), fallback translation, English text-to-speech | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
-| OpenAI | Haitian Creole speech transcription (fallback for English and Spanish), translation (through OpenRouter), Haitian Creole and Spanish text-to-speech, optional English text-to-speech | [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy/) |
+| Groq AI | Speech transcription (fallback; primary for English and Spanish in older iOS versions and on Android), fallback translation, English text-to-speech | [groq.com/privacy-policy](https://groq.com/privacy-policy/) |
+| OpenAI | Speech transcription, translation (through OpenRouter), Haitian Creole and Spanish text-to-speech, optional English text-to-speech | [openai.com/policies/privacy-policy](https://openai.com/policies/privacy-policy/) |
 | OpenRouter | Translation (routes text to an OpenAI model) | [openrouter.ai/privacy](https://openrouter.ai/privacy) |
 | Google Firebase | Analytics and crash reporting | [policies.google.com/privacy](https://policies.google.com/privacy) |
 | Google AdMob | In-app advertising | [policies.google.com/technologies/ads](https://policies.google.com/technologies/ads) |

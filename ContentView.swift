@@ -62,18 +62,23 @@ struct ContentView: View {
     @AppStorage("successfulTranslationCount") private var successfulTranslationCount = 0
     @AppStorage("lastReviewPromptVersion") private var lastReviewPromptVersion = ""
 
-    /// A phone set to Spanish opens on Español → Kreyòl; everyone else opens
-    /// on Kreyòl → English, which is what English- and French-language phones
+    /// A phone set to Spanish, or to a Spanish-speaking country, opens on
+    /// Kreyòl + Español; everyone else opens on Kreyòl + English, which is what English- and French-language phones
     /// mostly use (65% and 62% of translations, GA4 Sept–Nov 2026). With one
     /// mic for both languages this only decides the pair, and which way to
     /// translate words the detector can't place.
     static var firstLaunchDirection: TranslationDirection {
-        UIText.isSpanish ? .spanishToCreole : .creoleToEnglish
+        Language.phoneSuggestsSpanish ? .spanishToCreole : .creoleToEnglish
     }
 
     /// Other language the last input looked like (English typed into the
     /// Spanish pair, or the reverse). Offered as a chip; never applied silently.
     @State private var suggestedPartner: Language? = nil
+    /// Version whose "what's new" card has been dismissed. The card is shown
+    /// once on the first screen, and goes away on "Got it" or the first translation.
+    @AppStorage("whatsNewSeenVersion") private var whatsNewSeenVersion = ""
+    private static let whatsNewVersion = "3.7"
+
     enum InputMode {
         case voice, text
     }
@@ -335,6 +340,10 @@ struct ContentView: View {
                         .padding(.top, 8)
                     notices
                         .padding(.top, 12)
+                    if whatsNewSeenVersion != Self.whatsNewVersion, !isRecording, !isProcessing {
+                        whatsNewCard
+                            .padding(.top, 12)
+                    }
                     Spacer(minLength: 16)
                     micButton(size: 132)
                     Text(speakPrompt.kreyol)
@@ -367,6 +376,55 @@ struct ContentView: View {
                 .frame(minHeight: geo.size.height)
             }
         }
+    }
+
+    /// What changed in this version, said once: one mic for both languages,
+    /// and Spanish. Each line is in the interface language and in Kreyòl.
+    private var whatsNewCard: some View {
+        func line(_ symbol: String, _ text: String, _ kreyol: String) -> some View {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: symbol)
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.appAccent)
+                    .frame(width: 26)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(text)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.primary)
+                    Text(kreyol)
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .combine)
+        }
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(UIText.t("New", "Nuevo") + " · Nouvo")
+                .font(.headline)
+                .foregroundColor(.primary)
+                .accessibilityAddTraits(.isHeader)
+            line("mic.fill",
+                 UIText.t("One button for both languages. Just speak.", "Un solo botón para los dos idiomas. Solo habla."),
+                 "Yon sèl bouton pou de lang yo. Annik pale.")
+            line("globe.americas.fill",
+                 UIText.t("Now in Spanish too. Tap the languages at the top.", "Ahora también en español. Toca los idiomas arriba."),
+                 "Kounye a an panyòl tou. Peze lang yo anlè a.")
+            Button(action: { whatsNewSeenVersion = Self.whatsNewVersion }) {
+                Text(UIText.t("Got it", "Entendido") + " · Dakò")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.appAccent)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 4)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.controlSurface))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.controlBorder, lineWidth: 1.5))
     }
 
     /// Kreyòl is always one side, so the only choice is the other language.
@@ -925,6 +983,7 @@ struct ContentView: View {
         if replaceLast, !turns.isEmpty { turns.removeLast() }
         turns.append(turn)
         translationDirection = result.direction
+        whatsNewSeenVersion = Self.whatsNewVersion
         currentSampleId = result.sampleId
         sentRating = nil
         lastInput = (result.transcription, input)
