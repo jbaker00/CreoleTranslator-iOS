@@ -171,12 +171,8 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
-            Toggle(UIText.t("Auto-detect language", "Detectar idioma automáticamente"), isOn: $voiceSettings.autoDetectLanguage)
         } header: {
             Text(UIText.t("Translation", "Traducción"))
-        } footer: {
-            Text(UIText.t("If you type or say the other language of the pair (English while set to Creole → English, for example), the app translates in the right direction and shows an Undo button. Turn off to always use the direction you picked.",
-                          "Si escribes o dices el otro idioma del par (español cuando está en kreyòl → español, por ejemplo), la app traduce en la dirección correcta y muestra un botón Deshacer. Desactívalo para usar siempre la dirección que elegiste."))
         }
     }
 

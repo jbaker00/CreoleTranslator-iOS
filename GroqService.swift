@@ -342,13 +342,15 @@ class GroqService {
     /// `resolveDirection` sees the transcript before translation so the caller
     /// can apply language auto-detect; it returns the direction to translate in.
     /// Transcription itself always uses the caller's direction as Whisper's
-    /// language hint — that's the only signal available before any text exists.
+    /// language hint unless `transcribeAs` names another: the Creole engine
+    /// writes down whichever language was spoken, so one mic can take both.
     func processAudio(fileURL: URL,
                       direction: TranslationDirection = .creoleToEnglish,
+                      transcribeAs: String? = nil,
                       autoDirection: Bool = false,
                       resolveDirection: ((String) -> TranslationDirection)? = nil) async throws -> TranslationResult {
         // Step 1: Transcribe audio (gpt-transcribe for Creole, Whisper for English — see creoleSttEngine)
-        let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
+        let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: transcribeAs ?? direction.sourceLanguage)
         // gpt-transcribe declines rather than guesses; the proxy rejects empty text.
         if transcription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             throw GroqError.nothingHeard
