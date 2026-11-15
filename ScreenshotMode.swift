@@ -5,6 +5,7 @@
 //  DEBUG-only: launch with `-shotScene <scene>` (UserDefaults argument domain) to
 //  open straight to a screen for App Store / Custom Product Page screenshots.
 //  Screenshot mode also counts as consented, so the consent sheet never appears.
+//  Add `-shotInput text` to open in typing mode.
 //  Scenes: medical, travel, family, learn, church (result cards), phrasebook-<Category>.
 //
 
@@ -18,6 +19,16 @@ enum ScreenshotMode {
 #endif
 
     static var isActive: Bool { scene != nil }
+
+    /// `-shotRecording YES`: draw the source language's mic card as if it were
+    /// recording, so that state can be reviewed without a microphone.
+    static var showsRecording: Bool {
+#if DEBUG
+        UserDefaults.standard.bool(forKey: "shotRecording")
+#else
+        false
+#endif
+    }
 
     /// Category name to scroll the phrasebook to, e.g. "Medical".
     static var phrasebookCategory: String? {
@@ -34,6 +45,11 @@ enum ScreenshotMode {
     /// Sample result for the result-card scenes: (source, translation, direction).
     static var sampleResult: (String, String, TranslationDirection)? {
         switch scene {
+        case "spanish":
+            // Same Creole as the medical scene, reached from Spanish.
+            return ("¿Dónde le duele? Muéstreme con el dedo.",
+                    "Ki kote ou santi doulè a? Montre m ak dwèt ou.",
+                    .spanishToCreole)
         case "medical":
             return ("Where does it hurt? Show me with your finger.",
                     "Ki kote ou santi doulè a? Montre m ak dwèt ou.",

@@ -64,3 +64,7 @@ GeneratedSecrets.swift
 
 # Local environment
 CLAUDE.md
+
+# Internal review reports, research notes and marketing drafts (not for the public repo)
+private/
+__pycache__/

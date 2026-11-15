@@ -35,6 +35,12 @@ class VoiceSettings: ObservableObject {
     // Speed: default 0.7 — Creole voices tend to speak fast
     @AppStorage("creolePlaybackSpeed") var creolePlaybackSpeed: Double = 0.7
 
+    // --- Spanish (Latin American) ---
+    // OpenAI or System only — Groq Orpheus is English-only. No settings UI yet.
+    @AppStorage("spanishProvider") var spanishProvider: TTSProvider = .openai
+    @AppStorage("spanishOpenAIVoice") var spanishOpenAIVoice: String = "nova"
+    @AppStorage("spanishPlaybackSpeed") var spanishPlaybackSpeed: Double = 1.0
+
     // --- Translation ---
     // When on, clearly-English text sent while in Creole→English (or vice
     // versa) is translated in the detected direction, with an Undo chip.
@@ -85,6 +91,14 @@ class VoiceSettings: ObservableObject {
 
     func usesHDVoice(isCreole: Bool) -> Bool {
         (isCreole ? creoleProvider : englishProvider) != .system
+    }
+
+    func usesHDVoice(_ language: Language) -> Bool {
+        switch language {
+        case .creole: return creoleProvider != .system
+        case .english: return englishProvider != .system
+        case .spanish: return spanishProvider != .system
+        }
     }
 
     func description(for provider: TTSProvider, isCreole: Bool = false) -> String {

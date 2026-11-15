@@ -12,6 +12,7 @@ struct SettingsView: View {
     @ObservedObject var ttsManager: TextToSpeechManager
     @ObservedObject var privacyConsent: DataPrivacyConsent
     @ObservedObject private var hdCredits = HDVoiceCredits.shared
+    @AppStorage("translationDirection") private var translationDirection: TranslationDirection = ContentView.firstLaunchDirection
     @Environment(\.dismiss) private var dismiss
 
     init(voiceSettings: VoiceSettings, ttsManager: TextToSpeechManager, privacyConsent: DataPrivacyConsent) {
@@ -29,11 +30,11 @@ struct SettingsView: View {
                 testSection
                 privacySection
             }
-            .navigationTitle("Voice Settings")
+            .navigationTitle(UIText.t("Voice Settings", "Configuración de voz"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(UIText.t("Done", "Listo")) { dismiss() }
                 }
             }
         }
@@ -159,11 +160,19 @@ struct SettingsView: View {
 
     private var translationSection: some View {
         Section {
-            Toggle("Auto-detect language", isOn: $voiceSettings.autoDetectLanguage)
+            // People look here first to change language, so the same choice
+            // as the main screen's is offered here too.
+            Picker(UIText.t("Other language", "Otro idioma") + " · Lòt lang", selection: Binding(
+                get: { translationDirection.partner },
+                set: { translationDirection = translationDirection.with(partner: $0) }
+            )) {
+                ForEach([Language.english, .spanish], id: \.self) { language in
+                    Text("\(language.nativeName) · \(UIText.kreyolName(language))").tag(language)
+                }
+            }
+            .pickerStyle(.segmented)
         } header: {
-            Text("Translation")
-        } footer: {
-            Text("If you type or say English while set to Creole → English (or the other way round), the app translates in the right direction and shows an Undo button. Turn off to always use the direction you picked.")
+            Text(UIText.t("Translation", "Traducción"))
         }
     }
 
@@ -231,7 +240,7 @@ struct SettingsView: View {
     private var privacySection: some View {
         Section {
             Link(destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!) {
-                Label("Privacy Policy", systemImage: "doc.text")
+                Label(UIText.t("Privacy Policy", "Política de privacidad"), systemImage: "doc.text")
             }
             Button(role: .destructive) {
                 privacyConsent.revokeConsent()
@@ -240,7 +249,7 @@ struct SettingsView: View {
                 Label("Revoke AI Data Consent", systemImage: "hand.raised")
             }
         } header: {
-            Label("Privacy", systemImage: "lock.shield")
+            Label(UIText.t("Privacy", "Privacidad"), systemImage: "lock.shield")
         } footer: {
             Text("Revoking consent disables recording and translation until you consent again.")
                 .font(.caption)

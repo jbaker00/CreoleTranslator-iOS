@@ -8,31 +8,234 @@
 
 import Foundation
 
+/// Interface text. Spanish when the phone's first language is Spanish,
+/// English otherwise — done in code because the project has no string
+/// catalog yet. Strings a Creole speaker must read are written Kreyòl-first
+/// at the call site (iOS has no Haitian Creole system language to follow).
+/// All Spanish and Kreyòl copy here still needs a native-speaker review.
+enum UIText {
+    static let isSpanish: Bool = (Locale.preferredLanguages.first ?? "en").lowercased().hasPrefix("es")
+
+    static func t(_ english: String, _ spanish: String) -> String { isSpanish ? spanish : english }
+
+    // Mic-card and typing labels are written in the language they name, so
+    // each person finds their own button without reading the other's language.
+    static func tapToSpeak(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Peze pou pale"
+        case .english: return "Tap to speak"
+        case .spanish: return "Toca para hablar"
+        }
+    }
+
+    static func tapToStop(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Peze pou sispann"
+        case .english: return "Tap to stop"
+        case .spanish: return "Toca para detener"
+        }
+    }
+
+    static func translating(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "N ap tradui…"
+        case .english: return "Translating…"
+        case .spanish: return "Traduciendo…"
+        }
+    }
+
+    static func typeIn(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Ekri an kreyòl"
+        case .english: return "Type in English"
+        case .spanish: return "Escribe en español"
+        }
+    }
+
+    static func tapToReply(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Peze pou reponn"
+        case .english: return "Tap to reply"
+        case .spanish: return "Toca para responder"
+        }
+    }
+
+    static func listen(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Koute"
+        case .english: return "Listen"
+        case .spanish: return "Escuchar"
+        }
+    }
+
+    /// What a Kreyòl speaker calls the other language ("Panyòl", not "Español").
+    static func kreyolName(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Kreyòl"
+        case .english: return "Anglè"
+        case .spanish: return "Panyòl"
+        }
+    }
+
+    /// Signpost text for the main screen, in the pair's other language. Shown
+    /// next to its Kreyòl twin: there is no Kreyòl phone setting to key off,
+    /// so Creole speakers would otherwise get every instruction in English.
+    static func pair(_ partner: Language, _ english: String, _ spanish: String) -> String {
+        partner == .spanish ? spanish : english
+    }
+
+    static func typeHere(_ language: Language) -> String {
+        switch language {
+        case .creole:  return "Ekri an kreyòl… " + t("(type Creole)", "(escribe en kreyòl)")
+        case .english: return t("Type English…", "Escribe en inglés…")
+        case .spanish: return t("Type Spanish… · Escribe en español…", "Escribe en español…")
+        }
+    }
+}
+
+/// A language the app translates. Haitian Creole is always one side of a pair.
+enum Language: String, Codable, CaseIterable {
+    case creole = "ht"
+    case english = "en"
+    case spanish = "es"
+
+    /// Code the proxy uses (`x-language`, direction strings, TTS `language`).
+    var code: String { rawValue }
+
+    /// The language's own name for itself — what its speakers look for.
+    var nativeName: String {
+        switch self {
+        case .creole: return "Kreyòl"
+        case .english: return "English"
+        case .spanish: return "Español"
+        }
+    }
+
+    var englishName: String {
+        switch self {
+        case .creole: return "Creole"
+        case .english: return "English"
+        case .spanish: return "Spanish"
+        }
+    }
+
+    var flag: String {
+        switch self {
+        case .creole: return "🇭🇹"
+        case .english: return Self.regionFlag("en", among: Self.englishRegions) ?? "🇺🇸"
+        case .spanish: return Self.regionFlag("es", among: Self.spanishRegions) ?? "🇲🇽"
+        }
+    }
+
+    // No one flag stands for English or Spanish, so the card shows the flag
+    // of the country the phone is set to when that country speaks the
+    // language, and a fallback otherwise (US for English; Mexico for Spanish,
+    // matching the es-MX voice and store page).
+    private static let englishRegions: Set<String> = ["US", "CA", "GB", "AU", "NZ", "IE", "JM", "BS", "BB", "TT", "BZ", "GY", "ZA", "NG", "GH", "KE", "LR"]
+    private static let spanishRegions: Set<String> = ["MX", "DO", "CL", "CO", "AR", "PE", "VE", "EC", "GT", "CU", "BO", "HN", "PY", "SV", "NI", "CR", "PA", "UY", "PR", "ES"]
+
+    /// Whether a fresh install opens on Kreyòl + Español instead of Kreyòl +
+    /// English: Spanish is the phone's first language, or the phone's region
+    /// is a Spanish-speaking country (El Salvador, the Dominican Republic…)
+    /// whatever its language.
+    static var phoneSuggestsSpanish: Bool {
+        if UIText.isSpanish { return true }
+        guard let region = Locale.current.regionCode?.uppercased() else { return false }
+        return spanishRegions.contains(region)
+    }
+
+    /// The country named in the phone's language setting wins ("Español
+    /// (El Salvador)" → 🇸🇻 even on a phone whose region is the US); failing
+    /// that, the phone's region.
+    private static func regionFlag(_ code: String, among regions: Set<String>) -> String? {
+        let fromLanguages = Locale.preferredLanguages.lazy
+            .filter { $0.lowercased().hasPrefix(code + "-") }
+            .compactMap { Locale(identifier: $0).regionCode?.uppercased() }
+            .first { regions.contains($0) }
+        let deviceRegion = Locale.current.regionCode?.uppercased()
+        guard let region = fromLanguages ?? deviceRegion.flatMap({ regions.contains($0) ? $0 : nil }) else { return nil }
+        return String(String.UnicodeScalarView(region.unicodeScalars.compactMap { UnicodeScalar(127397 + $0.value) }))
+    }
+
+    /// Locale for the on-device voice and for labelling speech requests.
+    /// Spanish is Latin American.
+    var speechLocale: String {
+        switch self {
+        case .creole: return "ht-HT"
+        case .english: return "en-US"
+        case .spanish: return "es-MX"
+        }
+    }
+
+    init(speechLocale: String) {
+        if speechLocale.hasPrefix("ht") { self = .creole }
+        else if speechLocale.hasPrefix("es") { self = .spanish }
+        else { self = .english }
+    }
+}
+
 enum TranslationDirection: String, Codable {
     case creoleToEnglish
     case englishToCreole
+    case creoleToSpanish
+    case spanishToCreole
 
-    var sourceLanguage: String {
+    var source: Language {
         switch self {
-        case .creoleToEnglish: return "ht" // Haitian Creole
-        case .englishToCreole: return "en" // English
+        case .creoleToEnglish, .creoleToSpanish: return .creole
+        case .englishToCreole: return .english
+        case .spanishToCreole: return .spanish
         }
     }
 
-    var targetLanguage: String {
+    var target: Language {
         switch self {
-        case .creoleToEnglish: return "English"
-        case .englishToCreole: return "Haitian Creole"
+        case .englishToCreole, .spanishToCreole: return .creole
+        case .creoleToEnglish: return .english
+        case .creoleToSpanish: return .spanish
         }
     }
+
+    /// The non-Creole language of the pair.
+    var partner: Language { source == .creole ? target : source }
+
+    var sourceLanguage: String { source.code }
 
     // Proxy direction code — the system prompt lives server-side
-    var proxyDirection: String {
-        switch self {
-        case .creoleToEnglish: return "ht-en"
-        case .englishToCreole: return "en-ht"
+    var proxyDirection: String { "\(source.code)-\(target.code)" }
+
+    init?(source: Language, target: Language) {
+        switch (source, target) {
+        case (.creole, .english): self = .creoleToEnglish
+        case (.english, .creole): self = .englishToCreole
+        case (.creole, .spanish): self = .creoleToSpanish
+        case (.spanish, .creole): self = .spanishToCreole
+        default: return nil
         }
     }
+
+    init?(proxyDirection: String) {
+        let parts = proxyDirection.split(separator: "-").map(String.init)
+        guard parts.count == 2, let s = Language(rawValue: parts[0]), let t = Language(rawValue: parts[1]),
+              let direction = TranslationDirection(source: s, target: t) else { return nil }
+        self = direction
+    }
+
+    var reversed: TranslationDirection {
+        TranslationDirection(source: target, target: source) ?? self
+    }
+
+    /// Same side of the conversation, other partner language
+    /// (English → Creole becomes Spanish → Creole).
+    func with(partner: Language) -> TranslationDirection {
+        guard partner != .creole else { return self }
+        return (source == .creole
+            ? TranslationDirection(source: .creole, target: partner)
+            : TranslationDirection(source: partner, target: .creole)) ?? self
+    }
+
+    /// "English to Creole" — analytics-safe, English.
+    var englishTitle: String { "\(source.englishName) to \(target.englishName)" }
 }
 
 struct TranscriptionResponse: Codable {
@@ -56,6 +259,10 @@ struct ProxyTranslationResponse: Codable {
     // an older proxy. sampleId is what /v1/feedback rates.
     let sampleId: String?
     let confidence: Int?
+    // Direction the proxy actually translated in. Differs from the request
+    // only when we sent `autoDirection` and the text turned out to be in the
+    // target language already. Absent on an older proxy.
+    let direction: String?
 }
 
 /// Whether the text sent to /v1/translate was spoken or typed. The proxy
@@ -128,13 +335,16 @@ class GroqService {
     // apiKey retained for call-site compatibility; the proxy needs no key
     init(apiKey: String? = nil) {}
 
-    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish, source: TranslationSource = .typed) async throws -> TranslationResult {
-        let translated = try await translateText(text, direction: direction, source: source)
+    /// `autoDirection` lets the proxy translate the other way when the text is
+    /// already in the target language; `result.direction` says which way it went.
+    func processText(_ text: String, direction: TranslationDirection = .creoleToEnglish, source: TranslationSource = .typed,
+                     autoDirection: Bool = false) async throws -> TranslationResult {
+        let translated = try await translateText(text, direction: direction, source: source, autoDirection: autoDirection)
         return TranslationResult(
             transcription: text,
             translation: translated.text,
             provider: displayProvider(translated.provider),
-            direction: direction,
+            direction: translated.direction,
             sampleId: translated.sampleId
         )
     }
@@ -142,12 +352,15 @@ class GroqService {
     /// `resolveDirection` sees the transcript before translation so the caller
     /// can apply language auto-detect; it returns the direction to translate in.
     /// Transcription itself always uses the caller's direction as Whisper's
-    /// language hint — that's the only signal available before any text exists.
+    /// language hint unless `transcribeAs` names another: the Creole engine
+    /// writes down whichever language was spoken, so one mic can take both.
     func processAudio(fileURL: URL,
                       direction: TranslationDirection = .creoleToEnglish,
+                      transcribeAs: String? = nil,
+                      autoDirection: Bool = false,
                       resolveDirection: ((String) -> TranslationDirection)? = nil) async throws -> TranslationResult {
         // Step 1: Transcribe audio (gpt-transcribe for Creole, Whisper for English — see creoleSttEngine)
-        let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: direction.sourceLanguage)
+        let (transcription, transcribeProvider) = try await transcribeAudio(fileURL: fileURL, language: transcribeAs ?? direction.sourceLanguage)
         // gpt-transcribe declines rather than guesses; the proxy rejects empty text.
         if transcription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             throw GroqError.nothingHeard
@@ -155,7 +368,7 @@ class GroqService {
 
         // Step 2: Translate — in the detected direction if the caller asks
         let direction = resolveDirection?(transcription) ?? direction
-        let translated = try await translateText(transcription, direction: direction, source: .voice)
+        let translated = try await translateText(transcription, direction: direction, source: .voice, autoDirection: autoDirection)
 
         // If either leg used its fallback, surface that — it's the more useful signal.
         // (Engine-agnostic: the proxy tags every backup engine with "-fallback".)
@@ -164,7 +377,7 @@ class GroqService {
             transcription: transcription,
             translation: translated.text,
             provider: displayProvider(provider),
-            direction: direction,
+            direction: translated.direction,
             sampleId: translated.sampleId
         )
     }
@@ -226,13 +439,15 @@ class GroqService {
         }
     }
 
-    private func translateText(_ text: String, direction: TranslationDirection, source: TranslationSource) async throws -> (text: String, provider: String?, sampleId: String?) {
+    private func translateText(_ text: String, direction: TranslationDirection, source: TranslationSource,
+                               autoDirection: Bool) async throws -> (text: String, provider: String?, sampleId: String?, direction: TranslationDirection) {
         var request = proxyRequest(url: translateURL)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "text": text,
             "direction": direction.proxyDirection,
-            "source": source.rawValue
+            "source": source.rawValue,
+            "autoDirection": autoDirection
         ])
 
         do {
@@ -252,7 +467,8 @@ class GroqService {
             }
 
             let result = try JSONDecoder().decode(ProxyTranslationResponse.self, from: data)
-            return (result.translation, result.provider, result.sampleId)
+            let used = result.direction.flatMap(TranslationDirection.init(proxyDirection:)) ?? direction
+            return (result.translation, result.provider, result.sampleId, used)
 
         } catch let error as GroqError {
             throw error

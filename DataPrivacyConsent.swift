@@ -16,7 +16,9 @@ class DataPrivacyConsent: ObservableObject {
     /// Bump when the consent text names a new recipient of user data, so people who
     /// agreed to the old wording see the sheet once more.
     /// 2 = OpenAI named for Haitian Creole transcription (2026-10, app 3.4).
-    static let currentVersion = 2
+    /// 3 = OpenRouter named for translation (it was already the first-choice
+    ///     translator; the text said Groq) and Spanish added (2026-11, app 3.7).
+    static let currentVersion = 3
 
     @Published var hasConsented: Bool {
         didSet {
@@ -56,21 +58,22 @@ struct DataPrivacyConsentView: View {
                 .font(.system(size: 36))
                 .foregroundColor(.appAccent)
 
-            Text("Voice & Privacy")
+            Text(UIText.t("Voice & Privacy", "Voz y privacidad"))
                 .font(.title3)
                 .fontWeight(.bold)
 
-            Text("Your speech is sent to OpenAI (Haitian Creole) or Groq (English) for transcription, with the other as a backup; text is translated by Groq, and translated text is sent to OpenAI or Groq to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. Items you flag with 👎 may be shown to reviewers right away; everything else is shown only once it is 10 days old. See our Privacy Policy for details and how to request deletion.")
+            Text(UIText.t("Your speech is sent to OpenAI for transcription, with Groq as a backup; text is translated by OpenAI through OpenRouter, with Groq as a backup, and translated text is sent to OpenAI or Groq to generate spoken audio. Translated text (never linked to you) is kept for up to 90 days so Creole speakers can review quality; voice recordings are kept only when a translation is flagged, for up to 30 days. Items you flag with 👎 may be shown to reviewers right away; everything else is shown only once it is 10 days old. See our Privacy Policy for details and how to request deletion.",
+                          "Tu voz se envía a OpenAI para transcribirla, con Groq como respaldo; OpenAI traduce el texto a través de OpenRouter, con Groq como respaldo, y el texto traducido se envía a OpenAI o a Groq para generar el audio. El texto traducido (nunca vinculado a ti) se guarda hasta 90 días para que hablantes de criollo revisen la calidad; las grabaciones de voz solo se guardan cuando una traducción se marca como incorrecta, hasta 30 días. Lo que marcas con 👎 puede mostrarse a los revisores de inmediato; lo demás, solo cuando tiene 10 días. Consulta nuestra Política de privacidad para más detalles y para solicitar que se elimine."))
                 .font(.subheadline)
                 .foregroundColor(.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
             HStack(spacing: 4) {
-                Text("Recordings are deleted from your phone once translated.")
+                Text(UIText.t("Recordings are deleted from your phone once translated.", "Las grabaciones se borran de tu teléfono al terminar la traducción."))
                     .font(.caption)
                     .foregroundColor(.secondaryText)
-                Link("Privacy Policy", destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!)
+                Link(UIText.t("Privacy Policy", "Política de privacidad"), destination: URL(string: "https://jbaker00.github.io/CreoleTranslator-iOS/privacy-policy")!)
                     .font(.caption)
             }
                 .font(.caption)
@@ -82,7 +85,7 @@ struct DataPrivacyConsentView: View {
             // so a decline button that goes nowhere would be a dark pattern
             // (and an App Store 5.1.1 rejection risk).
             Button(action: { consentManager.grantConsent() }) {
-                Text("I Understand — Continue")
+                Text(UIText.t("I Understand — Continue", "Entiendo — Continuar"))
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
